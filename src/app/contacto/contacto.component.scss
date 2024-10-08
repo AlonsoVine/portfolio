@@ -1,0 +1,26 @@
+#contacto {
+    .contact-form {
+      max-width: 600px;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background: #f9f9f9;
+    }
+  
+    .form-control {
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+  
+    .btn {
+      padding: 10px 20px;
+      border-radius: 5px;
+      background: #007bff;
+      border: none;
+      cursor: pointer;
+      &:hover {
+        background: #0056b3;
+      }
+    }
+}
+  
