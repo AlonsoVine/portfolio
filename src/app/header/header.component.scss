@@ -60,6 +60,19 @@
     animation: fadeIn 2s ease-in-out;
   }
 
+    /* Curva en la parte inferior del header */
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -2px; /* Ajustar la posición de la curva */
+      left: 0;
+      width: 100%;
+      height: 60px; /* Altura del arco */
+      background-color: #ffffff; /* Color del arco */
+      clip-path: ellipse(60% 100% at 50% 100%); /* Crea una curva suave */
+      z-index: 1; /* Asegura que esté detrás del contenido del header */
+    }
+
   /* Animación de entrada */
   @keyframes fadeIn {
     from {
