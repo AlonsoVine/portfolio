@@ -10,5 +10,22 @@
       font-size: 1.2rem;
       color: #666;
     }
+
+    .perfil-image {
+      width: 30%; /* Ajuste del ancho de la imagen al 30% de la pantalla */
+      max-width: 400px; /* Ancho máximo para limitar el tamaño en pantallas grandes */
+      height: auto; /* Mantiene la proporción de la imagen */
+      border-radius: 50%; /* Hace que la imagen sea circular, si la deseas redonda */
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra para destacar la imagen */
+      margin: 0 auto 20px; /* Centrar la imagen horizontalmente y añadir margen inferior */
+      display: block; /* Asegura que la imagen se comporte como un bloque */
+    }
+
+    @media (max-width: 768px) {
+      .perfil-image {
+        width: 50%; /* Ajusta el tamaño de la imagen en pantallas pequeñas */
+      }
+    }
+    
 }
   

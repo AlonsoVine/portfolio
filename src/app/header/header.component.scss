@@ -69,7 +69,7 @@
       width: 100%;
       height: 60px; /* Altura del arco */
       background-color: #ffffff; /* Color del arco */
-      clip-path: ellipse(60% 100% at 50% 100%); /* Crea una curva suave */
+      clip-path: ellipse(65% 100% at 50% 100%); /* Crea una curva suave */
       z-index: 1; /* Asegura que esté detrás del contenido del header */
     }
 
