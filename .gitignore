@@ -40,3 +40,7 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+
+# others
+/src/assets/img/MI-Laptop-Gif-unscreen.png
