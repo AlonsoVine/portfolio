@@ -43,12 +43,14 @@ footer {
         padding: 0 5px;
         font-size: 2.5rem;
         color: #ffffff;
-        transition: color 0.3s ease;
-  
+        transition: color 0.3s ease, transform 0.3s ease; /* Añade transform a la transición */
+
+        display: inline-block; /* Asegura que transform funcione correctamente */
+
         &:hover {
           color: #a1e2cc; /* Cambia el color en hover */
           //transition: transform 0.3s ease-in-out;
-          //transform: scale(1.50); /* Aumenta el tamaño */
+          transform: scale(1.5); /* Aumenta el tamaño */
         }
       }
     }
