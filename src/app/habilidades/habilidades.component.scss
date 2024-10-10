@@ -1,3 +1,4 @@
+/*
 #habilidades {
     ul {
       margin: 0;
@@ -15,4 +16,75 @@
       }
     }
 }
+
+*/
+
+#habilidades {
+  background-color: #f8f9fa; // Color de fondo claro
+  padding: 3rem 0;
+
+  h2 {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 2rem;
+  }
+
+  .container {
+    .row {
+      .col-md-6 {
+        margin-bottom: 2rem;
+
+        h4 {
+          font-size: 1.2rem;
+          font-weight: 600;
+          color: #343a40;
+          margin-bottom: 1rem;
+          border-bottom: 2px solid #6c757d;
+          padding-bottom: 0.5rem;
+        }
+
+        ul {
+          padding-left: 1.5rem; // Desplazamiento de las listas hacia adentro
+
+          li {
+            font-size: 0.95rem; // Tamaño de fuente más pequeño
+            margin-bottom: 0.5rem; // Espacio entre cada habilidad
+            padding-left: 1.2rem; // Espacio para el icono
+            position: relative;
+
+            // Estilo para el icono
+            &::before {
+              content: "•"; // Utiliza un punto o el emoji que prefieras
+              font-size: 1rem;
+              color: #6c757d; // Color de los iconos
+              position: absolute;
+              left: 0; // Posiciona el icono a la izquierda
+              top: 0.1rem; // Ajusta la alineación vertical del icono
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Responsive adjustments
+  @media (max-width: 768px) {
+    h2 {
+      font-size: 1.75rem;
+    }
+
+    .col-md-6 {
+      margin-bottom: 1.5rem;
+    }
+
+    h4 {
+      font-size: 1.1rem;
+    }
+
+    li {
+      font-size: 0.9rem;
+    }
+  }
+}
+
   

@@ -39,7 +39,7 @@ El proyecto sigue una estructura modular basada en componentes de Angular. A con
 
 ---
 
-## 👨‍💻 Tecnologías Utilizadas
+## 💻 Tecnologías Utilizadas
 
 El portafolio está desarrollado con las siguientes tecnologías y librerías:
 
@@ -55,7 +55,7 @@ El portafolio está desarrollado con las siguientes tecnologías y librerías:
 ---
 ---
 
-# 🚀 Guía para Desarrolladores 
+# 👨‍💻 Guía para Desarrolladores 
 
 
 
