@@ -1,3 +1,4 @@
+/*
 #experiencia {
     .job {
       margin-bottom: 30px;
@@ -17,4 +18,43 @@
       }
     }
 }
+
+*/
+
+#experiencia {
+  .job {
+    margin-bottom: 30px; /* Espacio entre cada experiencia */
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+
+    h3 {
+      font-size: 1.5rem;
+      color: #343a40;
+    }
+
+    h4 {
+      font-size: 1.2rem;
+      color: #6c757d;
+    }
+
+    p {
+      font-size: 1rem;
+      color: #495057;
+    }
+
+    p strong {
+      color: #343a40; /* Resalta la ubicación */
+    }
+  }
+
+  h2 {
+    font-size: 2.5rem;
+    color: #343a40;
+    margin-bottom: 50px;
+  }
+}
+
+
   
