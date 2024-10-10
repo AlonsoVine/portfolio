@@ -32,6 +32,12 @@ h2 {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+.card:hover {
+    transition: transform 0.3s ease-in-out;
+    transform: scale(1.10); /* Aumenta el tamaño de la card */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* Agrega una sombra para mayor efecto */
+}
+
 .card-title {
     font-size: 1.25em;
     margin-bottom: 10px;
@@ -41,4 +47,6 @@ h2 {
     font-size: 1em;
     color: #666;
 }
+
+
   

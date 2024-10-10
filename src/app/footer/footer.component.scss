@@ -46,7 +46,9 @@ footer {
         transition: color 0.3s ease;
   
         &:hover {
-          color: #94d2bd; /* Cambia el color en hover */
+          color: #a1e2cc; /* Cambia el color en hover */
+          //transition: transform 0.3s ease-in-out;
+          //transform: scale(1.50); /* Aumenta el tamaño */
         }
       }
     }
