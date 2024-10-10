@@ -63,11 +63,12 @@ El portafolio está desarrollado con las siguientes tecnologías y librerías:
 
 Esta sección proporciona una guía detallada para configurar y ejecutar el proyecto de manera local en tu entorno de desarrollo.
 
-## Requisitos Previos
+### Requisitos Previos
 
 Asegúrate de tener los siguientes requisitos antes de iniciar la configuración del proyecto:
 
 - **Node.js**: Debes tener Node.js instalado en tu sistema. Si no lo tienes, puedes descargarlo desde [aquí](https://nodejs.org/).
+
 - **Angular CLI**: Angular CLI es la interfaz de línea de comandos para Angular y se necesita para ejecutar comandos como `ng serve` y `ng build`.
 
   Puedes instalar Angular CLI globalmente en tu sistema usando:
@@ -75,11 +76,44 @@ Asegúrate de tener los siguientes requisitos antes de iniciar la configuración
   ```bash
   npm install -g @angular/cli
     ```
+
+### Clonar el Repositorio
+
+Clona el repositorio de GitHub en tu entorno local usando el comando:
+
+```bash
+git clone https://github.com/tu-repositorio/portfolio.git
+```
+### Instalación de las Dependencias
+
+Accede al directorio del proyecto y ejecuta el siguiente comando para instalar todas las dependencias necesarias:
+
+```bash
+cd portfolio
+npm install
+```
+
+### Ejecutar el Proyecto en Modo Desarrollo
+
+Para iniciar el servidor de desarrollo y ver la aplicación en tu navegador en `http://localhost:4200/`, ejecuta el siguiente comando:
+
+```bash
+ng serve --open
+```
+
+### Compilar el Proyecto para Producción
+
+Para compilar el proyecto para producción, ejecuta el siguiente comando:
+
+```bash
+ng build --prod
+```
+
+Esto generará una carpeta `dist/` con los archivos optimizados para producción que se pueden desplegar en un servidor.
+
 ## Estructura del Proyecto
 
 El proyecto tiene la siguiente estructura básica:
-
-# Estructura del Proyecto
 
 ```plaintext
 
