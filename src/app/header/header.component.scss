@@ -22,7 +22,7 @@
     }
 }*/
 
-//estilos de la imagen
+// Estilos de la imagen
 img {
   position: relative;
   border-radius: 8px; // Esquinas redondeadas para que se vea más limpio
@@ -37,7 +37,7 @@ img {
   }
 }
 
-//Estilos del header
+// Estilos del header
 .hero-section {
   height: 100vh; /* Ocupa toda la altura de la pantalla */
   background: #0b0d22; /* Color de fondo similar */
@@ -57,6 +57,7 @@ img {
     width: 100%; /* Ancho total de la fila */
   }
 
+  // ANIMACIÓN DEL WELCOME
   .welcome-text {
     font-size: 4rem;
     opacity: 0;
@@ -78,9 +79,6 @@ img {
     }
   }
 
-  
-  
-
   .hero-text {
     h1 {
       font-size: 5rem;
@@ -94,6 +92,7 @@ img {
     }
   }
 
+  // ANIMACIÓN DE LA IMAGEN
   .hero-image {
     max-width: 400px; /* Ancho máximo de la imagen */
     height: auto;
@@ -124,6 +123,56 @@ img {
   }
 }
 
+// ANIMACIÓN DEL TEXTO
+.hero-section .hero-text p.lead {
+  font-size: 1.25rem;
+  line-height: 1.6;
+  opacity: 0;
+  animation: fadeInText 4s ease-in-out forwards; /* Duración y suavidad de la animación */
+}
+
+@keyframes fadeInText {
+  0% {
+    opacity: 0;
+    transform: translateY(20px); /* El texto comienza ligeramente desplazado hacia abajo */
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0); /* El texto vuelve a su posición original */
+  }
+}
+
+/* Animación línea por línea */
+.hero-section .hero-text p.lead span {
+  display: block;
+  opacity: 0;
+  animation: fadeInLines 1s ease forwards;
+}
+
+.hero-section .hero-text p.lead span:nth-child(1) {
+  animation-delay: 0.7s;
+}
+
+.hero-section .hero-text p.lead span:nth-child(2) {
+  animation-delay: 1.4s;
+}
+
+.hero-section .hero-text p.lead span:nth-child(3) {
+  animation-delay: 2.0s;
+}
+
+.hero-section .hero-text p.lead span:nth-child(4) {
+  animation-delay: 2.7s;
+}
+
+@keyframes fadeInLines {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
 
 
   
