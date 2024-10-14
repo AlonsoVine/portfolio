@@ -7,4 +7,11 @@ import { Component } from '@angular/core';
 })
 export class HeaderComponent {
 
+  irAlComponente() {
+    const elemento = document.getElementById('mi-perfil');
+    if (elemento) {
+      elemento.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+
 }
