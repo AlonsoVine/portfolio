@@ -1,6 +1,7 @@
 name: Deploy to GitHub Pages
 
 on:
+  # Evento que activará el workflow: cuando se haga un push en la rama 'main'
   push:
     branches:
       - main
@@ -14,24 +15,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    # 1. Checkout del repositorio
     - name: Check out the repository
       uses: actions/checkout@v3
 
+    # 2. Configurar Node.js
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '16'
 
+    # 3. Instalar dependencias de npm
     - name: Install dependencies
       run: npm install
 
+    # 4. Compilar la aplicación Angular
+    # Reemplaza 'portfolio' por el nombre de tu aplicación en 'output-path'
     - name: Build the project
       run: npm run build -- --output-path=dist/portfolio --base-href=/portfolio/
       #run: npm run build -- --base-href https://AlonsoVine.github.io/portfolio/
 
+    # 5. Crear el archivo .nojekyll para deshabilitar Jekyll
     - name: Create .nojekyll file
-      run: echo "" > ./dist/portfolio/.nojekyl
+      run: echo "" > ./dist/portfolio/.nojekyll
 
+    # 6. Desplegar a GitHub Pages
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       with:
