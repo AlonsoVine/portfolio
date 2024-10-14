@@ -2,6 +2,8 @@
 
 Este es un portafolio personal diseñado para presentar mi trayectoria profesional.
 
+Puedes acceder desde: [https://alonsovine.github.io/portfolio/](https://alonsovine.github.io/portfolio/)
+
 Desarrollado con **Angular**, el portafolio incluye secciones dedicadas para mostrar habilidades, experiencia profesional, proyectos y certificados, así como un formulario de contacto funcional.
 
 ## 🗂 Estructura del Proyecto
