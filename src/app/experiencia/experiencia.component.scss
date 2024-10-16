@@ -22,13 +22,23 @@
 */
 
 #experiencia {
+
+  h5 {
+    margin-left: 50px;
+    font-size: 2.5rem;
+    color: #343a40;
+    margin-bottom: 50px;
+  }
+
   .job {
     margin-bottom: 30px; /* Espacio entre cada experiencia */
     padding: 20px;
     //background: #f8f9fa;
     background: #ffffff;
-    border-radius: 8px;
+    border-radius: 10px;
+    //Propiedades del borde de la caja
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    //border-bottom: 2px solid #6c757d;
 
     &:hover {
       transition: transform 0.4s ease-in-out;
@@ -55,12 +65,6 @@
     }
   }
 
-  h5 {
-    margin-left: 50px;
-    font-size: 2.5rem;
-    color: #343a40;
-    margin-bottom: 50px;
-  }
 }
 
 
