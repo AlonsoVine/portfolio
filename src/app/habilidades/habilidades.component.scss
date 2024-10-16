@@ -29,6 +29,13 @@
     margin-bottom: 2rem;
   }
 
+  h5{
+    margin-left: 50px;
+    font-size: 2.5rem;
+    color: #343a40;
+    margin-bottom: 50px;
+  }
+
   .container {
     .row {
       .col-md-6 {
@@ -39,7 +46,7 @@
           font-weight: 600;
           color: #343a40;
           margin-bottom: 1rem;
-          border-bottom: 2px solid #6c757d;
+          border-bottom: 1px double #898f94;
           padding-bottom: 0.5rem;
         }
 
