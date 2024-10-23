@@ -32,6 +32,7 @@ img {
   transition: transform 0.3s ease-in-out;
   width: 50%; /* Ajuste del ancho de la imagen al 30% de la pantalla */
   max-width: 400px; /* Ancho máximo para limitar el tamaño en pantallas grandes */
+  min-width: 30%;
   height: auto; /* Mantiene la proporción de la imagen */
 
   &:hover {
