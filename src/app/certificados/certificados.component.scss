@@ -49,35 +49,34 @@
   font-size: 2.5rem;
   color: #343a40;
 }
+
+
 .row {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  overflow: visible; /* Permite que las cards se extiendan fuera de su contenedor */
+  overflow: visible; // Permite que las cards se extiendan fuera de su contenedor
 }
 
-.col-md-4 {
-  flex: 1 1 calc(33% - 10px); /* Cada tarjeta ocupará el 50% menos el espacio del gap */
-  max-width: calc(33% - 10px); /* Asegura que el ancho máximo sea el 50% menos el espacio del gap */
-  box-sizing: border-box; /* Asegura que los márgenes y rellenos se incluyan dentro del ancho total */
-}
+
 
 .card {
   flex-grow: 1;
   min-height: 100%;
   display: flex;
   flex-direction: column;
-  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Añade una transición suave para el hover */
-  position: relative; /* Posición relativa para gestionar el z-index */
-  z-index: 1; /* Por defecto, todas las cards tendrán el mismo nivel */
+  transition: transform 0.3s ease, box-shadow 0.3s ease; // Añade una transición suave para el hover 
+  position: relative; // Posición relativa para gestionar el z-index 
+  z-index: 1; // Por defecto, todas las cards tendrán el mismo nivel 
 }
 
 .card:hover {
-  transform: scale(1.05); /* Aumenta el tamaño en un 5% al hacer hover */
-  z-index: 10; /* Eleva la tarjeta por encima de las demás para evitar solapamientos extraños */
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2); /* Añade sombra para un efecto más llamativo */
+  transform: scale(1.05); // Aumenta el tamaño en un 5% al hacer hover 
+  z-index: 10; // Eleva la tarjeta por encima de las demás para evitar solapamientos extraños 
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2); // Añade sombra para un efecto más llamativo 
 }
 
 .card-body {
   flex-grow: 1;
 }
+
+
