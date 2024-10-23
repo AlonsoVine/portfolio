@@ -52,7 +52,14 @@
 .row {
   display: flex;
   flex-wrap: wrap;
+  gap: 10px;
   overflow: visible; /* Permite que las cards se extiendan fuera de su contenedor */
+}
+
+.col-md-4 {
+  flex: 1 1 calc(33% - 10px); /* Cada tarjeta ocupará el 50% menos el espacio del gap */
+  max-width: calc(33% - 10px); /* Asegura que el ancho máximo sea el 50% menos el espacio del gap */
+  box-sizing: border-box; /* Asegura que los márgenes y rellenos se incluyan dentro del ancho total */
 }
 
 .card {
