@@ -14,7 +14,7 @@ El proyecto sigue una estructura modular basada en componentes de Angular. A con
 ## ✨ Funcionalidades
 
 ### 1. **Certificados**
-   - Muestra los certificados del DevOps, cada uno con su imagen y descripción correspondiente.
+   - Muestra los certificados del , cada uno con su imagen y descripción correspondiente.
    - Los certificados pueden incluir imágenes y archivos PDF, que están organizados en la carpeta `assets/certificates`.
 
 ### 2. **Contacto**
@@ -26,18 +26,18 @@ El proyecto sigue una estructura modular basada en componentes de Angular. A con
    - Incluye descripciones detalladas de cada rol, tecnologías usadas y proyectos en los que se participó.
 
 ### 4. **Proyectos**
-   - Muestra proyectos realizados, cada uno con una breve descripción de las tecnologías utilizadas y el impacto del proyecto.
+   - Muestra proyectos realizados, cada uno con una breve descripción.
    - Incluye enlaces para ver más detalles sobre cada proyecto (si aplica).
 
 ### 5. **Habilidades**
    - Muestra las habilidades técnicas, tales como lenguajes de programación, frameworks, herramientas y metodologías ágiles.
 
 ### 6. **Perfil**
-   - Una descripción general del profesional, su enfoque, y las áreas en las que se especializa.
+   - Una descripción general, mi enfoque, y las áreas en las que se especializa.
 
 ### 7. **Header y Footer**
-   - **Header**: Contiene la introducción general, nombre y título profesional.
-   - **Footer**: Incluye enlaces a redes sociales como GitHub, LinkedIn y otros, con un diseño curvado y enlaces visuales.
+   - **Header**: Contiene la introducción general.
+   - **Footer**: Incluye enlaces a redes sociales como GitHub, LinkedIn y Microsoft.
 
 ---
 
