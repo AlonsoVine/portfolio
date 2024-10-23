@@ -29,6 +29,7 @@
 
     &:hover {
       transform: scale(1.02); /* Añade un efecto de hover para la card */
+      z-index: 10;
     }
 
     img {
