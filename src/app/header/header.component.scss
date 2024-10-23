@@ -30,11 +30,14 @@ img {
   //background-color: rgba(255, 255, 255, 0.1); // Fondo clareado en torno a la imagen
   //padding: 1rem; // Espacio alrededor de la imagen para mayor separación
   transition: transform 0.3s ease-in-out;
+  width: 50%; /* Ajuste del ancho de la imagen al 30% de la pantalla */
+  max-width: 400px; /* Ancho máximo para limitar el tamaño en pantallas grandes */
+  height: auto; /* Mantiene la proporción de la imagen */
 
   &:hover {
     transform: scale(1.05); // Efecto de aumento al pasar el ratón por encima
     //box-shadow: 0 8px 40px rgba(255, 255, 255, 0.3); // Aumenta el resplandor al hacer hover
-    filter:drop-shadow(0 0 50px rgba(255, 255, 255, 0.571))
+    filter:drop-shadow(0 0 40px rgba(255, 255, 255, 0.571))
   }
 }
 
