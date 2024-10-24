@@ -1,27 +1,27 @@
-/*
-#proyectos {
-    .project {
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      padding: 20px;
-      border-radius: 5px;
-  
-      h3 {
-        font-size: 1.5rem;
-      }
-  
-      p {
-        margin-bottom: 10px;
-      }
-  
-      .btn {
-        margin-top: 10px;
-      }
-    }
-}
-    */
 
 #proyectos {
+
+  #titulo{
+    margin-left: 50px;
+    margin-bottom: 50px;
+  }
+
+  h5 {
+    font-size: 2.5rem;
+    color: #343a40;
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    overflow: visible; /* Permite que las cards se extiendan fuera de su contenedor */
+  }
+
   .card {
+    flex-grow: 1; 
+    display: flex;
+    min-height: 100%;
     border: none;
     border-radius: 10px;
     overflow: hidden;
@@ -29,6 +29,7 @@
 
     &:hover {
       transform: scale(1.02); /* Añade un efecto de hover para la card */
+      z-index: 10;
     }
 
     img {
@@ -58,24 +59,6 @@
     }
   }
 
-  h2 {
-    font-size: 2.5rem;
-    //font-weight: bold;
-    margin-bottom: 40px;
-  }
-
-  #titulo{
-    margin-left: 50px;
-    margin-bottom: 50px;
-  }
-
-  h5 {
-    font-size: 2.5rem;
-    color: #343a40;
-  }
-
-  
-
   .social-icons {
 
     a {
@@ -91,6 +74,7 @@
         color: #dcb32d; /* Cambia el color en hover */
         //transition: transform 0.3s ease-in-out;
         transform: scale(1.5); /* Aumenta el tamaño */
+        text-shadow: 0 0 2px #ffee10;
       }
     }
   }

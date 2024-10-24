@@ -25,15 +25,20 @@
 // Estilos de la imagen
 img {
   position: relative;
-  border-radius: 8px; // Esquinas redondeadas para que se vea más limpio
-  box-shadow: 0 4px 30px rgba(255, 255, 255, 0.2); // Resplandor alrededor de la imagen
-  background-color: rgba(255, 255, 255, 0.1); // Fondo clareado en torno a la imagen
-  padding: 1rem; // Espacio alrededor de la imagen para mayor separación
+  //border-radius: 8px; // Esquinas redondeadas para que se vea más limpio
+  //box-shadow: 0 4px 30px rgba(255, 255, 255, 0.2); // Resplandor alrededor de la imagen
+  //background-color: rgba(255, 255, 255, 0.1); // Fondo clareado en torno a la imagen
+  //padding: 1rem; // Espacio alrededor de la imagen para mayor separación
   transition: transform 0.3s ease-in-out;
+  width: 50%; /* Ajuste del ancho de la imagen al 30% de la pantalla */
+  max-width: 400px; /* Ancho máximo para limitar el tamaño en pantallas grandes */
+  min-width: 30%;
+  height: auto; /* Mantiene la proporción de la imagen */
 
   &:hover {
     transform: scale(1.05); // Efecto de aumento al pasar el ratón por encima
-    box-shadow: 0 8px 40px rgba(255, 255, 255, 0.3); // Aumenta el resplandor al hacer hover
+    //box-shadow: 0 8px 40px rgba(255, 255, 255, 0.3); // Aumenta el resplandor al hacer hover
+    filter:drop-shadow(0 0 40px rgba(255, 255, 255, 0.571))
   }
 }
 
@@ -59,7 +64,7 @@ img {
 
   // ANIMACIÓN DEL WELCOME
   .welcome-text {
-    font-size: 4rem;
+    //font-size: 4rem;
     opacity: 0;
     animation: fadeInScale 3s ease-in-out forwards;
   
@@ -81,13 +86,13 @@ img {
 
   .hero-text {
     h1 {
-      font-size: 5rem;
+      font-size: 4rem;
       margin-bottom: 20px;
-      font-weight: 700;
+      font-weight: 500;
     }
 
     p {
-      font-size: 1.25rem;
+      font-size: 0.7rem;
       line-height: 1.8;
     }
   }
@@ -125,7 +130,7 @@ img {
 
 // ANIMACIÓN DEL TEXTO
 .hero-section .hero-text p.lead {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   line-height: 1.6;
   opacity: 0;
   animation: fadeInText 4s ease-in-out forwards; /* Duración y suavidad de la animación */
