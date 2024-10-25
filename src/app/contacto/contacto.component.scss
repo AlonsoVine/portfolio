@@ -6,6 +6,13 @@
     margin-bottom: 50px;
   }
 
+  .container{
+    border-radius: 52px;
+    background: #e0e0e0;
+    box-shadow:  23px 23px 46px #d3d1d1,-23px -23px 46px #ffffff;
+    padding: 4%;
+  }
+
   .contact-form {
     max-width: 600px;
     padding: 20px;
@@ -19,6 +26,12 @@
     border: 1px solid #ccc;
   }
 
+  form{
+    margin-left: 8%;
+    margin-right: 8%;
+  }
+
+  /*
   .btn {
     padding: 10px 20px;
     border-radius: 5px;
@@ -28,6 +41,30 @@
     &:hover {
       background: #0056b3;
     }
+  }*/
+
+  //Button
+  button {
+    color: #f0eaea;
+    font-weight: 600;
+    padding: 0.7em 1.7em;
+    font-size: 18px;
+    border-radius: 0.5em;
+    background: #007bff;
+    cursor: pointer;
+    border: 1px solid #007bff;
+    transition: all 0.3s;
+    box-shadow: 6px 6px 12px #c5c5c5, -6px -6px 12px #ffffff;
+  }
+  
+  button:active {
+    color: #666;
+    box-shadow: inset 4px 4px 12px #c5c5c5, inset -4px -4px 12px #ffffff;
+  }
+
+  .notificacion-mensaje{
+    margin-left: 8%; 
+    margin-top: 2%;
   }
 }
   
