@@ -1,4 +1,4 @@
-<section id="contacto" class="py-5">
+<!--section id="contacto" class="py-5">
     <div class="container">
       <h5 class="text-center mb-5" id="titulo">Contacto.</h5>
       <p class="text-center">¿Tienes alguna pregunta o quieres trabajar conmigo? ¡Envíame un mensaje!</p>
@@ -15,5 +15,24 @@
         <button type="submit" class="btn btn-primary">Enviar</button>
       </form>
     </div>
+</section-->
+
+<section id="contacto" class="py-5">
+  <div class="container">
+    <h5 class="text-center mb-5" id="titulo">Contacto.</h5>
+    <p class="text-center">¿Tienes alguna pregunta o quieres trabajar conmigo? ¡Envíame un mensaje!</p>
+    <form (ngSubmit)="onSubmit()" #contactForm="ngForm">
+      <div class="form-group mb-3">
+        <input type="text" name="nombre" class="form-control" placeholder="Tu nombre" [(ngModel)]="nombre" required>
+      </div>
+      <div class="form-group mb-3">
+        <input type="email" name="email" class="form-control" placeholder="Tu correo electrónico" [(ngModel)]="email" required>
+      </div>
+      <div class="form-group mb-3">
+        <textarea name="mensaje" class="form-control" rows="5" placeholder="Tu mensaje" [(ngModel)]="mensaje" required></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary" [disabled]="contactForm.invalid">Enviar</button>
+    </form>
+    <div *ngIf="message" class="notificacion-mensaje">{{ message }}</div>
+  </div>
 </section>
-  
