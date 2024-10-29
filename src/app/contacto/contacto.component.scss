@@ -8,9 +8,12 @@
 
   .container{
     border-radius: 52px;
-    background: #e0e0e0;
-    box-shadow:  23px 23px 46px #d3d1d1,-23px -23px 46px #ffffff;
+    //background: #e0e0e0;
+    //box-shadow:  23px 23px 46px #d3d1d1,-23px -23px 46px #ffffff;
+    background: linear-gradient(145deg, #cacaca, #f0f0f0);
+    box-shadow:  20px 20px 60px #bebebe,-20px -20px 60px #ffffff;
     padding: 4%;
+    margin-bottom: 2%;
   }
 
   .contact-form {
