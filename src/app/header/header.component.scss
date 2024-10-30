@@ -38,7 +38,9 @@ img {
   &:hover {
     transform: scale(1.05); // Efecto de aumento al pasar el ratón por encima
     //box-shadow: 0 8px 40px rgba(255, 255, 255, 0.3); // Aumenta el resplandor al hacer hover
-    filter:drop-shadow(0 0 40px rgba(255, 255, 255, 0.571))
+    //filter:drop-shadow(0 0 40px rgba(255, 255, 255, 0.571))
+    filter:drop-shadow(0 0 40px #00f0ff)
+
   }
 }
 
@@ -90,6 +92,22 @@ img {
       margin-bottom: 20px;
       font-weight: 500;
     }
+
+    //Efecto de luminiscencia sobre las letras del h1
+    .text{
+      font-family: 'Liberty';
+      font-weight: 100;
+      font-size: 7rem;
+      letter-spacing: -0.25em;
+      flex-flow: row;
+    }
+    
+    .letter{
+      color: #d9fdff;
+      text-shadow: 0 0 2rem #00f0ff;
+      display: inline-block;
+    }
+  
 
     p {
       font-size: 0.7rem;
