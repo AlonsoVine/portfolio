@@ -7,8 +7,15 @@ import { Component } from '@angular/core';
 })
 export class HeaderComponent {
 
-  irAlComponente() {
+  irAlComponentePerfil() {
     const elemento = document.getElementById('mi-perfil');
+    if (elemento) {
+      elemento.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+
+  irAlComponenteHabilidades() {
+    const elemento = document.getElementById('habilidades');
     if (elemento) {
       elemento.scrollIntoView({ behavior: 'smooth' });
     }
