@@ -57,6 +57,13 @@
   overflow: visible; // Permite que las cards se extiendan fuera de su contenedor
 }
 
+/* Igualar el espacio vertical entre filas al horizontal solo en la sección de certificados */
+#certificados {
+  .row {
+    --bs-gutter-y: var(--bs-gutter-x);
+  }
+}
+
 
 
 .card {

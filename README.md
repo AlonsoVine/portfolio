@@ -1,46 +1,71 @@
-# Mi Portfolio (Angular)
+# 🚀 Mi Portfolio (Angular)
 
-Portafolio personal desarrollado con Angular. Demostración pública:
+¡Hola! Este es mi portafolio personal desarrollado con Angular. Aquí muestro quién soy, mi experiencia, mis habilidades y algunos proyectos que me divierte construir. La versión en producción está desplegada en GitHub Pages:
 
-- URL: https://alonsovine.github.io/portfolio/
+- URL pública: https://alonsovine.github.io/portfolio/
 
-## Tecnologías y stack
+---
+
+## 🧰 Tecnologías y stack
 
 - Angular 16 (TypeScript)
-- Bootstrap 5 + SCSS
-- Font Awesome
-- GitHub Actions + GitHub Pages para despliegue
+- Bootstrap 5 + SCSS para estilos
+- Font Awesome para iconografía
+- GitHub Actions + GitHub Pages para despliegue continuo
 
-## Requisitos locales
+---
+
+## 🧑‍💻 Requisitos locales
 
 - Node.js LTS (>= 16)
-- Angular CLI instalado globalmente: `npm i -g @angular/cli`
+- Angular CLI global: `npm i -g @angular/cli`
 
-## Scripts útiles
+Primera vez en el proyecto:
 
-- `npm start` → levanta el servidor de desarrollo en `http://localhost:4200/`
+```
+npm ci
+npm start
+```
+
+Esto levanta la app en `http://localhost:4200/` con recarga en caliente.
+
+---
+
+## 📦 Scripts útiles
+
+- `npm start` → inicia el servidor de desarrollo
 - `npm run build` → compila en modo producción (por configuración del proyecto)
 - `npm test` → ejecuta tests
 
-Nota: en Angular 16 `ng build` ya compila en producción por defecto en este proyecto. Si quieres ser explícito: `ng build --configuration production`.
+Nota rápida: en Angular 16 este proyecto ya tiene `defaultConfiguration: production`, así que `ng build` compila en prod por defecto. Si quiero ser explícito, uso `ng build --configuration production`.
 
-## Estructura rápida
+---
 
-- `src/app/app.component.html` → compone las secciones: header, perfil, habilidades, experiencia, proyectos, certificados, contacto y footer.
-- `src/app/app-routing.module.ts` → sin rutas (SPA por secciones en una sola página).
-- `angular.json` → salida de build en `dist/portfolio` y estilos/scripts globales.
+## 🗂️ Estructura del proyecto (resumen)
 
-## Despliegue (GitHub Pages)
+- `src/app/app.component.html` → compone todas las secciones de la landing: `header`, `perfil`, `habilidades`, `experiencia`, `proyectos`, `certificados`, `contacto`, `footer`.
+- `src/app/app-routing.module.ts` → no defino rutas (es una SPA de una sola página con secciones).
+- `angular.json` → salida de compilación en `dist/portfolio`, y configuración de estilos/scripts globales (Bootstrap, Font Awesome, jQuery para algunos componentes de Bootstrap).
+- `src/assets/` → imágenes, certificados y recursos estáticos.
 
-El despliegue está automatizado mediante un workflow de GitHub Actions: `.github/workflows/deploy.yml`.
+Decisiones de UI/UX: estructura sencilla tipo landing con secciones claras y scroll. Bootstrap me da velocidad para maquetar y mantener responsive sin fricción.
 
-- Publica el contenido generado en la rama `gh-pages`.
-- Para que se ejecute automáticamente, el mensaje del último commit debe contener `deploy:` y el push debe ir a `main`.
-- También se puede lanzar manualmente desde la pestaña Actions (`workflow_dispatch`).
+---
 
-### Cómo desplegar
+## 🚢 Despliegue a producción (GitHub Pages)
 
-1) Asegúrate de tener cambios comprometidos en `main` y crea un commit con `deploy:` en el mensaje. Ejemplo:
+Tengo automatizado el despliegue con GitHub Actions (`.github/workflows/deploy.yml`). El flujo es simple y predecible: si el último commit del push a `main` contiene `deploy:`, se construye y publica automáticamente a la rama `gh-pages`.
+
+### ✅ Cómo publico
+
+1) Confirmo que estoy en `main` y sincronizado:
+
+```
+git checkout main
+git pull
+```
+
+2) Hago commit de mis cambios usando el prefijo `deploy:` en el mensaje (esto dispara el pipeline):
 
 ```
 git add .
@@ -48,38 +73,73 @@ git commit -m "deploy: actualiza estilos del header"
 git push origin main
 ```
 
-2) Verifica el workflow en GitHub → pestaña `Actions` → workflow “Deploy to GitHub Pages”.
+3) Reviso el progreso en GitHub → pestaña `Actions` → “Deploy to GitHub Pages”. Al terminar, los archivos quedan publicados en `gh-pages` y la web se sirve en `https://alonsovine.github.io/portfolio/`.
 
-3) La web se publica/actualiza en `https://alonsovine.github.io/portfolio/` (GitHub Pages sirviendo la rama `gh-pages`).
+También puedo lanzar el workflow manualmente desde `Actions` (Run workflow). Si quiero que ese disparo manual ignore la condición de `deploy:`, puedo ajustar la condición del job a:
 
-### Build local de producción
+```
+if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, 'deploy:')
+```
 
-Para compilar localmente en producción:
+> Importante: en la configuración del repositorio, GitHub Pages debe servir desde la rama `gh-pages` (Settings → Pages → Source: gh-pages / root).
+
+### 🏗️ Compilación local de producción
 
 ```
 npm run build
 ```
 
-El resultado queda en `dist/portfolio`. Para GitHub Pages el workflow añade `--base-href=/portfolio/` al comando de build, necesario para que las rutas funcionen correctamente bajo `/portfolio/`.
+El output se deja en `dist/portfolio`. En el workflow de CI se añade `--base-href=/portfolio/` porque la web se sirve bajo `/portfolio/` (esto es clave para que las rutas y assets funcionen en GitHub Pages).
 
-## Explicación del workflow (`deploy.yml`)
+---
 
-Archivo: `.github/workflows/deploy.yml`
+## 🧾 Explicación detallada del workflow (`deploy.yml`)
+
+Ruta: `.github/workflows/deploy.yml`
 
 - Triggers (`on`):
-  - `push` a `main` (ignora cambios en `README.md`).
-  - `workflow_dispatch` para ejecución manual.
-- Condición de job:
-  - `if: contains(github.event.head_commit.message, 'deploy:')` → solo despliega si el último commit del push contiene `deploy:`.
-- Pasos principales:
-  - `actions/checkout@v3` con `fetch-depth: 0` para disponer de historial completo.
-  - `actions/setup-node@v3` con Node 16 y caché npm.
-  - `npm ci` para instalar dependencias con `package-lock.json` (más reproducible en CI).
-  - `npm run build -- --output-path=dist/portfolio --base-href=/portfolio/` para compilar Angular con el `base-href` apropiado de GitHub Pages.
-  - Crear `.nojekyll` para deshabilitar Jekyll y evitar problemas sirviendo archivos.
-  - `peaceiris/actions-gh-pages@v3` publica `./dist/portfolio` en `gh-pages`.
+  - `push` a `main` (ignoro cambios en `README.md` para no desplegar solo por docs).
+  - `workflow_dispatch` para lanzarlo manualmente desde la UI de GitHub.
+- Condición del job:
+  - `if: contains(github.event.head_commit.message, 'deploy:')` → solo despliego si el último commit del push incluye `deploy:`.
+- Permisos:
+  - `permissions: contents: write` → necesarios para que `gh-pages` pueda escribir en la rama `gh-pages`.
+- Pasos clave:
+  - `actions/checkout@v3` con `fetch-depth: 0` para traer historial completo (recomendado por la acción de gh-pages).
+  - `actions/setup-node@v3` con Node 16 y `cache: npm` para acelerar instalaciones.
+  - `npm ci` para instalaciones reproducibles (usa `package-lock.json`).
+  - Build Angular con: `npm run build -- --output-path=dist/portfolio --base-href=/portfolio/`.
+  - Crear `.nojekyll` para evitar que GitHub Pages procese con Jekyll y oculte recursos con `_`.
+  - Publicación con `peaceiris/actions-gh-pages@v3` apuntando a `publish_dir: ./dist/portfolio`.
 
-## Notas
+### 🛠️ Problemas típicos y cómo los resuelvo
 
-- Si prefieres no depender del prefijo `deploy:` en el commit, se puede quitar la condición y el workflow se ejecutará en cada push a `main`.
-- Se puede endurecer la convención de commits añadiendo `commitlint + husky` para validar mensajes (opcional).
+- 404 tras desplegar: reviso que Pages está configurado a `gh-pages` y que el `base-href` es `/portfolio/`.
+- Assets que no cargan: suele ser `base-href` incorrecto. En repos de usuario/proyecto debe ser `/<nombre-repo>/`.
+- El workflow no arranca: confirmo que el commit HEAD del push tiene `deploy:` y que tengo Actions habilitado para el repo.
+- Cache rara de npm: reintento borrando cache o forzando una instalación limpia (quitar temporalmente `cache: npm`).
+
+---
+
+## 🧭 Mantenimiento
+
+- Actualizaciones de Angular: actualizo minor/patch con el CLI (`ng update`).
+- Dependencias: subo lo necesario y pruebo local antes de desplegar.
+- Commits: sigo una convención simple (ej.: `feat:`, `fix:`, `chore:`). Para desplegar, uso `deploy:` para que el pipeline se ejecute.
+
+Si quisiera forzar estos formatos de commit en local, puedo añadir `commitlint + husky` para validar los mensajes antes de cada commit.
+
+---
+
+## 🗺️ Roadmap breve
+
+- Pequeñas mejoras visuales y animaciones.
+- Refactorización ligera de estilos SCSS.
+- Validaciones extra en el formulario de contacto.
+
+---
+
+## 📮 Contacto
+
+Si has llegado hasta aquí y quieres dar feedback o curiosear más, ¡genial! Me encanta automatizar cosas y cuidar los detalles de frontend, así que cualquier idea es bienvenida.
+
