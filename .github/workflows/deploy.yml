@@ -1,49 +1,59 @@
 name: Deploy to GitHub Pages
 
+# Triggers del workflow
 on:
-  # Evento que activará el workflow: cuando se haga un push en la rama 'main'
+  # 1) Automático en push a 'main' (ignora cambios de README)
   push:
     branches:
       - main
     paths-ignore:
       - README.md
-    types: [committed]
-    jobs:
-      if: contains(github.event.head_commit.message, 'deploy:')
-  workflow_dispatch:  # Permite ejecutar el workflow manualmente
+  # 2) Manual desde la pestaña Actions (Run workflow)
+  workflow_dispatch:
+
 jobs:
   build:
+    # Condición de despliegue: solo si el último commit contiene 'deploy:'
+    # Ejemplo de mensaje: "deploy: publicar cambios de estilos"
+    if: contains(github.event.head_commit.message, 'deploy:')
     runs-on: ubuntu-latest
 
+    # Permisos requeridos por la acción de gh-pages para publicar en la rama
+    permissions:
+      contents: write
+
     steps:
-    # 1. Checkout del repositorio
-    - name: Check out the repository
-      uses: actions/checkout@v3
+      # 1. Checkout del repositorio (con historial completo, recomendado por gh-pages)
+      - name: Check out the repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-    # 2. Configurar Node.js
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '16'
+      # 2. Configurar Node.js (versión compatible con Angular 16)
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
 
-    # 3. Instalar dependencias de npm
-    - name: Install dependencies
-      run: npm install
+      # 3. Instalar dependencias con lockfile para reproducibilidad
+      - name: Install dependencies
+        run: npm ci
 
-    # 4. Compilar la aplicación Angular
-    # Reemplaza 'portfolio' por el nombre de tu aplicación en 'output-path'
-    - name: Build the project
-      run: npm run build -- --output-path=dist/portfolio --base-href=/portfolio/
-      #run: npm run build -- --base-href https://AlonsoVine.github.io/portfolio/
+      # 4. Compilar la aplicación Angular
+      # - '--output-path' genera el build en 'dist/portfolio'
+      # - '--base-href' es necesario para GitHub Pages (repositorio de usuario/proyecto)
+      - name: Build the project
+        run: npm run build -- --output-path=dist/portfolio --base-href=/portfolio/
 
-    # 5. Crear el archivo .nojekyll para deshabilitar Jekyll
-    - name: Create .nojekyll file
-      run: echo "" > ./dist/portfolio/.nojekyll
+      # 5. Deshabilitar Jekyll para servir correctamente recursos con nombres con guiones bajos
+      - name: Create .nojekyll file
+        run: echo "" > ./dist/portfolio/.nojekyll
 
-    # 6. Desplegar a GitHub Pages
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./dist/portfolio
+      # 6. Publicar el contenido en la rama 'gh-pages'
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist/portfolio
 
