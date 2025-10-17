@@ -62,6 +62,9 @@
   }
 
   .social-icons {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 
     a {
       //margin: 0 5px;
@@ -83,3 +86,16 @@
 }
 
   
+/* Tamaño del icono SVG del enlace a demo */
+#proyectos .social-icons a img.icon-svg {
+  width: 2rem;
+  height: 2rem;
+  display: block;
+  transition: filter 0.3s ease, transform 0.3s ease;
+}
+
+/* Efecto hover: teñido a verde del icono SVG */
+#proyectos .social-icons a:hover img.icon-svg {
+  /* Verde suave usando filtro CSS */
+  filter: invert(38%) sepia(74%) saturate(448%) hue-rotate(88deg) brightness(92%) contrast(90%);
+}
