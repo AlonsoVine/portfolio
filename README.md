@@ -121,21 +121,26 @@ Ruta: `.github/workflows/deploy.yml`
 
 ---
 
-## 🧭 Mantenimiento
+## 🌟 Futuras mejoras
 
-- Actualizaciones de Angular: actualizo minor/patch con el CLI (`ng update`).
-- Dependencias: subo lo necesario y pruebo local antes de desplegar.
-- Commits: sigo una convención simple (ej.: `feat:`, `fix:`, `chore:`). Para desplegar, uso `deploy:` para que el pipeline se ejecute.
-
-Si quisiera forzar estos formatos de commit en local, puedo añadir `commitlint + husky` para validar los mensajes antes de cada commit.
-
----
-
-## 🗺️ Roadmap breve
-
-- Pequeñas mejoras visuales y animaciones.
-- Refactorización ligera de estilos SCSS.
-- Validaciones extra en el formulario de contacto.
+- Métricas e impacto visibles en proyectos — añade resultados concretos (tiempos, costes, usuarios, SLAs) y tu rol exacto. Dificultad: 3/10 · Versatilidad: 10/10
+- SEO + Open Graph + JSON‑LD — metadatos, tarjetas sociales y schema.org Person/Project. Dificultad: 4/10 · Versatilidad: 9/10
+- Accesibilidad (WCAG AA) — contraste, foco visible, orden de tabulación, alt en imágenes, landmarks ARIA, skip links. Dificultad: 5/10 · Versatilidad: 10/10
+- Optimización de imágenes responsive — `srcset/sizes`, AVIF/WEBP, compresión y lazy loading. Dificultad: 3/10 · Versatilidad: 9/10
+- Dark mode + design tokens — variables CSS para color/espaciados, `prefers-color-scheme`. Dificultad: 4/10 · Versatilidad: 8/10
+- i18n ES/EN con selector — `@ngx-translate` o i18n de Angular. Dificultad: 6/10 · Versatilidad: 8/10
+- Fichas de proyecto con filtros — dataset con tags (Angular, Python, Cloud, CI/CD) y búsqueda/ordenación. Dificultad: 5/10 · Versatilidad: 8/10
+- Case studies por proyecto — problema → solución → arquitectura → métricas → código. Dificultad: 4/10 · Versatilidad: 8/10
+- Eliminar jQuery y aligerar Bootstrap JS — en Bootstrap 5 no hace falta jQuery. Dificultad: 4/10 · Versatilidad: 5/10
+- Performance Angular 16 (deferrable views) — `@defer` en secciones pesadas y split lógico. Dificultad: 6/10 · Versatilidad: 7/10
+- PWA básica (instalable/offline) — `@angular/pwa`, manifest e iconos. Dificultad: 5/10 · Versatilidad: 6/10
+- Analytics y eventos — Plausible/GA4 para medir clics y secciones. Dificultad: 3/10 · Versatilidad: 7/10
+- Contacto robusto — validación, estados, honeypot + reCAPTCHA v3, fallback `mailto:`. Dificultad: 4/10 · Versatilidad: 7/10
+- CI de calidad del sitio — Lighthouse CI, pa11y y link-checker por PR. Dificultad: 5/10 · Versatilidad: 8/10
+- Convenciones de commit y releases — husky + commitlint; opción `semantic-release`. Dificultad: 4/10 · Versatilidad: 8/10
+- Pre‑render estático (SSG) — Angular Universal/Scully para mejorar SEO/TTFB. Dificultad: 7/10 · Versatilidad: 7/10
+- Sección “Sobre mí” enfocada a valor — pitch corto, stack, sectores, certificaciones, enlaces rápidos (CV). Dificultad: 2/10 · Versatilidad: 10/10
+- Visualizaciones de DevOps — diagramas C4/Mermaid, pipelines y artefactos explicados. Dificultad: 5/10 · Versatilidad: 8/10
 
 ---
 
