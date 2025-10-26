@@ -47,20 +47,27 @@
       display: flex; // Activa Flexbox
       align-items: center; // Centra verticalmente el contenido
       padding: $content-padding;
-  
+
       .image-container {
-          margin-right: $content-padding; // Espacio entre la imagen y el texto
-          width: 4%; // Ajusta el tamaño del contenedor de la imagen
-          height: 4%; // Ajusta el tamaño del contenedor de la imagen
-          overflow: hidden; // Asegúrate de que la imagen no sobresalga
-  
-          .image {
-              width: 100%; // La imagen ocupa todo el ancho del contenedor
-              height: auto; // Mantiene la proporción
-              max-height: 60px; // Limita la altura de la imagen
-          }
+        --logo-size: 60px; // Tamaño consistente de logo (desktop y móvil)
+        margin-right: $content-padding; // Espacio entre la imagen y el texto
+        width: var(--logo-size);
+        height: var(--logo-size);
+        flex: 0 0 var(--logo-size);
+        overflow: hidden; // Evita desbordes
+
+        .image {
+          width: auto; // Mantiene proporción
+          height: 100%; // Igual al contenedor
+          max-height: var(--logo-size);
+          object-fit: contain;
+          border-radius: 8px; // Esquinas suaves, look elegante
+          background-color: #fff; // Fondo neutro para logos con transparencia
+          border: 1px solid rgba(0,0,0,0.06);
+          box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+        }
       }
-  }
+    }
   }
 
 }

@@ -33,7 +33,7 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   private fullText = [
     'Soy Alonso, un desarrollador y analista, apasionado por la tecnologí­a.',
     'Me especializo en crear aplicaciones personalizadas que combinan funcionalidad y diseño.',
-    'Mi objetivo es construir soluciones que impulsen la eficiencia y el rendimiento en entornos dinámicos.'
+    'Mi objetivo es construir soluciones que impulsen la eficiencia y el rendimiento.'
   ].join('\n');
   private typeIndex = 0;
   private typeTimer?: any;
