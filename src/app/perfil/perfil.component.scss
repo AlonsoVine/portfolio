@@ -1,4 +1,7 @@
 #perfil {
+    margin-top: 0;
+    // Escala con la altura de la ventana pero acotado
+    padding-top: clamp(80px, 12vh, 140px);
     text-align: center;
   
     h2 {

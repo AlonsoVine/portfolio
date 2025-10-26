@@ -39,6 +39,8 @@ img {
   justify-content: center;
   color: #ffffff;
   text-align: left;
+  position: relative;
+  transition: height 220ms ease, background-color 220ms ease, box-shadow 220ms ease;
 
   .container {
     height: 100%; /* Altura completa del contenedor */
@@ -108,18 +110,8 @@ img {
     animation: fadeIn 2s ease-in-out;
   }
 
-    /* Curva en la parte inferior del header */
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: -2px; /* Ajustar la posición de la curva */
-      left: 0;
-      width: 100%;
-      height: 60px; /* Altura del arco */
-      background-color: #ffffff; /* Color del arco */
-      clip-path: ellipse(65% 100% at 50% 100%); /* Crea una curva suave */
-      z-index: 1; /* Asegura que esté detrás del contenido del header */
-    }
+    /* Eliminado el arco blanco inferior para que el azul ocupe toda la pantalla */
+    &::after { display: none !important; }
 
   /* Animación de entrada */
   @keyframes fadeIn {
@@ -129,6 +121,26 @@ img {
     to {
       opacity: 1;
     }
+  }
+
+  /* Barra sticky independiente (no altera el flujo del hero) */
+  .sticky-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: #0b0d22;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    z-index: 1000;
+    transform: translateY(-100%);
+    opacity: 0;
+    transition: transform 360ms cubic-bezier(0.22, 1, 0.36, 1), opacity 360ms ease;
+    will-change: transform, opacity;
+  }
+
+  &.has-sticky {
+    .sticky-bar { transform: translateY(0); opacity: 1; }
   }
 }
 
@@ -182,6 +194,9 @@ img {
     opacity: 1;
   }
 }
+
+/* Placeholder eliminado */
+.header-placeholder { display: none; }
 
 
   

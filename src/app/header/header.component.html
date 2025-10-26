@@ -16,7 +16,11 @@
   </div>
 </header-->
 
-<header class="hero-section">
+<header class="hero-section" #heroSection [class.has-sticky]="isSticky">
+  <!-- Barra sticky independiente (no altera el flujo) -->
+  <div class="sticky-bar" [class.visible]="isSticky">
+    <!-- Aquí colocaremos la futura navbar/brand -->
+  </div>
   <div class="container">
     <div class="row align-items-center justify-content-center">
       <!-- Columna de texto -->
@@ -52,6 +56,8 @@
     </div>
   </div>
 </header>
+
+<!-- Placeholder retirado: no es necesario con barra fija independiente -->
 
 
    
