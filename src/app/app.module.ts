@@ -12,6 +12,8 @@ import { CertificadosComponent } from './certificados/certificados.component';
 import { ContactoComponent } from './contacto/contacto.component';
 import { FooterComponent } from './footer/footer.component';
 import { FormsModule } from '@angular/forms';
+import { SettingsMenuComponent } from './shared/settings-menu/settings-menu.component';
+import { QuickNavMenuComponent } from './shared/quick-nav-menu/quick-nav-menu.component';
 
 @NgModule({
   declarations: [
@@ -23,7 +25,9 @@ import { FormsModule } from '@angular/forms';
     ProyectosComponent,
     CertificadosComponent,
     ContactoComponent,
-    FooterComponent
+    FooterComponent,
+    SettingsMenuComponent,
+    QuickNavMenuComponent
   ],
   imports: [
     BrowserModule,

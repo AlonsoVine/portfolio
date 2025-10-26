@@ -1,0 +1,14 @@
+<div class="quicknav" [class.open]="open">
+  <button #button type="button" class="quicknav-btn" aria-haspopup="menu" [attr.aria-expanded]="open" aria-controls="quicknav-menu" (click)="toggle()" aria-label="Navegación rápida">
+    <img src="assets/icons/menu.png" alt="" aria-hidden="true" />
+  </button>
+
+  <div #menu id="quicknav-menu" class="dropdown" role="menu" [attr.aria-hidden]="!open">
+    <button class="item" role="menuitem" type="button" (click)="navigateTo('perfil')">Perfil</button>
+    <button class="item" role="menuitem" type="button" (click)="navigateTo('habilidades')">Habilidades</button>
+    <button class="item" role="menuitem" type="button" (click)="navigateTo('experiencia')">Experiencia</button>
+    <button class="item" role="menuitem" type="button" (click)="navigateTo('proyectos')">Proyectos</button>
+    <button class="item" role="menuitem" type="button" (click)="navigateTo('certificados')">Certificados</button>
+    <button class="item" role="menuitem" type="button" (click)="navigateTo('contacto')">Contacto</button>
+  </div>
+</div>

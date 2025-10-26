@@ -1,0 +1,101 @@
+.settings {
+  position: relative;
+}
+
+.settings-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.35); // sutil borde blanquecino
+  background: rgba(255, 255, 255, 0.06);
+  color: #e8f5f7;
+  cursor: pointer;
+  transition: background 200ms ease, transform 150ms ease, box-shadow 200ms ease;
+}
+
+.settings-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 2px 10px rgba(0,0,0,.25);
+}
+
+.settings-btn:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.settings-btn img {
+  width: 22px;
+  height: 22px;
+  display: block;
+  filter: brightness(0) invert(1); // fuerza a blanco
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 220px;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(17, 20, 44, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 24px rgba(0,0,0,.35);
+  transform-origin: top right;
+  transform: translateY(-8px) scale(0.98);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease, transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  color: #eef7f9;
+}
+
+.settings.open .dropdown {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.group {
+  display: grid;
+  gap: 6px;
+}
+
+.group-title {
+  font-size: 0.8rem;
+  letter-spacing: .02em;
+  color: #a6c7ce;
+  margin: 4px 6px;
+}
+
+.item {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  color: #e8f5f7;
+  border: none;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.item:hover, .item:focus {
+  outline: none;
+  background: rgba(255,255,255,.08);
+}
+
+.separator {
+  height: 1px;
+  background: rgba(255,255,255,.14);
+  margin: 8px 4px;
+}
+
+@media (prefers-color-scheme: light) {
+  .dropdown { background: rgba(255,255,255,0.98); color: #1d2a31; }
+  .group-title { color: #5b7480; }
+  .item { color: #21343b; }
+  .item:hover, .item:focus { background: rgba(0,0,0,.05); }
+  .settings-btn { border-color: rgba(0,0,0,0.25); background: rgba(0,0,0,0.04); }
+  .settings-btn img { filter: none; } /* En fondos claros, el icono original puede ser oscuro */
+}

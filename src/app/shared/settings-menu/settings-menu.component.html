@@ -1,0 +1,19 @@
+<div class="settings" [class.open]="open">
+  <button #button type="button" class="settings-btn" aria-haspopup="menu" [attr.aria-expanded]="open" aria-controls="settings-menu" (click)="toggle()" aria-label="Ajustes">
+    <img src="assets/icons/ajustes.png" alt="" aria-hidden="true" />
+  </button>
+
+  <div #menu id="settings-menu" class="dropdown" role="menu" [attr.aria-hidden]="!open">
+    <div class="group" aria-label="Tema">
+      <div class="group-title">Tema</div>
+      <button class="item" role="menuitem" type="button" (click)="setLight()">Claro</button>
+      <button class="item" role="menuitem" type="button" (click)="setDark()">Oscuro</button>
+    </div>
+    <div class="separator" aria-hidden="true"></div>
+    <div class="group" aria-label="Idioma">
+      <div class="group-title">Idioma</div>
+      <button class="item" role="menuitem" type="button" (click)="setEs()">ES</button>
+      <button class="item" role="menuitem" type="button" (click)="setEn()">EN</button>
+    </div>
+  </div>
+</div>

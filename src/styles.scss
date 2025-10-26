@@ -14,6 +14,11 @@ section {
     padding: 60px 0;
 }
 
+/* Evita que la barra sticky (100px) tape los títulos al navegar por anclas */
+section[id] {
+    scroll-margin-top: calc(100px + 16px);
+}
+
 /* Títulos de sección
 h2 {
     font-size: 2.5em;
