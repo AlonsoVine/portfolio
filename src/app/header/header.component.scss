@@ -1,214 +1,237 @@
-// Estilos de la imagen
-img {
-  position: relative;
-  //border-radius: 8px; // Esquinas redondeadas para que se vea más limpio
-  //box-shadow: 0 4px 30px rgba(255, 255, 255, 0.2); // Resplandor alrededor de la imagen
-  //background-color: rgba(255, 255, 255, 0.1); // Fondo clareado en torno a la imagen
-  //padding: 1rem; // Espacio alrededor de la imagen para mayor separación
-  transition: transform 0.3s ease-in-out;
-  width: 50%; /* Ajuste del ancho de la imagen al 30% de la pantalla */
-  max-width: 400px; /* Ancho máximo para limitar el tamaño en pantallas grandes */
-  min-width: 30%;
-  height: auto; /* Mantiene la proporción de la imagen */
-
-  &:hover {
-    transform: scale(1.05); // Efecto de aumento al pasar el ratón por encima
-    //box-shadow: 0 8px 40px rgba(255, 255, 255, 0.3); // Aumenta el resplandor al hacer hover
-    //filter:drop-shadow(0 0 40px rgba(255, 255, 255, 0.571))
-    filter:drop-shadow(0 0 40px #81e6ed)
-
-  }
-}
-
-.enlace-experiencia{
-  margin-top: 1.5em;
-  font-weight: bolder;
-
-  &:hover{
-    transform: scale(1.01);
-    text-shadow: 0 0 1rem #00f0ff;
-  }
-}
-
-// Estilos del header
-.hero-section {
-  height: 100vh; /* Ocupa toda la altura de la pantalla */
-  background: #0b0d22; /* Color de fondo similar */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-  text-align: left;
-  position: relative;
-  transition: height 220ms ease, background-color 220ms ease, box-shadow 220ms ease;
-
-  .container {
-    height: 100%; /* Altura completa del contenedor */
-    display: flex;
-    align-items: center;
-  }
-
-  .row {
-    width: 100%; /* Ancho total de la fila */
-  }
-
-  // ANIMACIÓN DEL WELCOME
+﻿// Estilos de la imagen
+img {
+  position: relative;
+  //border-radius: 8px; // Esquinas redondeadas para que se vea mÃ¡s limpio
+  //box-shadow: 0 4px 30px rgba(255, 255, 255, 0.2); // Resplandor alrededor de la imagen
+  //background-color: rgba(255, 255, 255, 0.1); // Fondo clareado en torno a la imagen
+  //padding: 1rem; // Espacio alrededor de la imagen para mayor separaciÃ³n
+  transition: transform 0.3s ease-in-out;
+  width: 50%; /* Ajuste del ancho de la imagen al 30% de la pantalla */
+  max-width: 400px; /* Ancho mÃ¡ximo para limitar el tamaÃ±o en pantallas grandes */
+  min-width: 30%;
+  height: auto; /* Mantiene la proporciÃ³n de la imagen */
+
+  &:hover {
+    transform: scale(1.05); // Efecto de aumento al pasar el ratÃ³n por encima
+    //box-shadow: 0 8px 40px rgba(255, 255, 255, 0.3); // Aumenta el resplandor al hacer hover
+    //filter:drop-shadow(0 0 40px rgba(255, 255, 255, 0.571))
+    filter:drop-shadow(0 0 40px #81e6ed)
+
+  }
+}
+
+.enlace-experiencia{
+  margin-top: 1.5em;
+  font-weight: bolder;
+
+  &:hover{
+    transform: scale(1.01);
+    text-shadow: 0 0 1rem #00f0ff;
+  }
+}
+
+// Estilos del header
+.hero-section {
+  height: 100vh; /* Ocupa toda la altura de la pantalla */
+  background: #0b0d22; /* Color de fondo similar */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  text-align: left;
+  position: relative;
+  transition: height 220ms ease, background-color 220ms ease, box-shadow 220ms ease;
+
+  .container {
+    height: 100%; /* Altura completa del contenedor */
+    display: flex;
+    align-items: center;
+  }
+
+  .row {
+    width: 100%; /* Ancho total de la fila */
+  }
+
+  // ANIMACIÃ“N DEL WELCOME
   .welcome-text {
     //font-size: 4rem;
     opacity: 0;
     animation: fadeInScale 3s ease-in-out forwards;
-  
+
     @keyframes fadeInScale {
-      0% {
-        transform: scale(0.5);
-        opacity: 0;
-      }
-      50% {
-        transform: scale(1.2);
-        opacity: 0.7;
-      }
-      100% {
-        transform: scale(1);
-        opacity: 1;
-      }
+      0% { transform: scale(0.9); opacity: 0; }
+      50% { transform: scale(1); opacity: 0.7; }
+      100% { transform: scale(1); opacity: 1; }
     }
   }
-
-  .hero-text {
+
+  .hero-text {
     h1 {
-      font-size: 4rem;
+      font-size: clamp(2.2rem, 8vw, 4rem);
       margin-bottom: 20px;
       font-weight: 500;
+      max-width: 100%;
+      overflow-wrap: anywhere;
     }
+
+    //Efecto de luminiscencia sobre las letras del h1
+    .text{
+      font-family: 'Liberty';
+      font-weight: 100;
+      font-size: 7rem;
+      letter-spacing: -0.25em;
+      flex-flow: row;
+    }
+    
+    .letter{
+      color: #d9fdff;
+      text-shadow: 0 0 2rem #00f0ff;
+      display: inline-block;
+    }
+  
+
+    p {
+      font-size: 0.7rem;
+      line-height: 1.8;
+    }
+  }
+
+  // ANIMACIÃ“N DE LA IMAGEN
+  .hero-image {
+    max-width: 400px; /* Ancho mÃ¡ximo de la imagen */
+    height: auto;
+    animation: fadeIn 2s ease-in-out;
+  }
+
+    /* Eliminado el arco blanco inferior para que el azul ocupe toda la pantalla */
+    &::after { display: none !important; }
+
+  /* AnimaciÃ³n de entrada */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Barra sticky independiente (no altera el flujo del hero) */
+  .sticky-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: #0b0d22;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    z-index: 1000;
+    transform: translateY(-100%);
+    opacity: 0;
+    transition: transform 360ms cubic-bezier(0.22, 1, 0.36, 1), opacity 360ms ease;
+    will-change: transform, opacity;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 16px;
+    gap: 10px;
+  }
+
+  &.has-sticky {
+    .sticky-bar { transform: translateY(0); opacity: 1; }
+  }
+
+/* Fuerza ocultar barra sticky cuando el perfil es visible o se quiere prioridad de contenido */
+html.force-hide-sticky .hero-section .sticky-bar {
+  transform: translateY(-100%) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+}
+
+// ANIMACIÃ“N DEL TEXTO
+.hero-section .hero-text p.lead {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  opacity: 0;
+  animation: fadeInText 4s ease-in-out forwards; /* DuraciÃ³n y suavidad de la animaciÃ³n */
+}
+
+@keyframes fadeInText {
+  0% {
+    opacity: 0;
+    transform: translateY(20px); /* El texto comienza ligeramente desplazado hacia abajo */
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0); /* El texto vuelve a su posiciÃ³n original */
+  }
+}
+
+/* AnimaciÃ³n lÃ­nea por lÃ­nea */
+.hero-section .hero-text p.lead span {
+  display: block;
+  opacity: 0;
+  animation: fadeInLines 1s ease forwards;
+}
+
+.hero-section .hero-text p.lead span:nth-child(1) {
+  animation-delay: 0.7s;
+}
+
+.hero-section .hero-text p.lead span:nth-child(2) {
+  animation-delay: 1.4s;
+}
+
+.hero-section .hero-text p.lead span:nth-child(3) {
+  animation-delay: 2.0s;
+}
+
+.hero-section .hero-text p.lead span:nth-child(4) {
+  animation-delay: 2.7s;
+}
+
+@keyframes fadeInLines {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Placeholder eliminado */
+.header-placeholder { display: none; }
+
+
+  
+
+/* ===== Consola de bienvenida (typewriter) ===== */
+.hero-section .hero-text .console {
+  font-family: Consolas, 'SFMono-Regular', Menlo, Monaco, 'Courier New', monospace;
+  color: #e6f7ff;
+}
+.hero-section .hero-text .console-text {
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.6;
+  font-size: 1rem;
+  min-height: 3.2em;
+}
+.hero-section .hero-text .caret {
+  display: inline-block;
+  width: 0.6ch;
+  color: #88ecff;
+  animation: caretBlink 1s steps(1, end) infinite;
+}
+.hero-section .hero-text .caret.hidden { visibility: hidden; }
+@keyframes caretBlink { 50% { opacity: 0; } }
+
+/* Oculta el antiguo párrafo si permanece en el DOM */
+.hero-section .hero-text p.lead { display: none; }
 
-    //Efecto de luminiscencia sobre las letras del h1
-    .text{
-      font-family: 'Liberty';
-      font-weight: 100;
-      font-size: 7rem;
-      letter-spacing: -0.25em;
-      flex-flow: row;
-    }
-    
-    .letter{
-      color: #d9fdff;
-      text-shadow: 0 0 2rem #00f0ff;
-      display: inline-block;
-    }
-  
-
-    p {
-      font-size: 0.7rem;
-      line-height: 1.8;
-    }
-  }
-
-  // ANIMACIÓN DE LA IMAGEN
-  .hero-image {
-    max-width: 400px; /* Ancho máximo de la imagen */
-    height: auto;
-    animation: fadeIn 2s ease-in-out;
-  }
-
-    /* Eliminado el arco blanco inferior para que el azul ocupe toda la pantalla */
-    &::after { display: none !important; }
-
-  /* Animación de entrada */
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  /* Barra sticky independiente (no altera el flujo del hero) */
-  .sticky-bar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 100px;
-    background: #0b0d22;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-    z-index: 1000;
-    transform: translateY(-100%);
-    opacity: 0;
-    transition: transform 360ms cubic-bezier(0.22, 1, 0.36, 1), opacity 360ms ease;
-    will-change: transform, opacity;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding: 0 16px;
-    gap: 10px;
-  }
-
-  &.has-sticky {
-    .sticky-bar { transform: translateY(0); opacity: 1; }
-  }
-
-/* Fuerza ocultar barra sticky cuando el perfil es visible o se quiere prioridad de contenido */
-html.force-hide-sticky .hero-section .sticky-bar {
-  transform: translateY(-100%) !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
+/* Separación extra de la imagen en móvil */
+@media (max-width: 768px) {
+  .hero-section .hero-image { margin-top: 40px; }
 }
-}
 
-// ANIMACIÓN DEL TEXTO
-.hero-section .hero-text p.lead {
-  font-size: 1.1rem;
-  line-height: 1.6;
-  opacity: 0;
-  animation: fadeInText 4s ease-in-out forwards; /* Duración y suavidad de la animación */
-}
-
-@keyframes fadeInText {
-  0% {
-    opacity: 0;
-    transform: translateY(20px); /* El texto comienza ligeramente desplazado hacia abajo */
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0); /* El texto vuelve a su posición original */
-  }
-}
-
-/* Animación línea por línea */
-.hero-section .hero-text p.lead span {
-  display: block;
-  opacity: 0;
-  animation: fadeInLines 1s ease forwards;
-}
-
-.hero-section .hero-text p.lead span:nth-child(1) {
-  animation-delay: 0.7s;
-}
-
-.hero-section .hero-text p.lead span:nth-child(2) {
-  animation-delay: 1.4s;
-}
-
-.hero-section .hero-text p.lead span:nth-child(3) {
-  animation-delay: 2.0s;
-}
-
-.hero-section .hero-text p.lead span:nth-child(4) {
-  animation-delay: 2.7s;
-}
-
-@keyframes fadeInLines {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-/* Placeholder eliminado */
-.header-placeholder { display: none; }
-
-
-  
