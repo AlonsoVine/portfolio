@@ -147,6 +147,13 @@ img {
   &.has-sticky {
     .sticky-bar { transform: translateY(0); opacity: 1; }
   }
+
+/* Fuerza ocultar barra sticky cuando el perfil es visible o se quiere prioridad de contenido */
+html.force-hide-sticky .hero-section .sticky-bar {
+  transform: translateY(-100%) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
 }
 
 // ANIMACIÓN DEL TEXTO

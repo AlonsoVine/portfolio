@@ -57,9 +57,17 @@ export class QuickNavMenuComponent {
 
   navigateTo(id: string): void {
     const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      this.close();
+    if (!el) return;
+
+    // Si vamos a 'perfil', ocultamos inmediatamente la barra sticky para evitar parpadeos
+    if (id === 'perfil') {
+      const root = document.documentElement;
+      root.classList.add('force-hide-sticky');
+      // Fallback temporal: retiramos la clase tras 1.6s por si no llega a aplicarla PerfilComponent aún
+      setTimeout(() => root.classList.remove('force-hide-sticky'), 1600);
     }
+
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    this.close();
   }
 }

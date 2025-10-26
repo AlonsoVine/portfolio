@@ -55,3 +55,59 @@ h2 {
 */
 
   
+
+/* Avatar flotante al pasar la mitad de su altura */
+#perfil .perfil-image {
+  width: clamp(200px, 30vw, 400px);
+  transition: width 260ms ease, transform 260ms ease;
+}
+
+:root {
+  --sticky-height: 100px;
+  --avatar-size: 112px; /* miniavatar más grande */
+  --avatar-overhang: 18px; /* un pelín menos de asomado para subirlo */
+}
+
+#perfil .perfil-image.floating-avatar {
+  position: fixed !important;
+  width: var(--avatar-size) !important;
+  /* Posiciona el avatar dentro de la barra y deja que sobresalga por debajo */
+  top: calc(var(--sticky-height) + var(--avatar-overhang) - var(--avatar-size)) !important;
+  left: 32px !important; /* separado el doble de la izquierda */
+  padding: 0 !important;
+  margin: 0 !important;
+  z-index: 1002 !important; /* por encima de la barra sticky (1000) */
+  transition: transform 360ms ease, top 360ms ease, left 360ms ease, width 360ms ease;
+  transform: translateZ(0) scale(1) !important;
+  transform-origin: left top;
+  will-change: transform;
+  animation: avatarPop 1.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  border-radius: 50% !important;
+  border: 12px solid #0b0d22; /* engrosado para integrarse con la barra */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.35); /* misma sombra que el navbar */
+}
+
+@media (max-width: 768px) {
+  #perfil .perfil-image { width: clamp(140px, 40vw, 240px); }
+}
+
+/* Animación de entrada del avatar flotante (más suave) */
+@keyframes avatarPop {
+  0% { transform: translateY(-6px) scale(0.82); opacity: 0; }
+  60% { transform: translateY(0) scale(0.97); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* Mantiene el flujo cuando el avatar pasa a fixed */
+#perfil .avatar-spacer { width: 100%; }
+
+/* Reaparición al volver al contenido (animación inversa sutil) */
+#perfil .perfil-image.reappear {
+  animation: avatarPopReverse 1.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes avatarPopReverse {
+  0% { transform: translateY(-4px) scale(0.9); opacity: 0; }
+  60% { transform: translateY(0) scale(0.98); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}

@@ -20,6 +20,9 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   irAlComponentePerfil() {
     const elemento = document.getElementById('mi-perfil');
     if (elemento) {
+      const root = document.documentElement;
+      root.classList.add('force-hide-sticky');
+      setTimeout(() => root.classList.remove('force-hide-sticky'), 1600);
       elemento.scrollIntoView({ behavior: 'smooth' });
     }
   }
@@ -61,6 +64,13 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
       if (y <= this.exitThreshold) {
         this.isSticky = false;
       }
+    }
+    // Propaga estado sticky a nivel global para otros componentes
+    const root = document.documentElement;
+    if (this.isSticky) {
+      root.classList.add('sticky-active');
+    } else {
+      root.classList.remove('sticky-active');
     }
   }
 }
