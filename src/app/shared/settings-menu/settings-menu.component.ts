@@ -10,17 +10,37 @@ export class SettingsMenuComponent {
   @ViewChild('button', { static: false }) buttonRef?: ElementRef<HTMLButtonElement>;
 
   open = false;
+  private autoCloseTimer?: any;
+  private autoCloseMs = 7000; // cierre automático si no hay selección
 
   // Stubs para futuro
   @Output() themeChange = new EventEmitter<'light' | 'dark'>();
   @Output() langChange = new EventEmitter<'es' | 'en'>();
 
   toggle(): void {
-    this.open = !this.open;
+    if (this.open) {
+      this.close();
+    } else {
+      this.open = true;
+      this.startAutoCloseTimer();
+    }
   }
 
   close(): void {
     this.open = false;
+    this.clearAutoCloseTimer();
+  }
+
+  private startAutoCloseTimer(): void {
+    this.clearAutoCloseTimer();
+    this.autoCloseTimer = setTimeout(() => this.close(), this.autoCloseMs);
+  }
+
+  private clearAutoCloseTimer(): void {
+    if (this.autoCloseTimer) {
+      clearTimeout(this.autoCloseTimer);
+      this.autoCloseTimer = undefined;
+    }
   }
 
   // Cierra al hacer click fuera
@@ -47,8 +67,7 @@ export class SettingsMenuComponent {
 
   // Stubs de acciones
   setLight(): void { this.themeChange.emit('light'); }
-  setDark(): void { this.themeChange.emit('dark'); }
-  setEs(): void { this.langChange.emit('es'); }
-  setEn(): void { this.langChange.emit('en'); }
+  setDark(): void { this.themeChange.emit('dark'); this.close(); }
+  setEs(): void { this.langChange.emit('es'); this.close(); }
+  setEn(): void { this.langChange.emit('en'); this.close(); }
 }
-

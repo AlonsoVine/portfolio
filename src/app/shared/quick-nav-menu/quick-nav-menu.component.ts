@@ -10,9 +10,32 @@ export class QuickNavMenuComponent {
   @ViewChild('button', { static: false }) buttonRef?: ElementRef<HTMLButtonElement>;
 
   open = false;
+  private autoCloseTimer?: any;
+  private autoCloseMs = 7000;
 
-  toggle(): void { this.open = !this.open; }
-  close(): void { this.open = false; }
+  toggle(): void {
+    if (this.open) {
+      this.close();
+    } else {
+      this.open = true;
+      this.startAutoCloseTimer();
+    }
+  }
+  close(): void {
+    this.open = false;
+    this.clearAutoCloseTimer();
+  }
+
+  private startAutoCloseTimer(): void {
+    this.clearAutoCloseTimer();
+    this.autoCloseTimer = setTimeout(() => this.close(), this.autoCloseMs);
+  }
+  private clearAutoCloseTimer(): void {
+    if (this.autoCloseTimer) {
+      clearTimeout(this.autoCloseTimer);
+      this.autoCloseTimer = undefined;
+    }
+  }
 
   @HostListener('document:click', ['$event'])
   onDocClick(ev: MouseEvent): void {
@@ -40,4 +63,3 @@ export class QuickNavMenuComponent {
     }
   }
 }
-
