@@ -1,8 +1,8 @@
-﻿<!--header class="bg-dark text-white text-center py-5">
+<!--header class="bg-dark text-white text-center py-5">
     <div class="container">
       <h1>Tu Nombre</h1>
-      <p>Ingeniero DevOps | Especialista en Infraestructura y AutomatizaciÃ³n</p>
-      <a href="#contacto" class="btn btn-primary">ContÃ¡ctame</a>
+      <p>Ingeniero DevOps | Especialista en Infraestructura y Automatización</p>
+      <a href="#contacto" class="btn btn-primary">Contáctame</a>
     </div>
 </header-->
 
@@ -10,7 +10,7 @@
   <div class="container hero-content text-center text-white">
     <h1 class="display-1">Welcome.</h1>
     
-    <img src="assets/img/laptop-minimalist.png" class="hero-image" alt="Imagen decorativa de cÃ³digo y laptop">
+    <img src="assets/img/laptop-minimalist.png" class="hero-image" alt="Imagen decorativa de código y laptop">
   </div>
 </header-->
 
@@ -22,43 +22,51 @@
   </div>
   <div class="container">
     <div class="row align-items-center justify-content-center">
-      <!-- Columna de texto -->
-      <div class="col-md-6 text-left hero-text">
-        <h1 class="display-1 welcome-text letter">{{ typedTitle }}<span class="caret" [class.hidden]="!caretVisible">|</span></h1>
-        <div class="console" aria-live="polite">
-          <pre class="console-text">{{ typedText }}<span class="caret" [class.hidden]="!caretVisible">|</span></pre>
-          <div class="console-actions">
-            <span class="enlace-experiencia" (click)="irAlComponenteHabilidades()">{{ typedCta }}</span>
+      <!-- Columna única: consola estilo CMD -->
+      <div class="col-12 col-lg-10 text-left hero-text">
+        <div class="console-window" aria-live="polite"
+             [class.is-min]="isMin" [class.is-max]="isMax" [class.is-hidden]="isHidden">
+          <div class="console-titlebar">
+            <div class="console-cap">
+              <img class="console-icon" src="assets/icons/terminaL.svg" alt="Icono terminal">
+              <span class="console-title">Símbolo del sistema</span>
+            </div>
+            <div class="console-controls win">
+              <button class="ctrl min" aria-label="Minimizar" (click)="toggleMin()">
+                <svg class="ico" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                  <path d="M3 8.5h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="square"/>
+                </svg>
+              </button>
+              <button class="ctrl max" aria-label="Maximizar" (click)="toggleMax()">
+                <svg class="ico" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                  <rect x="3.5" y="3.5" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1.6"/>
+                </svg>
+              </button>
+              <button class="ctrl close" aria-label="Cerrar" (click)="closeHero()">
+                <svg class="ico" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                  <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="console-body console">
+            <pre class="console-text">{{ typedText }}<span class="caret" [class.hidden]="!caretVisible">|</span></pre>
+            <div class="console-actions">
+              <span class="enlace-experiencia" (click)="irAlComponenteHabilidades()">{{ typedCta }}</span>
+            </div>
           </div>
         </div>
-        
-        <!--p class="lead">
-          My name is Alonso, a DevOps Engineer with expertise in cloud-based solutions, automation, 
-          and digital transformation. I have a proven track record in implementing automated testing 
-          within CI/CD pipelines, leveraging Power Platform to create custom applications, and 
-          developing robust frontend solutions using Angular and Spring Boot. My experience spans 
-          across optimizing DevOps processes, delivering scalable software solutions, and integrating 
-          cutting-edge technologies to drive business efficiency and innovation.        
-        </p-->
-        <!--p>
-          My name is Alonso, a DevOps Engineer with a strong foundation in frontend development and cloud infrastructure. With hands-on experience in building responsive web interfaces using Angular, PrimeNG, and Bootstrap, I have contributed to large-scale projects by delivering user-centric designs and seamless integrations with backend services using Java and Spring Boot. Additionally, I specialize in developing applications with Power Platform, where I design and implement custom business solutions using Power Apps, Power Automate, and Power BI to streamline processes and enhance data-driven decision-making. As an experienced Functional Analyst, I have also led requirements gathering and translated business needs into technical implementations, driving value and efficiency across various development projects.
-        </p-->
-        <!--p>
-          My name is Alonso, a DevOps Engineer with a strong focus on frontend development and cloud solutions. I have extensive experience creating user interfaces with Angular and Spring Boot, while also building business applications with Power Platform to automate workflows and visualize data. Additionally, Iâ€™ve contributed as a Functional Analyst, translating complex business requirements into technical solutions and optimizing processes within Agile teams.
-        </p-->
-      </div>
-      <!-- Columna de imagen -->
-      <div class="col-md-6 text-center">
-        <!--img src="assets\img\Pantalla_pc_programando.gif" class="img-fluid hero-image" alt="Imagen decorativa de laptop y cÃ³digo"-->
-        <img src="assets\img\MI-Laptop-Gif-unscreen.gif" class="img-fluid hero-image" alt="Imagen decorativa de laptop y cÃ³digo" (click)="irAlComponentePerfil()">
       </div>
     </div>
   </div>
+  <!-- Botón de reabrir anclado al header -->
+  <button *ngIf="isHidden" class="console-reopen" (click)="reopenHero()" aria-label="Abrir consola">Abrir consola</button>
 </header>
+
+<!-- Backdrop para modo max -->
+<div class="console-backdrop" *ngIf="isMax" (click)="toggleMax()"></div>
 
 <!-- Placeholder retirado: no es necesario con barra fija independiente -->
 
 
    
-
-

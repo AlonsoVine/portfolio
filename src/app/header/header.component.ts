@@ -31,13 +31,26 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   typedText = '';
   caretVisible = true;
   private fullText = [
-    'Soy Alonso, un desarrollador y analista, apasionado por la tecnologí­a.',
-    'Me especializo en crear aplicaciones personalizadas que combinan funcionalidad y diseño.',
-    'Mi objetivo es construir soluciones que impulsen la eficiencia y el rendimiento.'
-  ].join('\n');
+  'Soy Alonso, un desarrollador y analista, apasionado por la tecnología.',
+  'Me especializo en crear aplicaciones personalizadas que combinan funcionalidad y diseño.',
+  'Mi objetivo es construir soluciones que impulsen la eficiencia y el rendimiento.'
+].join('\\n');
   private typeIndex = 0;
   private typeTimer?: any;
   private caretTimer?: any;
+  // Dinámica de consola
+  consoleTitle = 'Símbolo del sistema';
+  private consoleUser = 'visitante';
+  private osHeader = '';
+  // Estados UI consola
+  isMin = false;
+  isMax = false;
+  isHidden = false;
+  private keydownHandler = (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && this.isMax) {
+      this.toggleMax();
+    }
+  };
 
   irAlComponentePerfil() {
     const elemento = document.getElementById('mi-perfil');
@@ -62,12 +75,15 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
     window.addEventListener('resize', this.onResize);
     // EvaluaciÃ³n inicial (por si se entra con scroll restaurado)
     this.updateStickyState();
-    this.startTypingEffect2();
+    this.initUserAndOS();
+    this.restoreConsoleState();
+    window.addEventListener('keydown', this.keydownHandler);
   }
 
   ngOnDestroy(): void {
     window.removeEventListener('scroll', this.onScroll);
     window.removeEventListener('resize', this.onResize);
+    window.removeEventListener('keydown', this.keydownHandler);
     if (this.typeTimer) { clearInterval(this.typeTimer); }
     if (this.titleTimer) { clearInterval(this.titleTimer); }
     if (this.ctaTimer) { clearInterval(this.ctaTimer); }
@@ -101,6 +117,77 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  // Inicializa usuario (localStorage) y cabecera de SO
+  private async initUserAndOS(): Promise<void> {
+    try {
+      const stored = localStorage.getItem('console.username');
+      if (stored && stored.trim()) {
+        this.consoleUser = stored.trim();
+      } else {
+        const lang = navigator.language || 'es';
+        this.consoleUser = lang.startsWith('es') ? 'visitante' : 'guest';
+      }
+
+      const { platform, versionLabel } = await this.detectPlatformVersion();
+
+      if (platform === 'Window') {
+        this.consoleTitle = 'C:\\Window\\System32\\cmd.exe';
+        const versionText = "25.04.01995+";
+        this.osHeader = `Alonso Window [Versión ${versionText}]\n(c) Alonso Corporation. Todos los derechos reservados.\n\nC:\\Users\\${this.consoleUser}> `;
+      } else if (platform === 'macOS') {
+        this.consoleTitle = 'Terminal';
+        this.osHeader = `Darwin (macOS)\n\n${this.consoleUser}@mac ~ % `;
+      } else if (platform === 'Linux') {
+        this.consoleTitle = 'Terminal';
+        this.osHeader = `GNU/Linux\n\n${this.consoleUser}@host:~$ `;
+      } else {
+        this.consoleTitle = 'Developer Console';
+        this.osHeader = `${platform}\n\n${this.consoleUser}$ `;
+      }
+
+      const intro = [
+        'Soy Alonso, un desarrollador y analista, apasionado por la tecnología.',
+        'Me especializo en crear aplicaciones personalizadas que combinan funcionalidad y diseño.',
+        'Mi objetivo es construir soluciones que impulsen la eficiencia y el rendimiento.'
+      ].join('\n');
+
+      // Reinicia estados y compone texto completo
+      this.typedText = '';
+      this.typedTitle = '';
+      this.typedCta = '';
+      this.fullText = `${this.osHeader}\nHola Mundo!\n${intro}`;
+      this.typeIndex = 0;
+      this.titleIndex = 0;
+      this.ctaIndex = 0;
+    } finally {
+      this.startTypingEffect2();
+    }
+  }
+
+  private async detectPlatformVersion(): Promise<{ platform: 'Window' | 'macOS' | 'Linux' | 'Desconocido'; versionLabel?: string }>{
+    const uaData: any = (navigator as any).userAgentData;
+    const ua = navigator.userAgent || '';
+    let platform: 'Window' | 'macOS' | 'Linux' | 'Desconocido' = 'Desconocido';
+    let versionLabel: string | undefined;
+
+    const plat = uaData?.platform || navigator.platform || '';
+    if (/Win/i.test(plat)) platform = 'Window';
+    else if (/Mac/i.test(plat)) platform = 'macOS';
+    else if (/Linux/i.test(plat)) platform = 'Linux';
+
+    if (platform === 'Window' && uaData?.getHighEntropyValues) {
+      try {
+        const { platformVersion } = await uaData.getHighEntropyValues(['platformVersion']);
+        const major = parseInt(String(platformVersion).split('.')[0] || '0', 10);
+        // Heurística: Window 11 suele ser >= 13; Window 10 < 13
+        versionLabel = major >= 13 ? '22000+' : '19045';
+      } catch { /* noop */ }
+    }
+    if (platform === 'Window' && !versionLabel) {
+      if (/Window NT 10\.0/.test(ua)) versionLabel = '19045';
+    }
+    return { platform, versionLabel };
+  }
   private startTypingEffect(): void {
     // Parpadeo del cursor
     this.caretTimer = setInterval(() => {
@@ -108,7 +195,7 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
     }, 600);
 
     // Escritura letra a letra
-    const baseDelay = 28; // ms por carÃ¡cter
+    const baseDelay = 16; // ms por carÃ¡cter
     this.typeTimer = setInterval(() => {
       if (this.typeIndex >= this.fullText.length) {
         clearInterval(this.typeTimer);
@@ -122,7 +209,7 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   // Nuevo: secuencia título -> texto -> CTA
   private startTypingEffect2(): void {
     // Cursor parpadeante
-    this.caretTimer = setInterval(() => { this.caretVisible = !this.caretVisible; }, 600);
+    this.caretTimer = setInterval(() => { this.caretVisible = !this.caretVisible; }, 450);
 
     // 1) Título
         this.titleTimer = setInterval(() => {
@@ -141,7 +228,7 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
                 return;
               }
               this.typedCta += this.fullCta[this.ctaIndex++];
-            }, 40);
+            }, 28);
             return;
           }
 
@@ -149,9 +236,9 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
           const ch = this.fullText[this.typeIndex++];
           this.typedText += ch;
 
-          let delay = 26 + Math.random() * 30; // base + jitter
+          let delay = 14 + Math.random() * 18; // base + jitter
           if (prev === "\n") {
-            delay = 420; // pausa al iniciar cada párrafo
+            delay = 260; // pausa al iniciar cada párrafo
           }
           this.typeTimer = setTimeout(typeNext, delay);
         };
@@ -159,8 +246,47 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
         return;
       }
       this.typedTitle += this.fullTitle[this.titleIndex++];
-    }, 85); }
+    }, 60); }
+
+
+
+
+
+
+
+
+
+
+
+  // ===== Acciones de ventana =====
+  toggleMin(): void {
+    this.isMin = !this.isMin;
+    try { localStorage.setItem('consoleMinimized', this.isMin ? '1' : '0'); } catch {}
+  }
+
+  toggleMax(): void {
+    this.isMax = !this.isMax;
+    document.body.style.overflow = this.isMax ? 'hidden' : '';
+  }
+
+  closeHero(): void {
+    this.isHidden = true;
+    this.isMax = false;
+    document.body.style.overflow = '';
+    try { localStorage.setItem('hideHero', '1'); } catch {}
+    this.irAlComponentePerfil();
+  }
+
+  reopenHero(): void {
+    this.isHidden = false;
+    try { localStorage.removeItem('hideHero'); } catch {}
+    this.heroSection?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  private restoreConsoleState(): void {
+    try {
+      this.isMin = localStorage.getItem('consoleMinimized') === '1';
+      this.isHidden = localStorage.getItem('hideHero') === '1';
+    } catch {}
+  }
 }
-
-
-
