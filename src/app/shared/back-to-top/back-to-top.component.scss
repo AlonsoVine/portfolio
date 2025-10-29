@@ -1,0 +1,80 @@
+:host {
+  position: fixed;
+  bottom: calc(var(--btp-bottom, 1rem) + env(safe-area-inset-bottom));
+  right: auto;
+  left: auto;
+  display: block;
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  z-index: var(--btp-z, 1050);
+  transition: opacity 200ms ease, transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:host(.pos-right) { right: var(--btp-side, 1rem); }
+:host(.pos-left)  { left: var(--btp-side, 1rem); }
+
+:host(.visible) {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host { transition: none; transform: none; }
+}
+
+.btp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--btp-size, 3rem);
+  height: var(--btp-size, 3rem);
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: calc(var(--btp-radius, 9999px));
+  border: var(--btp-border, none);
+  background: var(--btp-bg);
+  color: var(--btp-fg, inherit);
+  box-shadow: var(--btp-shadow);
+  cursor: pointer;
+  outline: none;
+  transition: background 160ms ease, transform 120ms ease, box-shadow 160ms ease;
+}
+
+.btp-btn:hover {
+  transform: translateY(calc(-1 * var(--btp-hover-lift, 2px)));
+  box-shadow: var(--btp-hover-shadow, 0 6px 18px rgba(0,0,0,.32));
+}
+
+.btp-btn:focus-visible {
+  outline: 2px solid transparent; /* allow custom focus via shadow */
+  box-shadow: var(--btp-focus-shadow, 0 0 0 3px rgba(0,0,0,0.15));
+}
+
+.btp-btn:active { transform: translateY(1px) scale(0.98); }
+
+@media (prefers-reduced-motion: reduce) {
+  .btp-btn { transition: none; }
+}
+
+.btp-icon {
+  width: var(--btp-icon-size, 64%);
+  height: var(--btp-icon-size, 64%);
+  display: block;
+  object-fit: contain;
+  pointer-events: none;
+  filter: brightness(0) invert(1);
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), filter 180ms ease;
+}
+
+.btp-btn:hover .btp-icon {
+  transform: translateY(calc(-1 * var(--btp-hover-lift, 2px))) scale(var(--btp-icon-hover-scale, 1.04));
+  filter: brightness(0) invert(1) drop-shadow(0 0 var(--btp-glow-radius, 10px) currentColor);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btp-btn:hover { transform: none; }
+  .btp-icon { transition: none; }
+  .btp-btn:hover .btp-icon { transform: none; filter: brightness(0) invert(1); }
+}

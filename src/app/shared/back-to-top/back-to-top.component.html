@@ -1,0 +1,16 @@
+<button
+  type="button"
+  class="btp-btn"
+  [attr.aria-label]="ariaLabel || 'Volver arriba'"
+  [attr.tabindex]="tabIndex"
+  (click)="onActivate($event)"
+  (keydown.enter)="onActivate($event)"
+  (keydown.space)="onActivate($event)"
+>
+  <img
+    class="btp-icon"
+    src="assets/icons/up-arrow.svg"
+    alt=""
+    aria-hidden="true"
+  />
+</button>
