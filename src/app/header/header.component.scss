@@ -598,7 +598,10 @@ html.force-hide-sticky .hero-section .sticky-bar {
   margin: 0;
   z-index: 2001;
   box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+  max-height: none; /* asegura que no herede el max-height del modo min */
+  overflow: auto;   /* restaura overflow si venimos de min */
 }
+.hero-section .hero-text .console-window.is-max .console-body { display: block; }
 .hero-section .hero-text .console-window.is-hidden { display: none; }
 
 /* Backdrop del modo max */

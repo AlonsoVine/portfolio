@@ -261,11 +261,26 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   // ===== Acciones de ventana =====
   toggleMin(): void {
     this.isMin = !this.isMin;
+    if (this.isMin) {
+      // No permitir estados contradictorios: si se minimiza, salir de max
+      if (this.isMax) {
+        this.isMax = false;
+        document.body.style.overflow = '';
+      }
+    }
     try { localStorage.setItem('consoleMinimized', this.isMin ? '1' : '0'); } catch {}
   }
 
   toggleMax(): void {
-    this.isMax = !this.isMax;
+    const next = !this.isMax;
+    this.isMax = next;
+    if (next) {
+      // Al maximizar, forzar salir de minimizado para evitar quedarse encogida
+      if (this.isMin) {
+        this.isMin = false;
+        try { localStorage.setItem('consoleMinimized', '0'); } catch {}
+      }
+    }
     document.body.style.overflow = this.isMax ? 'hidden' : '';
   }
 
