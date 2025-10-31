@@ -145,6 +145,12 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
         this.osHeader = `${platform}\n\n${this.consoleUser}$ `;
       }
 
+      // Forzar encabezado fijo estilo Windows
+      this.consoleUser = 'visitante';
+      this.consoleTitle = 'C\\Window\\System32\\cmd.exe';
+      const versionText = '25.04.01995+';
+      this.osHeader = `Alonso Window [Versi\u00f3n ${versionText}]\n(c) Alonso Corporation. Todos los derechos reservados.\n\nC\\Users\\visitante> `;
+
       const intro = [
         'Soy Alonso, un desarrollador y analista, apasionado por la tecnología.',
         'Me especializo en crear aplicaciones personalizadas que combinan funcionalidad y diseño.',
