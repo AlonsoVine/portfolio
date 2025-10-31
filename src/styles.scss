@@ -1,5 +1,7 @@
 /* Global styles */
 @import '~@fortawesome/fontawesome-free/css/all.min.css';
+/* palette: portfolio.* (safe, idempotent) */
+@import 'styles/theme.css';
 
 /* Estilos globales */
 body {
@@ -83,7 +85,8 @@ h2 {
   will-change: transform;
   animation: avatarPop 1.8s cubic-bezier(0.16, 1, 0.3, 1) both;
   border-radius: 50% !important;
-  border: 12px solid #0b0d22; /* engrosado para integrarse con la barra */
+  /* palette: portfolio.* (safe, idempotent) */
+  border: 12px solid var(--portfolio-base); /* engrosado para integrarse con la barra */
   box-shadow: 0 4px 12px rgba(0,0,0,0.35); /* misma sombra que el navbar */
 }
 

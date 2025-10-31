@@ -101,7 +101,8 @@ img {
 
   height: 100vh; /* Ocupa toda la altura de la pantalla */
 
-  background: #0b0d22; /* Color de fondo similar */
+  /* palette: portfolio.* (safe, idempotent) */
+  background: var(--portfolio-base); /* Color de fondo similar */
 
   display: flex;
 
@@ -109,7 +110,8 @@ img {
 
   justify-content: center;
 
-  color: #ffffff;
+  /* palette: portfolio.* (safe, idempotent) */
+  color: var(--portfolio-text);
 
   text-align: left;
 
@@ -308,7 +310,8 @@ img {
 
     height: 100px;
 
-    background: #0b0d22;
+    /* palette: portfolio.* (safe, idempotent) */
+    background: var(--portfolio-base);
 
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 
@@ -617,9 +620,10 @@ html.force-hide-sticky .hero-section .sticky-bar {
   position: absolute; /* anclado al header, no a la ventana */
   bottom: 20px;
   right: 20px;
-  background: #0b0d22;
-  color: #e6f7ff;
-  border: 1px solid #223048;
+  /* palette: portfolio.* (safe, idempotent) */
+  background: var(--portfolio-base);
+  color: var(--portfolio-text);
+  border: 1px solid var(--portfolio-text-muted);
   border-radius: 12px;
   padding: 10px 16px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.4);
@@ -720,4 +724,14 @@ html.force-hide-sticky .hero-section .sticky-bar {
   .hero-section .hero-text .console-body {
     padding: 14px 14px 10px 14px;
   }
+}
+
+/* palette: portfolio.* (safe, idempotent) */
+.hero-section .social-icons a {
+  color: var(--portfolio-text);
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+.hero-section .social-icons a:hover {
+  color: var(--portfolio-accent);
+  text-shadow: 0 0 2px var(--portfolio-soft);
 }

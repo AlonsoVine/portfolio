@@ -76,10 +76,10 @@
       display: inline-block; /* Asegura que transform funcione correctamente */
 
       &:hover {
-        color: #dcb32d; /* Cambia el color en hover */
+        color: var(--portfolio-accent); /* palette: portfolio.* (safe, idempotent) */
         //transition: transform 0.3s ease-in-out;
         transform: scale(1.5); /* Aumenta el tamaño */
-        text-shadow: 0 0 2px #ffee10;
+        text-shadow: 0 0 2px var(--portfolio-soft); /* palette: portfolio.* (safe, idempotent) */
       }
     }
   }
@@ -97,5 +97,6 @@
 /* Efecto hover: teñido a verde del icono SVG */
 #proyectos .social-icons a:hover img.icon-svg {
   /* Verde suave usando filtro CSS */
-  filter: invert(38%) sepia(74%) saturate(448%) hue-rotate(88deg) brightness(92%) contrast(90%);
+  filter: invert(57%) sepia(75%) saturate(2216%) hue-rotate(6deg) brightness(103%) contrast(104%); /* palette: portfolio.* (safe, idempotent) */
 }
+

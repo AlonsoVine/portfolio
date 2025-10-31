@@ -1,13 +1,22 @@
+/* palette: portfolio.* (safe, idempotent) */
 footer {
-    background: #0b0d22;
-    color: #fff;
+    background: var(--portfolio-base);
+    color: var(--portfolio-text);
     padding: 20px 0;
 }
+  
 
+
+/* palette: portfolio.* (safe, idempotent) */
+.footer-section .social-icons a:hover{
+  color: var(--portfolio-accent) !important; /* igual que hover del back-to-top */
+  text-shadow: 0 0 2px var(--portfolio-soft) !important;
+}
 .footer-section {
     position: relative;
-    background: #0b0d22; /* Color de fondo */
-    color: #ffffff;
+    /* palette: portfolio.* (safe, idempotent) */
+    background: var(--portfolio-base); /* Color de fondo */
+    color: var(--portfolio-text);
     padding: 50px 0;
     text-align: center;
     overflow: hidden;
@@ -20,7 +29,8 @@ footer {
       left: 0;
       width: 100%;
       height: 200px; /* Altura de la curva */
-      background-color: #ffffff; /* Color del arco */
+      /* palette: portfolio.* (safe, idempotent) */
+      background-color: var(--portfolio-text); /* Color del arco */
       clip-path: ellipse(100% 100% at 50% 0); /* Forma del arco */
       z-index: 1; /* Asegura que esté detrás del contenido del footer */
     }
@@ -42,7 +52,8 @@ footer {
         margin: 0 10px;
         padding: 0 5px;
         font-size: 2.5rem;
-        color: #ffffff;
+        /* palette: portfolio.* (safe, idempotent) */
+        color: var(--portfolio-text);
         transition: color 0.3s ease, transform 0.3s ease; /* Añade transform a la transición */
 
         display: inline-block; /* Asegura que transform funcione correctamente */

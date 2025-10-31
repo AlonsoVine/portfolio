@@ -11,9 +11,12 @@
   ariaLabel="Volver arriba"
   style="
     --btp-size: 4rem;
-    --btp-bg: #0b0d22;
-    --btp-fg: #ffffff;
-    --btp-border: 1px solid rgba(255,255,255,0.35);
+    /* palette: portfolio.* (safe, idempotent) */
+    --btp-bg: var(--portfolio-base);
+    --btp-fg: var(--portfolio-text);
+    --btp-bg-hover: var(--portfolio-accent);
+    --btp-fg-hover: var(--portfolio-text);
+    --btp-border: 1px solid var(--portfolio-text-muted);
     --btp-shadow: 0 2px 10px rgba(0,0,0,.25);
     --btp-icon-size: 70%;
   "

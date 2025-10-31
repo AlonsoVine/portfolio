@@ -9,9 +9,10 @@
   width: 40px;
   height: 40px;
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.35); // sutil borde blanquecino
+  /* palette: portfolio.* (safe, idempotent) */
+  border: 1px solid var(--portfolio-text-muted); // sutil borde blanquecino
   background: rgba(255, 255, 255, 0.06);
-  color: #e8f5f7;
+  color: var(--portfolio-text);
   cursor: pointer;
   transition: background 200ms ease, transform 150ms ease, box-shadow 200ms ease;
 }
@@ -56,6 +57,15 @@
   pointer-events: auto;
 }
 
+/* Estado seleccionado: botón con color de acento */
+/* palette: portfolio.* (safe, idempotent) */
+.settings.open .settings-btn,
+.settings-btn:focus-visible {
+  background: var(--portfolio-accent);
+  border-color: var(--portfolio-accent);
+  box-shadow: 0 2px 10px rgba(0,0,0,.25);
+}
+
 .group {
   display: grid;
   gap: 6px;
@@ -98,4 +108,5 @@
   .item:hover, .item:focus { background: rgba(0,0,0,.05); }
   .settings-btn { border-color: rgba(0,0,0,0.25); background: rgba(0,0,0,0.04); }
   .settings-btn img { filter: none; } /* En fondos claros, el icono original puede ser oscuro */
+  .settings.open .settings-btn { background: var(--portfolio-accent); border-color: var(--portfolio-accent); }
 }

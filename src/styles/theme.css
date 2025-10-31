@@ -1,0 +1,20 @@
+/* palette: portfolio.* (safe, idempotent) */
+:root{
+  --portfolio-base:#012456;
+  --portfolio-light:#0B3B73;
+  --portfolio-accent:#FFA500;
+  --portfolio-soft:#FFDAA9;
+  --portfolio-text:#FFFFFF;
+  --portfolio-text-muted:#EAEAEA;
+  --portfolio-dark:#001C3A;
+}
+
+/* Optional utilities (safe, idempotent) */
+.bg-portfolio-base{ background-color: var(--portfolio-base) !important; }
+.bg-portfolio-dark{ background-color: var(--portfolio-dark) !important; }
+.text-portfolio-text{ color: var(--portfolio-text) !important; }
+.border-portfolio-muted{ border-color: var(--portfolio-text-muted) !important; }
+.hover-portfolio-light:hover{ background-color: var(--portfolio-light) !important; }
+.btn-portfolio-accent{ background: var(--portfolio-accent) !important; color: var(--portfolio-dark) !important; }
+.btn-portfolio-accent:hover{ background: var(--portfolio-light) !important; color: var(--portfolio-text) !important; }
+
