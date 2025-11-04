@@ -46,31 +46,6 @@
     }
   }*/
 
-  //Button
-  button {
-    color: #f0eaea;
-    font-weight: 600;
-    padding: 0.7em 1.7em;
-    font-size: 18px;
-    border-radius: 0.5em;
-    background: #007bff;
-    cursor: pointer;
-    border: 1px solid #007bff;
-    transition: all 0.3s;
-    box-shadow: 6px 6px 12px #c5c5c5, -6px -6px 12px #ffffff;
-  }
-  
-  button:active {
-    color: #666;
-    box-shadow: inset 4px 4px 12px #c5c5c5, inset -4px -4px 12px #ffffff;
-  }
-
-  .notificacion-mensaje{
-    margin-left: 8%; 
-    margin-top: 2%;
-  }
-}
-  
 /* Dark theme coherence: remove white glow, use dark tones and readable text */
 :host-context([data-theme="dark"]) #contacto {
   #titulo { color: #FFFFFF; }
@@ -97,3 +72,84 @@
 }
 
 /* Dark theming moved back to global */
+
+  /* Botón Enviar (tematizado) */
+  .submit-btn {
+    --btn-bg: var(--portfolio-accent);
+    --btn-fg: var(--portfolio-dark);
+    --btn-bg-hover: var(--portfolio-light);
+    --btn-shadow: 0 8px 18px rgba(0,0,0,.25);
+    color: var(--btn-fg);
+    background: var(--btn-bg);
+    border: 1px solid transparent;
+    font-weight: 600;
+    padding: 0.75em 1.6em;
+    font-size: 1rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 160ms ease, box-shadow 180ms ease, background 160ms ease, color 160ms ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--btn-shadow); border: none; isolation: isolate;
+  }
+
+  /* Hover/Focus elegantes y consistentes por tema (sin sheen) */
+.submit-btn::after { display: none; }
+.submit-btn:hover { background: var(--btn-bg-hover); box-shadow: 0 10px 20px rgba(0,0,0,.28), 0 0 0 3px color-mix(in srgb, var(--btn-bg) 35%, transparent); }
+  .submit-btn:active { transform: none; }
+.submit-btn:focus-visible {
+  outline: none;
+  box-shadow:
+    0 8px 18px rgba(0,0,0,.25),
+    0 0 0 3px color-mix(in srgb, var(--btn-bg) 45%, transparent);
+}
+
+  /* Tema Predeterminado: naranja del selector de tema */
+  :host-context([data-theme='predeterminado']) .submit-btn {
+    --btn-bg: #FFA500;
+    --btn-fg: #001C3A;
+    --btn-bg-hover: #FFB733;
+    --btn-shadow: 0 8px 18px rgba(255,165,0,.25);
+  }
+  :host-context([data-theme='predeterminado']) .submit-btn:hover { background: var(--btn-bg-hover); box-shadow: 0 10px 20px rgba(0,0,0,.28), 0 0 0 3px color-mix(in srgb, var(--btn-bg) 35%, transparent); }
+
+  /* Tema Claro: azul del selector */
+  :host-context([data-theme='light']) .submit-btn {
+  --btn-bg: var(--portfolio-accent);
+  --btn-fg: #21343B;
+  --btn-bg-hover: color-mix(in srgb, var(--portfolio-accent) 85%, white);
+  --btn-shadow: 0 8px 18px rgba(0,102,204,.25);
+  color: var(--btn-fg);
+}
+
+  /* Tema Oscuro: base igual que navbar (cyan), hover aclara con borde */
+  :host-context([data-theme='dark']) .submit-btn {
+    /* Estado normal: cyan del tema */
+    --btn-bg: #00f0ff;
+    --btn-fg: #21343B;
+    --btn-bg-hover: #00d5e6; /* solo usado por la regla genérica si no hay override */
+    --btn-shadow: 0 8px 18px rgba(0,240,255,.20);
+    color: var(--btn-fg);
+    /* Igual que claro: borde fino y transparente para no alterar layout */
+    border: 1px solid transparent;
+  }
+
+}
+
+
+
+
+:host-context([data-theme='predeterminado']) button.submit-btn:hover,:host-context([data-theme='predeterminado']) .submit-btn:hover,:host-context([data-theme='predeterminado']) .submit-btn:focus-visible { color: #FFFFFF !important; }
+
+:host-context([data-theme='light']) .submit-btn:hover,
+:host-context([data-theme='light']) .submit-btn:focus-visible {
+  color: #21343B !important;
+}
+
+
+:host-context([data-theme='dark']) .submit-btn:hover, :host-context([data-theme='dark']) .submit-btn:focus-visible { background: #F2F8FF !important; color: #000000 !important; border: 1px solid #00f0ff !important; box-shadow: 0 10px 20px rgba(0,0,0,.28), 0 0 0 3px rgba(0,240,255,0.35); }
+
+
+
+
+

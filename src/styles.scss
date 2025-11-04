@@ -169,3 +169,54 @@ h2 {
 [data-theme="dark"] #perfil h6,
 [data-theme="dark"] #perfil p,
 [data-theme="dark"] #perfil li { color: #FFFFFF !important; }
+
+/* Themed button utility usable app-wide */
+.btn-theme {
+  --btn-bg: var(--portfolio-accent);
+  --btn-fg: var(--portfolio-dark);
+  --btn-bg-hover: var(--portfolio-light);
+  --btn-shadow: 0 8px 18px rgba(0,0,0,.25);
+  color: var(--btn-fg);
+  background: var(--btn-bg);
+  border: 1px solid transparent;
+  font-weight: 600;
+  padding: 0.7em 1.4em;
+  font-size: 1rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 180ms ease, background 160ms ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--btn-shadow);
+}
+.btn-theme::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.18) 40%, rgba(255,255,255,0.18) 60%, transparent 100%);
+  transform: translateX(-120%);
+  transition: transform 360ms cubic-bezier(0.22,1,0.36,1);
+}
+.btn-theme:hover::after { transform: translateX(120%); }
+.btn-theme:hover { transform: translateY(-1px) scale(1.02); background: var(--btn-bg-hover); box-shadow: 0 10px 20px rgba(0,0,0,.28); }
+.btn-theme:active { transform: translateY(0) scale(0.99); }
+
+/* Per-theme palette for .btn-theme */
+[data-theme='predeterminado'] .btn-theme {
+  --btn-bg: #FFA500;
+  --btn-fg: #001C3A;
+  --btn-bg-hover: #FFB733;
+  --btn-shadow: 0 8px 18px rgba(255,165,0,.25);
+}
+[data-theme='light'] .btn-theme {
+  --btn-bg: var(--portfolio-accent);
+  --btn-fg: var(--portfolio-dark);
+  --btn-bg-hover: color-mix(in srgb, var(--portfolio-accent) 85%, white);
+  --btn-shadow: 0 8px 18px rgba(0,102,204,.25);
+}
+[data-theme='dark'] .btn-theme {
+  --btn-bg: #00f0ff;
+  --btn-fg: #21343B;
+  --btn-bg-hover: #00d5e6;
+  --btn-shadow: 0 8px 18px rgba(0,240,255,.25);
+}
