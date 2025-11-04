@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
+﻿import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 
 @Component({
   selector: 'app-perfil',
@@ -6,25 +6,17 @@ import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@ang
   styleUrls: ['./perfil.component.scss']
 })
 export class PerfilComponent implements AfterViewInit, OnDestroy {
-  @ViewChild('avatar', { static: false }) avatarRef?: ElementRef<HTMLImageElement>;
+  @ViewChild('avatar', { static: false }) avatarRef?: ElementRef<HTMLElement>;
   avatarFloating = false;
   avatarReappear = false;
+  avatarHovered = false;
 
   private stickyHeight = 100; // px (altura actual de la barra)
   placeholderHeight = 0; // mantiene el espacio cuando el avatar flota
-  private imgLoadHandler?: () => void;
 
   ngAfterViewInit(): void {
-    // Medir posición/altura iniciales del avatar grande (tras cargar la imagen)
-    const img = this.avatarRef?.nativeElement;
-    if (img) {
-      if (img.complete) {
-        this.computeOffsets();
-      } else {
-        this.imgLoadHandler = () => { this.computeOffsets(); this.updateState(); };
-        img.addEventListener('load', this.imgLoadHandler);
-      }
-    }
+    // Medir posición/altura iniciales del avatar (contenedor)
+    this.computeOffsets();
     // Inicializa y escucha scroll/resize
     window.addEventListener('scroll', this.onScroll, { passive: true });
     window.addEventListener('resize', this.onResize);
@@ -34,10 +26,6 @@ export class PerfilComponent implements AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     window.removeEventListener('scroll', this.onScroll);
     window.removeEventListener('resize', this.onResize);
-    const img = this.avatarRef?.nativeElement;
-    if (img && this.imgLoadHandler) {
-      img.removeEventListener('load', this.imgLoadHandler);
-    }
   }
 
   private onScroll = () => this.updateState();

@@ -1,6 +1,15 @@
 <section id="perfil" class="pb-5">
     <div class="container" id="mi-perfil">
-      <img #avatar src="assets\\img\\mi-foto-cv1_blancoynegro.png" class="perfil-image mb-4" alt="Imagen de perfil" [class.floating-avatar]="avatarFloating" [class.reappear]="avatarReappear">
+      <div #avatar
+           class="perfil-image avatar-stack mb-4"
+           [class.floating-avatar]="avatarFloating"
+           [class.reappear]="avatarReappear"
+           [class.is-hovered]="avatarHovered"
+           (mouseenter)="avatarHovered = true"
+           (mouseleave)="avatarHovered = false"
+           aria-label="Imagen de perfil">
+        <img src="assets/img/mi-foto-cv1.1.png" alt="" class="photo" />
+      </div>
       <div class="avatar-spacer" [style.height.px]="avatarFloating ? placeholderHeight : 0"></div>
       
       <p>
