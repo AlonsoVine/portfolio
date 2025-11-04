@@ -92,17 +92,15 @@ h2 {
   animation: avatarPop 1.8s cubic-bezier(0.16, 1, 0.3, 1) both;
   border-radius: 50% !important;
   /* palette: portfolio.* (safe, idempotent) */
-  border: 12px solid var(--portfolio-base); /* engrosado para integrarse con la barra */
+  border: none; /* sin borde alrededor del avatar */
   /* Sombra inferior mÃ¡s concentrada (capas con spread negativo) */
   box-shadow:
     0 28px 30px -22px rgba(0,0,0,0.55), /* cola suave */
     0 12px 18px -12px rgba(0,0,0,0.35);  /* borde cercano */
 }
 
-/* Modo oscuro: igualar el borde del avatar al fondo #242323 */
-[data-theme="dark"] #perfil .perfil-image.floating-avatar {
-  border-color: #242323 !important;
-}
+/* Modo oscuro: sin borde también */
+[data-theme="dark"] #perfil .perfil-image.floating-avatar { border: none !important; }
 
 @media (max-width: 768px) {
   #perfil .perfil-image { width: clamp(140px, 40vw, 240px); }

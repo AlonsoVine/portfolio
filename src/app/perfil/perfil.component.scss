@@ -20,7 +20,7 @@
     //border-radius: 8px; // Esquinas redondeadas para que se vea mÃ¡s limpio
     //box-shadow: 0 4px 30px rgba(255, 255, 255, 0.2); // Resplandor alrededor de la imagen
     //background-color: rgba(255, 255, 255, 0.1); // Fondo clareado en torno a la imagen
-    padding: 1rem; // Espacio alrededor de la imagen para mayor separaciÃ³n
+    padding: 0; // Espacio alrededor de la imagen para mayor separaciÃ³n
     transition: transform 0.3s ease-in-out;
 
     &:hover {
@@ -30,18 +30,18 @@
   }
 
     .perfil-image {
-      width: 30%; /* Ajuste del ancho de la imagen al 30% de la pantalla */
-      max-width: 400px; /* Ancho mÃ¡ximo para limitar el tamaÃ±o en pantallas grandes */
+      width: 34%; /* Ajuste del ancho de la imagen al 30% de la pantalla */
+      max-width: 460px; /* Ancho mÃ¡ximo para limitar el tamaÃ±o en pantallas grandes */
       height: auto; /* Mantiene la proporciÃ³n de la imagen */
       border-radius: 50%; /* Hace que la imagen sea circular, si la deseas redonda */
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra para destacar la imagen */
+      box-shadow: none; /* Sombra para destacar la imagen */
       margin: 0 auto 20px; /* Centrar la imagen horizontalmente y aÃ±adir margen inferior */
       display: block; /* Asegura que la imagen se comporte como un bloque */
     }
 
     @media (max-width: 768px) {
       .perfil-image {
-        width: 50%; /* Ajusta el tamaÃ±o de la imagen en pantallas pequeÃ±as */
+        width: 55%; /* Ajusta el tamaÃ±o de la imagen en pantallas pequeÃ±as */
       }
     }
     
@@ -49,4 +49,7 @@
   
 
 /* Dark theme (scoped) moved back to global */
+
+
+
 
