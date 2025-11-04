@@ -1,4 +1,4 @@
-#experiencia {
+﻿#experiencia {
 
   h5 {
     margin-left: 50px;
@@ -19,7 +19,7 @@
 
     &:hover {
       transition: transform 0.2s ease-in-out;
-      transform: scale(1.05); /* Aumenta el tamaño */
+      transform: scale(1.05); /* Aumenta el tamaÃ±o */
     }
 
     h3 {
@@ -38,7 +38,7 @@
     }
 
     p strong {
-      color: #343a40; /* Resalta la ubicación */
+      color: #343a40; /* Resalta la ubicaciÃ³n */
     }
 
     $content-padding: 10px; 
@@ -49,7 +49,7 @@
       padding: $content-padding;
 
       .image-container {
-        --logo-size: 60px; // Tamaño consistente de logo (desktop y móvil)
+        --logo-size: 60px; // TamaÃ±o consistente de logo (desktop y mÃ³vil)
         margin-right: $content-padding; // Espacio entre la imagen y el texto
         width: var(--logo-size);
         height: var(--logo-size);
@@ -57,7 +57,7 @@
         overflow: hidden; // Evita desbordes
 
         .image {
-          width: auto; // Mantiene proporción
+          width: auto; // Mantiene proporciÃ³n
           height: 100%; // Igual al contenedor
           max-height: var(--logo-size);
           object-fit: contain;
@@ -74,3 +74,18 @@
 
 
   
+/* Modo oscuro: las cards de experiencia usan el mismo fondo que Proyectos destacados */
+:host-context([data-theme="dark"]) #experiencia .job {
+  background: #7A7979 !important;
+  color: #FFFFFF !important;
+  border-color: rgba(255,255,255,0.18) !important;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+}
+
+:host-context([data-theme="dark"]) #experiencia .job h3,
+:host-context([data-theme="dark"]) #experiencia .job h4,
+:host-context([data-theme="dark"]) #experiencia .job p,
+:host-context([data-theme="dark"]) #experiencia .job p strong { color: #FFFFFF !important; }
+
+/* Dark theme (scoped): fondo de sección y legibilidad */
+:host-context([data-theme='dark']) #experiencia { background: #545454 !important; color: #F2F2F2 !important; }

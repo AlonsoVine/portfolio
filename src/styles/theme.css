@@ -1,5 +1,6 @@
 /* palette: portfolio.* (safe, idempotent) */
 :root{
+  /* Valores por defecto (Aurora) */
   --portfolio-base:#012456;
   --portfolio-light:#0B3B73;
   --portfolio-accent:#FFA500;
@@ -7,6 +8,39 @@
   --portfolio-text:#FFFFFF;
   --portfolio-text-muted:#EAEAEA;
   --portfolio-dark:#001C3A;
+}
+
+/* Predeterminado (antes Aurora) */
+[data-theme="predeterminado"]{
+  --portfolio-base:#012456;
+  --portfolio-light:#0B3B73;
+  --portfolio-accent:#FFA500;
+  --portfolio-soft:#FFDAA9;
+  --portfolio-text:#FFFFFF;
+  --portfolio-text-muted:#EAEAEA;
+  --portfolio-dark:#001C3A;
+}
+
+/* Oscuro clásico */
+[data-theme="dark"]{
+  --portfolio-base:#0a0f1c;
+  --portfolio-light:#16223b;
+  --portfolio-accent:#00f0ff;
+  --portfolio-soft:#9ff6ff;
+  --portfolio-text:#eaf6fa;
+  --portfolio-text-muted:#b7c5cb;
+  --portfolio-dark:#050912;
+}
+
+/* Claro */
+[data-theme="light"]{
+  --portfolio-base:#f4f7fb;
+  --portfolio-light:#e7eef7;
+  --portfolio-accent:#0066cc; /* azul usado como referencia */
+  --portfolio-soft:#b8d8ff;
+  --portfolio-text:#0B3B73; /* azul visible en modo claro */
+  --portfolio-text-muted:#0B3B73; /* bordes/iconos en azul consistente */
+  --portfolio-dark:#ffffff;
 }
 
 /* Optional utilities (safe, idempotent) */
@@ -17,4 +51,3 @@
 .hover-portfolio-light:hover{ background-color: var(--portfolio-light) !important; }
 .btn-portfolio-accent{ background: var(--portfolio-accent) !important; color: var(--portfolio-dark) !important; }
 .btn-portfolio-accent:hover{ background: var(--portfolio-light) !important; color: var(--portfolio-text) !important; }
-

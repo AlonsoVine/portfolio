@@ -1,4 +1,4 @@
-#contacto {
+﻿#contacto {
 
   #titulo{
     font-size: 2.5rem;
@@ -71,3 +71,29 @@
   }
 }
   
+/* Dark theme coherence: remove white glow, use dark tones and readable text */
+:host-context([data-theme="dark"]) #contacto {
+  #titulo { color: #FFFFFF; }
+
+  .container {
+    background: #545454; /* coherente con tonos oscuros del sitio */
+    box-shadow: 0 10px 28px rgba(0,0,0,0.35); /* sin resplandor blanco */
+    border: 1px solid rgba(255,255,255,0.10);
+  }
+
+  .form-control {
+    background: #606060;
+    color: #FFFFFF;
+    border: 1px solid rgba(255,255,255,0.20);
+  }
+  .form-control::placeholder { color: #E0E0E0; opacity: 0.85; }
+  .form-control:focus { outline: none; border-color: var(--portfolio-accent); box-shadow: 0 0 0 3px rgba(0,240,255,0.18); }
+
+  button {
+    box-shadow: 0 6px 14px rgba(0,0,0,0.4);
+  }
+
+  .notificacion-mensaje { color: #FFFFFF; }
+}
+
+/* Dark theming moved back to global */

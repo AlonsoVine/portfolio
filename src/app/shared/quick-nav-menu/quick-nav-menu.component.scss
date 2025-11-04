@@ -18,6 +18,15 @@
 .quicknav-btn:active { transform: translateY(1px) scale(0.98); }
 .quicknav-btn img { width: 22px; height: 22px; display: block; filter: brightness(0) invert(1); }
 
+/* Predeterminado: hover naranja (acento) */
+:host-context([data-theme="predeterminado"]) .quicknav-btn:hover img {
+  /* Aproxima #FFA500 */
+  filter: invert(63%) sepia(79%) saturate(722%) hue-rotate(359deg) brightness(106%) contrast(104%);
+}
+
+/* Menú abierto: icono blanco sobre fondo de acento (todas los temas) */
+.quicknav.open .quicknav-btn img { filter: brightness(0) invert(1); }
+
 .dropdown {
   position: absolute;
   top: calc(100% + 10px);
@@ -68,3 +77,44 @@
   .quicknav-btn img { filter: none; }
   .quicknav.open .quicknav-btn { background: var(--portfolio-accent); border-color: var(--portfolio-accent); }
 }
+
+/* Tema claro con data-theme: icono negro idle, azul en hover, blanco al abrir */
+:host-context([data-theme="light"]) .quicknav-btn img { filter: none; }
+:host-context([data-theme="light"]) .quicknav-btn:hover img { 
+  /* Aproxima #0066cc */
+  filter: invert(21%) sepia(92%) saturate(2056%) hue-rotate(197deg) brightness(95%) contrast(103%);
+}
+:host-context([data-theme="light"]) .quicknav.open .quicknav-btn img,
+:host-context([data-theme="light"]) .quicknav.open .quicknav-btn:hover img { filter: brightness(0) invert(1); }
+
+/* Oscuro: icono toma el color del fondo activo (acento #00f0ff) al hover */
+:host-context([data-theme="dark"]) .quicknav-btn:hover img {
+  /* Aproxima #00f0ff */
+  filter: invert(86%) sepia(20%) saturate(5000%) hue-rotate(146deg) brightness(109%) contrast(101%);
+}
+
+/* Predeterminado: fondo del dropdown un poco más claro */
+:host-context([data-theme="predeterminado"]) .dropdown {
+  background: #0F2E5F; /* más claro que el valor base */
+  color: var(--portfolio-text);
+}
+
+/* Dropdown theming per selected theme */
+/* Light: blanco grisáceo y texto oscuro, con borde sutil */
+:host-context([data-theme="light"]) .dropdown {
+  background: #DDE1E5; /* suavizado respecto a #CACCCF */
+  color: #21343B;
+  border-color: rgba(0,0,0,0.10);
+}
+:host-context([data-theme="light"]) .item { color: #21343B; }
+:host-context([data-theme="light"]) .group-title { color: #5b7480; }
+:host-context([data-theme="light"]) .item:hover,
+:host-context([data-theme="light"]) .item:focus { background: rgba(0,0,0,0.08); }
+
+/* Dark: tono #404042 con texto claro */
+:host-context([data-theme="dark"]) .dropdown {
+  background: #404042;
+  color: #EAF6FA;
+  border-color: rgba(255,255,255,0.14);
+}
+:host-context([data-theme="dark"]) .item { color: #EAF6FA; }

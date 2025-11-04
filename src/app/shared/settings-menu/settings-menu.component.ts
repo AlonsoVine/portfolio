@@ -1,11 +1,13 @@
-import { Component, ElementRef, EventEmitter, HostListener, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, OnInit, Output, ViewChild } from '@angular/core';
+type ThemeName = 'predeterminado' | 'light' | 'dark';
 
 @Component({
   selector: 'app-settings-menu',
   templateUrl: './settings-menu.component.html',
   styleUrls: ['./settings-menu.component.scss']
 })
-export class SettingsMenuComponent {
+
+export class SettingsMenuComponent implements OnInit {
   @ViewChild('menu', { static: false }) menuRef?: ElementRef<HTMLElement>;
   @ViewChild('button', { static: false }) buttonRef?: ElementRef<HTMLButtonElement>;
 
@@ -13,8 +15,11 @@ export class SettingsMenuComponent {
   private autoCloseTimer?: any;
   private autoCloseMs = 7000; // cierre automático si no hay selección
 
+  // Gestión de tema activo
+  currentTheme: ThemeName = 'predeterminado';
+
   // Stubs para futuro
-  @Output() themeChange = new EventEmitter<'light' | 'dark'>();
+  @Output() themeChange = new EventEmitter<ThemeName>();
   @Output() langChange = new EventEmitter<'es' | 'en'>();
 
   toggle(): void {
@@ -66,8 +71,23 @@ export class SettingsMenuComponent {
   }
 
   // Stubs de acciones
-  setLight(): void { this.themeChange.emit('light'); }
-  setDark(): void { this.themeChange.emit('dark'); this.close(); }
+  ngOnInit(): void {
+    const saved = (localStorage.getItem('theme') as ThemeName | null);
+    const initial: ThemeName = saved ?? 'predeterminado';
+    this.applyTheme(initial);
+  }
+
+  setPredeterminado(): void { this.applyTheme('predeterminado'); }
+  setLight(): void { this.applyTheme('light'); }
+  setDark(): void { this.applyTheme('dark'); }
+
+  private applyTheme(t: ThemeName): void {
+    this.currentTheme = t;
+    document.documentElement.setAttribute('data-theme', t);
+    try { localStorage.setItem('theme', t); } catch {}
+    this.themeChange.emit(t);
+    this.close();
+  }
   setEs(): void { this.langChange.emit('es'); this.close(); }
   setEn(): void { this.langChange.emit('en'); this.close(); }
 }

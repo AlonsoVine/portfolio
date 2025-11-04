@@ -1,4 +1,4 @@
-/* Global styles */
+﻿/* Global styles */
 @import '~@fortawesome/fontawesome-free/css/all.min.css';
 /* palette: portfolio.* (safe, idempotent) */
 @import 'styles/theme.css';
@@ -16,12 +16,18 @@ section {
     padding: 60px 0;
 }
 
-/* Evita que la barra sticky (100px) tape los títulos al navegar por anclas */
+/* Modo claro: icono del back-to-top en negro */
+[data-theme="light"] app-back-to-top {
+  --btp-fg: #000 !important;
+  --btp-fg-hover: #000 !important;
+}
+
+/* Evita que la barra sticky (100px) tape los tÃ­tulos al navegar por anclas */
 section[id] {
     scroll-margin-top: calc(100px + 16px);
 }
 
-/* Títulos de sección
+/* TÃ­tulos de secciÃ³n
 h2 {
     font-size: 2.5em;
     margin-bottom: 20px;
@@ -41,7 +47,7 @@ h2 {
 
 .card:hover {
     transition: transform 0.3s ease-in-out;
-    transform: scale(1.10); // Aumenta el tamaño de la card
+    transform: scale(1.10); // Aumenta el tamaÃ±o de la card
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); // Agrega una sombra para mayor efecto
 }
 
@@ -66,8 +72,8 @@ h2 {
 
 :root {
   --sticky-height: 100px;
-  --avatar-size: 112px; /* miniavatar más grande */
-  --avatar-overhang: 18px; /* un pelín menos de asomado para subirlo */
+  --avatar-size: 112px; /* miniavatar mÃ¡s grande */
+  --avatar-overhang: 18px; /* un pelÃ­n menos de asomado para subirlo */
 }
 
 #perfil .perfil-image.floating-avatar {
@@ -87,14 +93,22 @@ h2 {
   border-radius: 50% !important;
   /* palette: portfolio.* (safe, idempotent) */
   border: 12px solid var(--portfolio-base); /* engrosado para integrarse con la barra */
-  box-shadow: 0 4px 12px rgba(0,0,0,0.35); /* misma sombra que el navbar */
+  /* Sombra inferior mÃ¡s concentrada (capas con spread negativo) */
+  box-shadow:
+    0 28px 30px -22px rgba(0,0,0,0.55), /* cola suave */
+    0 12px 18px -12px rgba(0,0,0,0.35);  /* borde cercano */
+}
+
+/* Modo oscuro: igualar el borde del avatar al fondo #242323 */
+[data-theme="dark"] #perfil .perfil-image.floating-avatar {
+  border-color: #242323 !important;
 }
 
 @media (max-width: 768px) {
   #perfil .perfil-image { width: clamp(140px, 40vw, 240px); }
 }
 
-/* Animación de entrada del avatar flotante (más suave) */
+/* AnimaciÃ³n de entrada del avatar flotante (mÃ¡s suave) */
 @keyframes avatarPop {
   0% { transform: translateY(-6px) scale(0.82); opacity: 0; }
   60% { transform: translateY(0) scale(0.97); opacity: 1; }
@@ -104,7 +118,7 @@ h2 {
 /* Mantiene el flujo cuando el avatar pasa a fixed */
 #perfil .avatar-spacer { width: 100%; }
 
-/* Reaparición al volver al contenido (animación inversa sutil) */
+/* ReapariciÃ³n al volver al contenido (animaciÃ³n inversa sutil) */
 #perfil .perfil-image.reappear {
   animation: avatarPopReverse 1.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -114,3 +128,44 @@ h2 {
   60% { transform: translateY(0) scale(0.98); opacity: 1; }
   100% { transform: translateY(0) scale(1); opacity: 1; }
 }
+
+/* Dark theme: tipografía general clara */
+[data-theme="dark"] body { color: #F2F2F2; }
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6 { color: #FFFFFF !important; }
+
+/* Alterna fondos de secciones entre #545454 y #7A7979 (fijando !important para vencer utilidades Bootstrap) */
+[data-theme="dark"] #perfil { background: #545454 !important; color: #FFFFFF !important; }
+[data-theme="dark"] #habilidades { background: #7A7979 !important; color: #F2F2F2 !important; }
+[data-theme="dark"] #experiencia { background: #545454 !important; color: #F2F2F2 !important; }
+[data-theme="dark"] #proyectos { background: #7A7979 !important; color: #F2F2F2 !important; }
+[data-theme="dark"] #certificados { background: #545454 !important; color: #F2F2F2 !important; }
+[data-theme="dark"] #contacto { background: #7A7979 !important; color: #F2F2F2 !important; }
+
+/* Cartas internas: usa el tono opuesto para contraste y legibilidad */
+[data-theme="dark"] #perfil .card,
+[data-theme="dark"] #experiencia .card { background: #7A7979 !important; color: #FFFFFF !important; border-color: rgba(255,255,255,0.18) !important; }
+[data-theme="dark"] #habilidades .card,
+[data-theme="dark"] #proyectos .card,
+[data-theme="dark"] #contacto .card { background: #545454 !important; color: #FFFFFF !important; border-color: rgba(255,255,255,0.18) !important; }
+
+/* Dark: las cards de Certificados heredan el tono de fondo de la sección Proyectos (#7A7979) */
+[data-theme="dark"] #certificados .card { background: #7A7979 !important; color: #FFFFFF !important; border-color: rgba(255,255,255,0.18) !important; }
+
+/* Dark: asegurar blanco en textos de Proyectos (títulos y párrafos dentro de cards) */
+[data-theme="dark"] #proyectos .card .card-title,
+[data-theme="dark"] #proyectos .card .card-text { color: #FFFFFF !important; }
+
+/* Dark: asegurar blanco en todo el texto del bloque perfil */
+[data-theme="dark"] #perfil h1,
+[data-theme="dark"] #perfil h2,
+[data-theme="dark"] #perfil h3,
+[data-theme="dark"] #perfil h4,
+[data-theme="dark"] #perfil h5,
+[data-theme="dark"] #perfil h6,
+[data-theme="dark"] #perfil p,
+[data-theme="dark"] #perfil li { color: #FFFFFF !important; }

@@ -19,7 +19,7 @@ footer {
     color: var(--portfolio-text);
     padding: 50px 0;
     text-align: center;
-    overflow: hidden;
+    overflow: visible;
   
     /* Crear la curva en la parte superior del footer */
     &::before {
@@ -67,4 +67,23 @@ footer {
       }
     }
 }
+
+/* Modo claro: texto del footer en negro, sin afectar iconos */
+:host-context([data-theme="light"]) .footer-section p {
+  color: #000;
+}
+
+/* Modo claro: fondo del footer específico */
+:host-context([data-theme="light"]) .footer-section,
+:host-context([data-theme="light"]) footer {
+  background: #F0F1F2;
+}
+
+/* Modo oscuro: fondo del footer específico */
+:host-context([data-theme="dark"]) .footer-section,
+:host-context([data-theme="dark"]) footer {
+  background: #242323;
+}
+/* Quitar curva superior del footer */
+.footer-section::before { display: none !important; }
   

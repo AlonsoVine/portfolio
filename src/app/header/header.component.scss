@@ -581,6 +581,13 @@ html.force-hide-sticky .hero-section .sticky-bar {
   overflow: hidden;
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255,255,255,0.03) inset;
 }
+/* En modo oscuro, resalta con sombra blanca suave para mayor contraste */
+:host-context([data-theme="dark"]) .hero-section .hero-text .console-window {
+  box-shadow:
+    0 26px 80px rgba(0, 0, 0, 0.62),
+    0 0 0 3px rgba(255, 255, 255, 0.12) inset,
+    0 0 36px rgba(255, 255, 255, 0.12);
+}
 
 /* Modo minimizado: solo titlebar visible, se queda sticky */
 .hero-section .hero-text .console-window.is-min {
@@ -736,4 +743,17 @@ html.force-hide-sticky .hero-section .sticky-bar {
 .hero-section .social-icons a:hover {
   color: var(--portfolio-accent);
   text-shadow: 0 0 2px var(--portfolio-soft);
+}
+
+/* Modo claro: fondo específico del header */
+:host-context([data-theme="light"]) .hero-section {
+  background: #F0F1F2;
+}
+
+/* Modo oscuro: fondo del header y de la barra sticky */
+:host-context([data-theme="dark"]) .hero-section {
+  background: #242323;
+}
+:host-context([data-theme="dark"]) .hero-section .sticky-bar {
+  background: #242323;
 }

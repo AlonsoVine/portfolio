@@ -1,4 +1,4 @@
-.settings {
+﻿.settings {
   position: relative;
 }
 
@@ -33,6 +33,15 @@
   filter: brightness(0) invert(1); // fuerza a blanco
 }
 
+/* Predeterminado: hover naranja (acento) */
+:host-context([data-theme="predeterminado"]) .settings-btn:hover img {
+  /* Aproxima #FFA500 */
+  filter: invert(63%) sepia(79%) saturate(722%) hue-rotate(359deg) brightness(106%) contrast(104%);
+}
+
+/* Abierto: icono blanco sobre fondo de acento */
+.settings.open .settings-btn img { filter: brightness(0) invert(1); }
+
 .dropdown {
   position: absolute;
   top: calc(100% + 10px);
@@ -57,7 +66,7 @@
   pointer-events: auto;
 }
 
-/* Estado seleccionado: botón con color de acento */
+/* Estado seleccionado: botÃ³n con color de acento */
 /* palette: portfolio.* (safe, idempotent) */
 .settings.open .settings-btn,
 .settings-btn:focus-visible {
@@ -95,6 +104,13 @@
   background: rgba(255,255,255,.08);
 }
 
+/* Estado activo del tema seleccionado */
+.item.active {
+  /* palette: portfolio.* (safe, idempotent) */
+  background: var(--portfolio-accent);
+  color: var(--portfolio-dark);
+}
+
 .separator {
   height: 1px;
   background: rgba(255,255,255,.14);
@@ -110,3 +126,49 @@
   .settings-btn img { filter: none; } /* En fondos claros, el icono original puede ser oscuro */
   .settings.open .settings-btn { background: var(--portfolio-accent); border-color: var(--portfolio-accent); }
 }
+
+/* Dropdown theming per selected theme */
+/* Light: blanco grisÃ¡ceo y texto oscuro, con borde sutil */
+:host-context([data-theme="light"]) .dropdown {
+  background: #DDE1E5; /* suavizado respecto a #CACCCF */
+  color: #21343B;
+  border-color: rgba(0,0,0,0.10);
+}
+:host-context([data-theme="light"]) .item { color: #21343B; }
+:host-context([data-theme="light"]) .group-title { color: #5b7480; }
+:host-context([data-theme="light"]) .item:hover,
+:host-context([data-theme="light"]) .item:focus { background: rgba(0,0,0,0.08); }
+
+/* Dark: tono #404042 con texto claro */
+:host-context([data-theme="dark"]) .dropdown {
+  background: #404042;
+  color: #EAF6FA;
+  border-color: rgba(255,255,255,0.14);
+}
+:host-context([data-theme="dark"]) .item { color: #EAF6FA; }
+
+/* Tema claro controlado por data-theme: icono negro idle, azul en hover, blanco en abierto */
+:host-context([data-theme="light"]) .settings-btn img { filter: none; }
+:host-context([data-theme="light"]) .settings-btn:hover img {
+  /* Aproxima #0066cc */
+  filter: invert(21%) sepia(92%) saturate(2056%) hue-rotate(197deg) brightness(95%) contrast(103%);
+}
+:host-context([data-theme="light"]) .settings.open .settings-btn img,
+:host-context([data-theme="light"]) .settings.open .settings-btn:hover img { filter: brightness(0) invert(1); }
+
+/* Oscuro: icono toma el color del fondo activo (acento #00f0ff) al hover */
+:host-context([data-theme="dark"]) .settings-btn:hover img {
+  /* Aproxima #00f0ff */
+  filter: invert(86%) sepia(20%) saturate(5000%) hue-rotate(146deg) brightness(109%) contrast(101%);
+}
+
+/* Predeterminado: fondo del dropdown un poco mÃ¡s claro */
+:host-context([data-theme="predeterminado"]) .dropdown {
+  background: #0F2E5F; /* mÃ¡s claro que el valor base */
+  color: var(--portfolio-text);
+}
+
+/* Texto del item activo según tema */
+:host-context([data-theme='light']) .item.active { color: #ffffff !important; }
+:host-context([data-theme='dark']) .item.active { color: #21343B !important; }
+

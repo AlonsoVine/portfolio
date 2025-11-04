@@ -1,4 +1,4 @@
-/*
+﻿/*
 #certificados {
   .card {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -8,7 +8,7 @@
     transition: transform 0.3s ease;
 
     &:hover {
-      transform: translateY(-5px); // Efecto de elevación en hover 
+      transform: translateY(-5px); // Efecto de elevaciÃ³n en hover 
     }
 
     .card-img-top {
@@ -57,7 +57,7 @@
   overflow: visible; // Permite que las cards se extiendan fuera de su contenedor
 }
 
-/* Igualar el espacio vertical entre filas al horizontal solo en la sección de certificados */
+/* Igualar el espacio vertical entre filas al horizontal solo en la secciÃ³n de certificados */
 #certificados {
   .row {
     --bs-gutter-y: var(--bs-gutter-x);
@@ -71,15 +71,15 @@
   min-height: 100%;
   display: flex;
   flex-direction: column;
-  transition: transform 0.3s ease, box-shadow 0.3s ease; // Añade una transición suave para el hover 
-  position: relative; // Posición relativa para gestionar el z-index 
-  z-index: 1; // Por defecto, todas las cards tendrán el mismo nivel 
+  transition: transform 0.3s ease, box-shadow 0.3s ease; // AÃ±ade una transiciÃ³n suave para el hover 
+  position: relative; // PosiciÃ³n relativa para gestionar el z-index 
+  z-index: 1; // Por defecto, todas las cards tendrÃ¡n el mismo nivel 
 }
 
 .card:hover {
-  transform: scale(1.05); // Aumenta el tamaño en un 5% al hacer hover 
-  z-index: 10; // Eleva la tarjeta por encima de las demás para evitar solapamientos extraños 
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2); // Añade sombra para un efecto más llamativo 
+  transform: scale(1.05); // Aumenta el tamaÃ±o en un 5% al hacer hover 
+  z-index: 10; // Eleva la tarjeta por encima de las demÃ¡s para evitar solapamientos extraÃ±os 
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2); // AÃ±ade sombra para un efecto mÃ¡s llamativo 
 }
 
 .card-body {
@@ -87,3 +87,5 @@
 }
 
 
+
+/* Dark theming moved back to global */

@@ -1,4 +1,4 @@
-
+﻿
 #proyectos {
 
   #titulo{
@@ -30,13 +30,13 @@
     transition: transform 0.3s ease;
 
     &:hover {
-      transform: scale(1.02); /* Añade un efecto de hover para la card */
+      transform: scale(1.02); /* AÃ±ade un efecto de hover para la card */
       z-index: 10;
     }
 
     img {
       object-fit: cover;
-      height: 200px; /* Ajusta la altura de las imágenes */
+      height: 200px; /* Ajusta la altura de las imÃ¡genes */
     }
 
     .carousel-control-prev-icon,
@@ -71,14 +71,14 @@
       //padding: 0 5px;
       font-size: 2.0rem;
       color: #0a0a0a;
-      transition: color 0.3s ease, transform 0.3s ease; /* Añade transform a la transición */
+      transition: color 0.3s ease, transform 0.3s ease; /* AÃ±ade transform a la transiciÃ³n */
 
       display: inline-block; /* Asegura que transform funcione correctamente */
 
       &:hover {
         color: var(--portfolio-accent); /* palette: portfolio.* (safe, idempotent) */
         //transition: transform 0.3s ease-in-out;
-        transform: scale(1.5); /* Aumenta el tamaño */
+        transform: scale(1.5); /* Aumenta el tamaÃ±o */
         text-shadow: 0 0 2px var(--portfolio-soft); /* palette: portfolio.* (safe, idempotent) */
       }
     }
@@ -86,7 +86,7 @@
 }
 
   
-/* Tamaño del icono SVG del enlace a demo */
+/* TamaÃ±o del icono SVG del enlace a demo */
 #proyectos .social-icons a img.icon-svg {
   width: 2rem;
   height: 2rem;
@@ -94,9 +94,34 @@
   transition: filter 0.3s ease, transform 0.3s ease;
 }
 
-/* Efecto hover: teñido a verde del icono SVG */
+/* Modo claro: icono de abrir pÃ¡gina igual que GitHub (negro) */
+:host-context([data-theme="light"]) #proyectos .social-icons a img.icon-svg {
+  filter: brightness(0);
+}
+
+/* Efecto hover: teÃ±ido a verde del icono SVG */
 #proyectos .social-icons a:hover img.icon-svg {
   /* Verde suave usando filtro CSS */
   filter: invert(57%) sepia(75%) saturate(2216%) hue-rotate(6deg) brightness(103%) contrast(104%); /* palette: portfolio.* (safe, idempotent) */
+}
+
+/* Modo claro: hover del icono igual que GitHub (usa azul de acento aproximado) */
+:host-context([data-theme="light"]) #proyectos .social-icons a:hover img.icon-svg {
+  filter: invert(21%) sepia(92%) saturate(2056%) hue-rotate(197deg) brightness(95%) contrast(103%);
+}
+
+/* Dark theming moved back to global */
+
+/* Modo oscuro: iconos en blanco por defecto (GitHub y SVG) */
+:host-context([data-theme="dark"]) #proyectos .social-icons a { color: #FFFFFF; }
+:host-context([data-theme="dark"]) #proyectos .social-icons a img.icon-svg { filter: brightness(0) invert(1); }
+
+/* Modo oscuro: hover usa el mismo acento que los botones del navbar */
+:host-context([data-theme='dark']) #proyectos .social-icons a:hover {
+  color: var(--portfolio-accent);
+}
+:host-context([data-theme='dark']) #proyectos .social-icons a:hover img.icon-svg {
+  /* Aproxima el acento del tema oscuro (#00f0ff) */
+  filter: invert(86%) sepia(20%) saturate(5000%) hue-rotate(146deg) brightness(109%) contrast(101%);
 }
 
