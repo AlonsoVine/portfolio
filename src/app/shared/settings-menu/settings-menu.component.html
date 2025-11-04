@@ -3,16 +3,16 @@
     <img src="assets/icons/ajustes.png" alt="" aria-hidden="true" />
   </button>
 
-  <div #menu id="settings-menu" class="dropdown" role="menu" [attr.aria-hidden]="!open">
-    <div class="group" aria-label="Tema">
-      <div class="group-title">Tema</div>
+  <div #menu id="settings-menu" class="dropdown" role="menu" aria-orientation="vertical" [attr.aria-hidden]="!open">
+    <div class="group" role="group" aria-label="Tema">
+      <div class="group-title" role="presentation" aria-hidden="true">Tema</div>
       <button class="item" role="menuitem" type="button" (click)="setPredeterminado()" [class.active]="currentTheme==='predeterminado'">Predeterminado</button>
       <button class="item" role="menuitem" type="button" (click)="setLight()" [class.active]="currentTheme==='light'">Claro</button>
       <button class="item" role="menuitem" type="button" (click)="setDark()" [class.active]="currentTheme==='dark'">Oscuro</button>
     </div>
-    <div class="separator" aria-hidden="true"></div>
-    <div class="group" aria-label="Idioma">
-      <div class="group-title">Idioma</div>
+    <div class="separator" role="separator" aria-hidden="true"></div>
+    <div class="group" role="group" aria-label="Idioma">
+      <div class="group-title" role="presentation" aria-hidden="true">Idioma</div>
       <button class="item" role="menuitem" type="button" (click)="setEs()">ES</button>
       <button class="item" role="menuitem" type="button" (click)="setEn()">EN</button>
     </div>
