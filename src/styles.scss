@@ -219,3 +219,9 @@ h2 {
   --btn-bg-hover: #00d5e6;
   --btn-shadow: 0 8px 18px rgba(0,240,255,.25);
 }
+
+/* Predeterminado: cuando el nombre del Perfil está compacto dentro del navbar, forzar texto blanco */
+[data-theme='predeterminado'].name-compact #perfil #miNombre,
+[data-theme='predeterminado'].name-compact #perfil #miNombre .name-col {
+  color: #ffffff !important;
+}

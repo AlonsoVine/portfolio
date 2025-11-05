@@ -31,7 +31,12 @@
       [style.height.px]="avatarFloating ? placeholderHeight : 0"
     ></div>
 
-    <h1 id="miNombre" class="name"><span class="name-col initial">A</span><span class="name-col rest">lonso</span><span class="name-col initial">V</span><span class="name-col rest">i&ntilde;&eacute;</span></h1>
+    <div class="name-sentinel" #nameSentinel aria-hidden="true"></div>
+    
+    <h1 id="miNombre" #nameEl class="name">
+      <span class="name-col initial">A</span><span class="name-col rest">lonso</span>
+      <span class="name-col initial">V</span><span class="name-col rest">i&ntilde;&eacute;</span>
+    </h1>
     <p>¡Encantado de conocerte!</p>
     <p>
       En busca de nuevas oportunidades soy un entusiasta de las tecnologí­as
@@ -49,6 +54,7 @@
       </p-->
   </div>
 </section>
+
 
 
 

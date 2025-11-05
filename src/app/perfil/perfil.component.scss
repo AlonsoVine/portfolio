@@ -1,4 +1,4 @@
-﻿#perfil {
+#perfil {
     margin-top: 0;
     // Escala con la altura de la ventana pero acotado
     padding-top: clamp(80px, 12vh, 140px);
@@ -17,10 +17,10 @@
     //estilos de la imagen
   img {
     position: relative;
-    //border-radius: 8px; // Esquinas redondeadas para que se vea mÃ¡s limpio
+    //border-radius: 8px; // Esquinas redondeadas para que se vea más limpio
     //box-shadow: 0 4px 30px rgba(255, 255, 255, 0.2); // Resplandor alrededor de la imagen
     //background-color: rgba(255, 255, 255, 0.1); // Fondo clareado en torno a la imagen
-    padding: 0; // Espacio alrededor de la imagen para mayor separaciÃ³n
+    padding: 0; // Espacio alrededor de la imagen para mayor separación
     transition: transform 0.3s ease-in-out;
 
     &:hover { transform: none; }
@@ -28,17 +28,17 @@
 
     .perfil-image {
       width: 34%; /* Ajuste del ancho de la imagen al 30% de la pantalla */
-      max-width: 460px; /* Ancho mÃ¡ximo para limitar el tamaÃ±o en pantallas grandes */
-      height: auto; /* Mantiene la proporciÃ³n de la imagen */
+      max-width: 460px; /* Ancho máximo para limitar el tamaño en pantallas grandes */
+      height: auto; /* Mantiene la proporción de la imagen */
       border-radius: 50%; /* Hace que la imagen sea circular, si la deseas redonda */
       box-shadow: none; /* Sombra para destacar la imagen */
-      margin: 0 auto 20px; /* Centrar la imagen horizontalmente y aÃ±adir margen inferior */
+      margin: 0 auto 20px; /* Centrar la imagen horizontalmente y añadir margen inferior */
       display: block; /* Asegura que la imagen se comporte como un bloque */
     }
 
     @media (max-width: 768px) {
       .perfil-image {
-        width: 55%; /* Ajusta el tamaÃ±o de la imagen en pantallas pequeÃ±as */
+        width: 55%; /* Ajusta el tamaño de la imagen en pantallas pequeñas */
       }
     }
     
@@ -51,32 +51,32 @@
 
 
 
-/* Pila de imágenes para fundido suave en hover */
+/* Pila de im�genes para fundido suave en hover */
 #perfil .avatar-stack { position: relative; overflow: hidden; border-radius: 50%; border: 1px solid var(--avatar-border, rgba(255,255,255,0.28)); perspective: 1000px; aspect-ratio: 1/1; cursor: pointer; }
 
 /* Flip 3D container */
 #perfil .avatar-stack .flip { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1); }
 #perfil .avatar-stack.is-flipped .flip { transform: rotateY(180deg); }
 
-/* Faces */
+/* Caras del flip (frontal y trasera) */
 #perfil .avatar-stack .face { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; backface-visibility: hidden; }
 #perfil .avatar-stack .front.photo { filter: grayscale(100%); transition: filter 500ms ease; transform: translateZ(1px) scale(1.03); }
 #perfil .avatar-stack.is-hovered .front.photo, #perfil .avatar-stack:hover .front.photo { filter: grayscale(0%); }
 #perfil .avatar-stack .back { transform: rotateY(180deg); }
 
-/* Ajustes sutiles por tema para el borde */
+/*/* Ajustes sutiles por tema para el borde del avatar */
 :host-context([data-theme='predeterminado']) #perfil .avatar-stack { border-color: rgba(255,255,255,0.32); }
 :host-context([data-theme='light']) #perfil .avatar-stack { border-color: rgba(33,52,59,0.25); }
 :host-context([data-theme='dark']) #perfil .avatar-stack { border-color: rgba(255,255,255,0.22); }
 
 
 
-/* Nombre en dos líneas con columna de iniciales alineadas (A / V) */
+/*/* Nombre en dos l�neas con columna de iniciales alineadas (A / V) */
 #miNombre.name{
   display: inline-grid;
   grid-template-columns: auto 1fr;
   grid-auto-rows: auto;
-  /* Separación exacta entre inicial y resto */
+  /* Separaci�n exacta entre inicial y resto */
   gap: 0 1px;
   align-items: baseline;
   text-align: left;
@@ -86,7 +86,7 @@
 #miNombre .name-col.initial{
   font-family: 'Josefin Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   font-weight: 700;
-  font-size: clamp(2.8rem, 9vw, 4.8rem); /* un punto más grande que el resto */
+  font-size: clamp(2.8rem, 9vw, 4.8rem); /* un punto m�s grande que el resto */
   line-height: .9;
   /* Sin ajuste adicional: controlado por gap (5px) */
   margin-right: 0;
@@ -97,6 +97,36 @@
   font-size: clamp(2.3rem, 7.6vw, 4.0rem);
   line-height: .9;
   letter-spacing: .01em;
-  /* Compensa en móviles para evitar solapamientos */
+  /* Compensa en m�viles para evitar solapamientos */
   @media (max-width: 480px){ margin-left: 0; }
 }
+/* Sentinel en flujo (no visible) */
+.name-sentinel{ width: 1px; height: 1px; }
+
+/*/* Transici�n a estado compacto dentro del navbar sticky */
+#miNombre{ transition: transform 360ms cubic-bezier(0.22,1,0.36,1), opacity 240ms ease, color 220ms ease; transform-origin: left center; }
+:host-context(.name-compact) #miNombre{
+  position: fixed;
+  opacity: 1;
+  z-index: 1001;
+  pointer-events: none;
+  will-change: transform, top, left;
+  /* En compacto, mantener dos l�neas (grid) para que 'Vi��' quede debajo */
+  display: inline-grid !important;
+  white-space: normal;
+  gap: 0 1px;
+  line-height: .9;
+  margin: 0 !important; /* elimina margen inferior del layout base */
+  align-items: start; /* evita alineaci�n por baseline que a�ade altura extra */
+}
+
+/* Ajusta el alto efectivo de las dos l�neas en compacto */
+:host-context(.name-compact) #miNombre .name-col.initial,
+:host-context(.name-compact) #miNombre .name-col.rest{
+  line-height: .85;
+}
+
+
+
+
+
