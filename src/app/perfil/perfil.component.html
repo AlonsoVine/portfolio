@@ -1,36 +1,56 @@
-<section id="perfil" class="pb-5">
-    <div class="container" id="mi-perfil">
-      <div #avatar
-           class="perfil-image avatar-stack mb-4"
-           [class.floating-avatar]="avatarFloating"
-           [class.reappear]="avatarReappear"
-           [class.is-hovered]="avatarHovered"
-           [class.is-flipped]="avatarFlipped"
-           (mouseenter)="avatarHovered = true"
-           (mouseleave)="avatarHovered = false"
-           (click)="avatarFlipped = !avatarFlipped"
-           aria-label="Imagen de perfil"
-           role="img">
-        <div class="flip">
-          <img src="assets/img/mi-foto-cv1.1.png" alt="" class="face front photo" />
-          <img src="assets/img/logo/logo-negro-redondo-conFondo.png" alt="" class="face back" />
-        </div>
+﻿<section id="perfil" class="pb-5">
+  <div class="container" id="mi-perfil">
+    <div
+      #avatar
+      class="perfil-image avatar-stack mb-4"
+      [class.floating-avatar]="avatarFloating"
+      [class.reappear]="avatarReappear"
+      [class.is-hovered]="avatarHovered"
+      [class.is-flipped]="avatarFlipped"
+      (mouseenter)="avatarHovered = true"
+      (mouseleave)="avatarHovered = false"
+      (click)="avatarFlipped = !avatarFlipped"
+      aria-label="Imagen de perfil"
+      role="img"
+    >
+      <div class="flip">
+        <img
+          src="assets/img/mi-foto-cv1.1.png"
+          alt=""
+          class="face front photo"
+        />
+        <img
+          src="assets/img/logo/logo-negro-redondo-conFondo.png"
+          alt=""
+          class="face back"
+        />
       </div>
-      <div class="avatar-spacer" [style.height.px]="avatarFloating ? placeholderHeight : 0"></div>
-      
-      <p>
-        ¡Encantado de conocerte!</p>
-      <p>
-        En busca de nuevas oportunidades soy un entusiasta de las tecnologías emergentes siempre motivado.      </p>
-      <!--p>
+    </div>
+    <div
+      class="avatar-spacer"
+      [style.height.px]="avatarFloating ? placeholderHeight : 0"
+    ></div>
+
+    <h1 id="miNombre" class="name"><span class="name-col initial">A</span><span class="name-col rest">lonso</span><span class="name-col initial">V</span><span class="name-col rest">i&ntilde;&eacute;</span></h1>
+    <p>¡Encantado de conocerte!</p>
+    <p>
+      En busca de nuevas oportunidades soy un entusiasta de las tecnologí­as
+      emergentes siempre motivado.
+    </p>
+    <!--p>
         Poseo la capacidad de encontrar soluciones ingeniosas a problemas complejos.
       </p-->
-      <p>
-        Creo firmemente en la mejora continua, y estoy emocionado por lo que el mundo del desarrollo de software me tiene preparado.
-      </p>
-      <!--p>
-        Soy un ingeniero DevOps con experiencia en la implementación y gestión de infraestructura en la nube, automatización de procesos y desarrollo de soluciones CI/CD para optimizar el ciclo de vida de desarrollo. Apasionado por la tecnología y la mejora continua.
+    <p>
+      Creo firmemente en la mejora continua, y estoy emocionado por lo que el
+      mundo del desarrollo de software me tiene preparado.
+    </p>
+    <!--p>
+        Soy un ingeniero DevOps con experiencia en la implementaciÃ³n y gestiÃ³n de infraestructura en la nube, automatizaciÃ³n de procesos y desarrollo de soluciones CI/CD para optimizar el ciclo de vida de desarrollo. Apasionado por la tecnologÃ­a y la mejora continua.
       </p-->
-    </div>
+  </div>
 </section>
-  
+
+
+
+
+

@@ -2,6 +2,7 @@
 @import '~@fortawesome/fontawesome-free/css/all.min.css';
 /* palette: portfolio.* (safe, idempotent) */
 @import 'styles/theme.css';
+@import 'styles/fonts.css';
 
 /* Estilos globales */
 body {
@@ -116,7 +117,7 @@ h2 {
 /* Mantiene el flujo cuando el avatar pasa a fixed */
 #perfil .avatar-spacer { width: 100%; }
 
-/* ReapariciÃ³n al volver al contenido (animaciÃ³n inversa sutil) */
+/* Reaparicion al volver al contenido (animacion inversa sutil) */
 #perfil .perfil-image.reappear {
   animation: avatarPopReverse 1.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
