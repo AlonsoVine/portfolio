@@ -5,10 +5,16 @@
            [class.floating-avatar]="avatarFloating"
            [class.reappear]="avatarReappear"
            [class.is-hovered]="avatarHovered"
+           [class.is-flipped]="avatarFlipped"
            (mouseenter)="avatarHovered = true"
            (mouseleave)="avatarHovered = false"
-           aria-label="Imagen de perfil">
-        <img src="assets/img/mi-foto-cv1.1.png" alt="" class="photo" />
+           (click)="avatarFlipped = !avatarFlipped"
+           aria-label="Imagen de perfil"
+           role="img">
+        <div class="flip">
+          <img src="assets/img/mi-foto-cv1.1.png" alt="" class="face front photo" />
+          <img src="assets/img/logo/logo-negro-redondo-conFondo.png" alt="" class="face back" />
+        </div>
       </div>
       <div class="avatar-spacer" [style.height.px]="avatarFloating ? placeholderHeight : 0"></div>
       

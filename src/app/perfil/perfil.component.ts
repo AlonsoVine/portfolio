@@ -10,6 +10,7 @@ export class PerfilComponent implements AfterViewInit, OnDestroy {
   avatarFloating = false;
   avatarReappear = false;
   avatarHovered = false;
+  avatarFlipped = false;
 
   private stickyHeight = 100; // px (altura actual de la barra)
   placeholderHeight = 0; // mantiene el espacio cuando el avatar flota
