@@ -52,7 +52,7 @@
 
 
 /* Pila de imágenes para fundido suave en hover */
-#perfil .avatar-stack { position: relative; overflow: hidden; border-radius: 50%; border: 1px solid color-mix(in srgb, var(--portfolio-text) 40%, transparent); }
+#perfil .avatar-stack { position: relative; overflow: hidden; border-radius: 50%; border: 1px solid var(--avatar-border, rgba(255,255,255,0.28)); }
 #perfil .avatar-stack .photo { display:block; width:100%; height:auto; border-radius:50%; filter: grayscale(100%); transition: filter 500ms ease; transform: scale(1.03); }
 
 #perfil .avatar-stack.is-hovered .photo, #perfil .avatar-stack:hover .photo { filter: grayscale(0%); }

@@ -1,4 +1,4 @@
-/* palette: portfolio.* (safe, idempotent) */
+﻿/* palette: portfolio.* (safe, idempotent) */
 :root{
   /* Valores por defecto (Aurora) */
   --portfolio-base:#012456;
@@ -8,6 +8,8 @@
   --portfolio-text:#FFFFFF;
   --portfolio-text-muted:#EAEAEA;
   --portfolio-dark:#001C3A;
+  /* Fallback para borde del avatar */
+  --avatar-border: rgba(255,255,255,0.28);
 }
 
 /* Predeterminado (antes Aurora) */
@@ -19,6 +21,7 @@
   --portfolio-text:#FFFFFF;
   --portfolio-text-muted:#EAEAEA;
   --portfolio-dark:#001C3A;
+  --avatar-border: rgba(255,255,255,0.32);
 }
 
 /* Oscuro clásico */
@@ -30,6 +33,7 @@
   --portfolio-text:#eaf6fa;
   --portfolio-text-muted:#b7c5cb;
   --portfolio-dark:#050912;
+  --avatar-border: rgba(255,255,255,0.22);
 }
 
 /* Claro */
@@ -41,6 +45,7 @@
   --portfolio-text:#0B3B73; /* azul visible en modo claro */
   --portfolio-text-muted:#0B3B73; /* bordes/iconos en azul consistente */
   --portfolio-dark:#ffffff;
+  --avatar-border: rgba(33,52,59,0.25);
 }
 
 /* Optional utilities (safe, idempotent) */

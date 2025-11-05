@@ -583,10 +583,11 @@ html.force-hide-sticky .hero-section .sticky-bar {
 }
 /* En modo oscuro, resalta con sombra blanca suave para mayor contraste */
 :host-context([data-theme="dark"]) .hero-section .hero-text .console-window {
+  /* Evita borde visible en dark: sin border y sin inset glow */
+  border: none;
   box-shadow:
     0 26px 80px rgba(0, 0, 0, 0.62),
-    0 0 0 3px rgba(255, 255, 255, 0.12) inset,
-    0 0 36px rgba(255, 255, 255, 0.12);
+    0 0 36px rgba(255, 255, 255, 0.08);
 }
 
 /* Modo minimizado: solo titlebar visible, se queda sticky */
