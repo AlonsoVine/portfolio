@@ -16,6 +16,7 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   private hysteresis = 40; // px de margen para una transiciÃ³n mÃ¡s suave
   private enterThreshold = 0;
   private exitThreshold = 0;
+  private isAutoScrolling = false;
 
   // Campos para typewriter de título y CTA
   typedTitle = '';
@@ -55,17 +56,14 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   irAlComponentePerfil() {
     const elemento = document.getElementById('mi-perfil');
     if (elemento) {
-      const root = document.documentElement;
-      root.classList.add('force-hide-sticky');
-      setTimeout(() => root.classList.remove('force-hide-sticky'), 1600);
-      elemento.scrollIntoView({ behavior: 'smooth' });
+      this.scrollToElement(elemento, 1300, true);
     }
   }
 
   irAlComponenteHabilidades() {
     const elemento = document.getElementById('habilidades');
     if (elemento) {
-      elemento.scrollIntoView({ behavior: 'smooth' });
+      this.scrollToElement(elemento, 1300, true);
     }
   }
 
@@ -100,6 +98,7 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   }
 
   private updateStickyState(): void {
+    if (this.isAutoScrolling) return;
     const y = window.scrollY;
     if (!this.isSticky) {
       this.isSticky = y >= this.enterThreshold;
@@ -301,7 +300,10 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   reopenHero(): void {
     this.isHidden = false;
     try { localStorage.removeItem('hideHero'); } catch {}
-    this.heroSection?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const el = this.heroSection?.nativeElement;
+    if (el) {
+      this.scrollToElement(el, 1100, false);
+    }
   }
 
   private restoreConsoleState(): void {
@@ -309,5 +311,58 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
       this.isMin = localStorage.getItem('consoleMinimized') === '1';
       this.isHidden = localStorage.getItem('hideHero') === '1';
     } catch {}
+  }
+
+  // Scroll suave con control de duración (~2x que el default del navegador)
+  private scrollToElement(el: Element, duration: number = 1200, hideSticky: boolean = true): void {
+    const targetY = Math.max(0, (el.getBoundingClientRect().top + window.scrollY));
+    this.scrollToY(targetY, duration, hideSticky);
+  }
+
+  private scrollToY(targetY: number, duration: number, hideSticky: boolean = true): void {
+    const startY = window.scrollY || window.pageYOffset;
+    const distance = targetY - startY;
+    if (distance === 0 || duration <= 0) {
+      window.scrollTo(0, targetY);
+      return;
+    }
+
+    const startTime = performance.now();
+    this.isAutoScrolling = true;
+    const root = document.documentElement;
+    let prevScrollBehavior = '';
+    try {
+      // Evita interferencias si hubiera scroll-behavior: smooth en CSS
+      prevScrollBehavior = (root.style as any).scrollBehavior || '';
+      (root.style as any).scrollBehavior = 'auto';
+    } catch {}
+    if (hideSticky) {
+      root.classList.add('force-hide-sticky');
+    }
+
+    const easeInOutCubic = (t: number) => t < 0.5
+      ? 4 * t * t * t
+      : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+    const step = (now: number) => {
+      const elapsed = now - startTime;
+      const t = Math.min(1, elapsed / duration);
+      const eased = easeInOutCubic(t);
+      const y = Math.round(startY + distance * eased);
+      window.scrollTo(0, y);
+      if (t < 1) {
+        requestAnimationFrame(step);
+      } else {
+        // Fin de animación
+        this.isAutoScrolling = false;
+        try { (root.style as any).scrollBehavior = prevScrollBehavior; } catch {}
+        if (hideSticky) {
+          setTimeout(() => root.classList.remove('force-hide-sticky'), 200);
+        }
+        this.updateStickyState();
+      }
+    };
+
+    requestAnimationFrame(step);
   }
 }
