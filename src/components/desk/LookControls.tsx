@@ -2,6 +2,7 @@
 
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
+import type { PerspectiveCamera } from "three";
 
 export const EYE: [number, number, number] = [0, 0.47, 0.74];
 
@@ -10,6 +11,9 @@ const YAW = 0.72;
 const PITCH_REST = -0.27;
 const PITCH_UP = 0.08;
 const PITCH_DOWN = -0.78;
+export const BASE_FOV = 56;
+const MAX_FOV = 92;
+const MIN_HFOV = (68 * Math.PI) / 180;
 // Más lento que el cursor: una cabeza pesa más que una mano
 const LOOK_SMOOTH_MS = 220;
 
@@ -65,6 +69,14 @@ export function LookControls({ reduceMotion }: { reduceMotion: boolean }) {
     const pitch = c.y > 0 ? PITCH_REST + c.y * (PITCH_DOWN - PITCH_REST) : PITCH_REST - c.y * (PITCH_UP - PITCH_REST);
     // Respiración: un vaivén mínimo para que la vista no parezca una cámara en trípode
     const breath = reduceMotion ? 0 : Math.sin(clock.elapsedTime * 1.1) * 0.004;
+
+    // En vertical se mantiene un campo horizontal mínimo para que quepan las tres pantallas
+    const cam = camera as PerspectiveCamera;
+    const fov = cam.aspect >= 1.2 ? BASE_FOV : Math.min(MAX_FOV, (2 * Math.atan(Math.tan(MIN_HFOV / 2) / cam.aspect) * 180) / Math.PI);
+    if (Math.abs(cam.fov - fov) > 0.1) {
+      cam.fov = fov;
+      cam.updateProjectionMatrix();
+    }
 
     camera.rotation.order = "YXZ";
     camera.rotation.set(pitch + breath * 0.3, yaw, 0);

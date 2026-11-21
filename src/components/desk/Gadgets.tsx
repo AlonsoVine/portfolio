@@ -1,11 +1,11 @@
 "use client";
 
-import { useFrame } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
-import { type Mesh, type MeshBasicMaterial, Vector2 } from "three";
+import { useMemo } from "react";
+import { Vector2 } from "three";
 import { hdr, ICE } from "./palette";
-import { drawPhone, drawSoftDot, drawTablet, type DeskCopy } from "./screens";
+import { drawPhone, drawTablet, type DeskCopy } from "./screens";
 import { RoundedBox } from "./primitives";
+import { Steam } from "./Steam";
 import { useCanvasTexture } from "./useCanvasTexture";
 
 type Placed = { position: [number, number, number]; rotation?: [number, number, number] };
@@ -82,7 +82,6 @@ export function Tablet({ t, lang, position, rotation }: { t: DeskCopy; lang: str
   );
 }
 
-const STEAM = 12;
 
 /** Perfil de la taza para el torno: exterior, borde y paredes interiores. */
 const MUG = (() => {
@@ -104,24 +103,6 @@ const MUG = (() => {
 })();
 
 export function Coffee({ position, reduceMotion }: Placed & { reduceMotion: boolean }) {
-  const puff = useCanvasTexture(128, 128, drawSoftDot);
-  const puffs = useRef<(Mesh | null)[]>([]);
-
-  useFrame(({ clock, camera }) => {
-    const t = clock.elapsedTime;
-    puffs.current.forEach((m, i) => {
-      if (!m) return;
-      const p = (t * 0.16 + i / STEAM) % 1;
-      // Volutas: cada bocanada sube girando y se ensancha hasta desvanecerse
-      const swirl = t * 0.9 + i * 1.7;
-      m.position.set(Math.sin(swirl) * 0.018 * p + Math.sin(t * 0.4) * 0.01 * p, 0.082 + p * 0.2, Math.cos(swirl * 0.8) * 0.012 * p);
-      m.scale.setScalar(0.026 + p * 0.085);
-      m.quaternion.copy(camera.quaternion);
-      m.rotateZ(i + t * 0.2);
-      (m.material as MeshBasicMaterial).opacity = Math.sin(Math.PI * Math.min(1, p * 1.4)) * 0.13 * (1 - p * 0.4);
-    });
-  });
-
   return (
     <group position={position}>
       {/* Posavasos de mandala */}
@@ -148,13 +129,12 @@ export function Coffee({ position, reduceMotion }: Placed & { reduceMotion: bool
           <meshPhysicalMaterial color="#8c7a2c" roughness={0.38} clearcoat={0.6} />
         </mesh>
       </group>
-      {!reduceMotion &&
-        Array.from({ length: STEAM }, (_, i) => (
-          <mesh key={i} ref={(m) => void (puffs.current[i] = m)}>
-            <planeGeometry />
-            <meshBasicMaterial map={puff} color="#e8eefc" transparent depthWrite={false} opacity={0} />
-          </mesh>
-        ))}
+      {!reduceMotion && (
+        <>
+          <Steam position={[0.004, 0.075, 0]} height={0.2} width={0.055} />
+          <Steam position={[-0.008, 0.075, 0.006]} height={0.15} width={0.045} seed={1} />
+        </>
+      )}
     </group>
   );
 }

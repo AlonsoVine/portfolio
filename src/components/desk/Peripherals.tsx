@@ -2,10 +2,10 @@
 
 import { useFrame } from "@react-three/fiber";
 import { useLayoutEffect, useMemo, useRef } from "react";
-import { type InstancedMesh, type MeshBasicMaterial, Object3D } from "three";
+import { AdditiveBlending, type InstancedMesh, type MeshBasicMaterial, Object3D } from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
-import { hdr, ICE, MINT, VIOLET } from "./palette";
-import { drawLegends, drawStrip } from "./screens";
+import { hdr, ICE, VIOLET } from "./palette";
+import { drawLegends, drawSoftDot, drawStrip } from "./screens";
 import { RoundedBox } from "./primitives";
 import { useCanvasTexture } from "./useCanvasTexture";
 
@@ -57,6 +57,7 @@ export function Keyboard({ position, rotation, reduceMotion }: Placed & { reduce
   const glowMat = useRef<MeshBasicMaterial>(null);
   const legends = useCanvasTexture(COLS * LEGEND_PX, DEPTH * LEGEND_PX, legendsDraw);
   const glow = useCanvasTexture(512, 4, drawStrip, { tileX: 1 });
+  const spill = useCanvasTexture(128, 128, drawSoftDot);
   const geometry = useMemo(() => new RoundedBoxGeometry(1, 1, 1, 2, 0.18), []);
   const width = COLS * U;
   const depth = DEPTH * U;
@@ -100,7 +101,12 @@ export function Keyboard({ position, rotation, reduceMotion }: Placed & { reduce
       <RoundedBox args={[width, 0.016, 0.07]} radius={0.008} smoothness={4} position={[0, 0.008, depth / 2 + 0.055]} castShadow receiveShadow>
         <meshStandardMaterial color="#141419" roughness={0.95} />
       </RoundedBox>
-      <pointLight position={[0, 0.05, 0]} color={VIOLET} intensity={0.25} distance={0.35} />
+      {/* Reflejo del RGB sobre el tapete alrededor del teclado */}
+      <mesh position={[0, 0.0045, 0.01]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[width * 1.7, depth * 2.6]} />
+        <meshBasicMaterial map={spill} color={VIOLET} transparent opacity={0.4} blending={AdditiveBlending} depthWrite={false} />
+      </mesh>
+      <pointLight position={[0, 0.05, 0]} color={VIOLET} intensity={0.35} distance={0.4} />
     </group>
   );
 }
@@ -138,88 +144,6 @@ export function Mouse({ position, rotation }: Placed) {
           <meshBasicMaterial color={hdr(VIOLET, 2.6)} toneMapped={false} />
         </mesh>
       </group>
-    </group>
-  );
-}
-const FACE = [
-  { c: "#f4c430", p: [0.035, -0.018] },
-  { c: "#2f7de1", p: [0.025, -0.008] },
-  { c: "#e0333a", p: [0.045, -0.008] },
-  { c: "#3fb54a", p: [0.035, 0.002] },
-] as const;
-
-/** Mando de Xbox: cuerpo, empuñaduras, gatillos, sticks, cruceta, botonera y el botón Xbox encendido. */
-export function Controller({ position, rotation }: Placed) {
-  const white = { color: "#eef0f3", roughness: 0.42, metalness: 0, clearcoat: 0.3, clearcoatRoughness: 0.5 } as const;
-  const dark = { color: "#1e2026", roughness: 0.55 } as const;
-  return (
-    <group position={position} rotation={rotation}>
-      <group position={[0, 0.02, 0]}>
-        <RoundedBox args={[0.12, 0.03, 0.062]} radius={0.014} smoothness={5} position={[0, 0, -0.006]} castShadow>
-          <meshPhysicalMaterial {...white} />
-        </RoundedBox>
-        {[-1, 1].map((s) => (
-          <group key={s}>
-            <mesh position={[s * 0.047, -0.002, 0.028]} rotation={[Math.PI / 2, 0, s * 0.42]} castShadow>
-              <capsuleGeometry args={[0.019, 0.04, 8, 20]} />
-              <meshPhysicalMaterial {...white} />
-            </mesh>
-            {/* Gatillo y bumper */}
-            <RoundedBox args={[0.03, 0.016, 0.014]} radius={0.006} position={[s * 0.042, 0.004, -0.04]} castShadow>
-              <meshStandardMaterial {...dark} />
-            </RoundedBox>
-            <RoundedBox args={[0.036, 0.008, 0.01]} radius={0.003} position={[s * 0.04, 0.012, -0.036]}>
-              <meshPhysicalMaterial {...white} />
-            </RoundedBox>
-          </group>
-        ))}
-        {(
-          [
-            [-0.036, -0.012],
-            [0.017, 0.01],
-          ] as const
-        ).map(([x, z]) => (
-          <group key={x} position={[x, 0.016, z]}>
-            <mesh>
-              <cylinderGeometry args={[0.008, 0.009, 0.01, 20]} />
-              <meshStandardMaterial {...dark} />
-            </mesh>
-            <mesh position={[0, 0.006, 0]}>
-              <cylinderGeometry args={[0.0115, 0.0115, 0.004, 28]} />
-              <meshStandardMaterial {...dark} roughness={0.85} />
-            </mesh>
-          </group>
-        ))}
-        {/* Cruceta */}
-        <group position={[-0.017, 0.0155, 0.01]}>
-          <mesh>
-            <cylinderGeometry args={[0.011, 0.011, 0.002, 24]} />
-            <meshStandardMaterial color="#c9ccd2" roughness={0.3} metalness={0.6} />
-          </mesh>
-          {[0, Math.PI / 2].map((r) => (
-            <RoundedBox key={r} args={[0.017, 0.004, 0.0055]} radius={0.0015} position={[0, 0.002, 0]} rotation={[0, r, 0]}>
-              <meshStandardMaterial {...dark} />
-            </RoundedBox>
-          ))}
-        </group>
-        {FACE.map(({ c, p }) => (
-          <mesh key={c} position={[p[0], 0.0155, p[1]]}>
-            <sphereGeometry args={[0.0052, 16, 10]} />
-            <meshPhysicalMaterial color="#1a1b20" roughness={0.1} clearcoat={1} emissive={c} emissiveIntensity={0.55} />
-          </mesh>
-        ))}
-        {[-0.011, 0.011].map((x) => (
-          <mesh key={x} position={[x, 0.0152, -0.012]}>
-            <cylinderGeometry args={[0.0028, 0.0028, 0.002, 16]} />
-            <meshStandardMaterial {...dark} />
-          </mesh>
-        ))}
-        <mesh position={[0, 0.0152, -0.026]}>
-          <cylinderGeometry args={[0.0075, 0.0075, 0.002, 28]} />
-          <meshBasicMaterial color={hdr("#ffffff", 3)} toneMapped={false} />
-        </mesh>
-      </group>
-      <pointLight position={[0, 0.05, -0.02]} color={MINT} intensity={0.04} distance={0.15} />
     </group>
   );
 }

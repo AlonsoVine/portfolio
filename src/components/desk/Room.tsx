@@ -5,7 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import { AdditiveBlending, type Color, type MeshBasicMaterial, type PointLight, type Texture } from "three";
 import { AMBER, hdr, ICE, MAGENTA, VIOLET } from "./palette";
-import { drawNeonSign, drawPegboard, drawSoftDot, drawStrip, drawWood, type DeskCopy } from "./screens";
+import { drawFabric, drawMatEdge, drawNeonSign, drawPegboard, drawSoftDot, drawStrip, drawWood, type DeskCopy } from "./screens";
 import { Dust, RoundedBox } from "./primitives";
 import { useCanvasTexture } from "./useCanvasTexture";
 
@@ -14,18 +14,25 @@ export const WALL_Z = -0.6;
 export function Desk() {
   const wood = useCanvasTexture(1024, 512, drawWood, { tileX: 2 });
   const peg = useCanvasTexture(512, 512, drawPegboard, { tileX: 10, tileY: 5 });
+  const fabric = useCanvasTexture(256, 256, drawFabric, { tileX: 14, tileY: 5.2 });
+  const edge = useCanvasTexture(1500, 560, drawMatEdge);
 
   return (
     <group>
       <RoundedBox args={[2.6, 0.045, 0.92]} radius={0.012} position={[0, -0.0225, -0.14]} receiveShadow>
-        <meshStandardMaterial map={wood} color="#c9a184" roughness={0.55} metalness={0} />
+        <meshStandardMaterial map={wood} bumpMap={wood} bumpScale={0.6} color="#c9a184" roughness={0.5} metalness={0} />
       </RoundedBox>
       <RoundedBox args={[1.5, 0.004, 0.56]} radius={0.002} smoothness={2} position={[-0.02, 0.002, 0.06]} receiveShadow>
-        <meshStandardMaterial color="#1d1e24" roughness={0.92} />
+        <meshStandardMaterial map={fabric} bumpMap={fabric} bumpScale={0.35} color="#5a5c64" roughness={0.95} />
       </RoundedBox>
+      {/* Costura del borde */}
+      <mesh position={[-0.02, 0.0041, 0.06]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[1.5, 0.56]} />
+        <meshStandardMaterial map={edge} transparent roughness={0.8} depthWrite={false} />
+      </mesh>
       <mesh position={[0, 0.7, WALL_Z]} receiveShadow>
         <planeGeometry args={[4.2, 1.9]} />
-        <meshStandardMaterial map={peg} color="#8a8496" roughness={1} />
+        <meshStandardMaterial map={peg} bumpMap={peg} bumpScale={1.5} color="#8a8496" roughness={1} />
       </mesh>
     </group>
   );

@@ -1,14 +1,15 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
-import { Bloom, EffectComposer, Noise, ToneMapping, Vignette } from "@react-three/postprocessing";
+import { Bloom, EffectComposer, N8AO, Noise, ToneMapping, Vignette } from "@react-three/postprocessing";
 import { BlendFunction, ToneMappingMode } from "postprocessing";
 import { RectAreaLightUniformsLib } from "three/examples/jsm/lights/RectAreaLightUniformsLib.js";
 import type { Dictionary } from "@/i18n/dictionaries";
 import { Laptop, SideMonitor, Ultrawide } from "./Displays";
 import { Coffee, Phone, Tablet } from "./Gadgets";
 import { EYE, LookControls } from "./LookControls";
-import { Controller, Keyboard, Mouse } from "./Peripherals";
+import { Controller } from "./Controller";
+import { Keyboard, Mouse } from "./Peripherals";
 import { Performance, Reflections } from "./primitives";
 import { Desk, Leds } from "./Room";
 
@@ -53,6 +54,9 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
         shadow-normalBias={0.02}
       />
 
+      {/* Relleno cenital suave: la luz de la habitación, para que el primer plano no se pierda en negro */}
+      <spotLight position={[0.1, 1.5, 1.1]} angle={0.75} penumbra={1} intensity={1.6} decay={1.2} color="#8b9ad6" />
+
       <Desk />
       <Leds t={t} reduceMotion={reduceMotion} />
       <Ultrawide t={t} position={[0, 0, -0.3]} />
@@ -69,6 +73,8 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
       <Performance />
 
       <EffectComposer multisampling={4} enableNormalPass={false}>
+        {/* Oclusión ambiental: asienta los objetos sobre la mesa y oscurece los rincones */}
+        <N8AO halfRes aoRadius={0.06} distanceFalloff={0.5} intensity={2.2} color="#05060a" quality="medium" />
         <Bloom mipmapBlur intensity={0.85} luminanceThreshold={1} luminanceSmoothing={0.25} radius={0.72} />
         <ToneMapping mode={ToneMappingMode.NEUTRAL} />
         <Vignette offset={0.28} darkness={0.72} />

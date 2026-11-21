@@ -438,20 +438,37 @@ export const drawSoftDot: Draw = (ctx, w, h) => {
 };
 
 export const drawWood: Draw = (ctx, w, h) => {
-  ctx.fillStyle = "#3b2619";
+  const base = ctx.createLinearGradient(0, 0, 0, h);
+  base.addColorStop(0, "#3d2719");
+  base.addColorStop(0.5, "#4a2f1e");
+  base.addColorStop(1, "#382316");
+  ctx.fillStyle = base;
   ctx.fillRect(0, 0, w, h);
   const r = rng(11);
-  for (let i = 0; i < 260; i += 1) {
+  // Vetas largas onduladas con grosor y tono variables, y algún nudo
+  for (let i = 0; i < 340; i += 1) {
     const y = r() * h;
-    ctx.strokeStyle = r() > 0.5 ? "rgba(20,10,4,0.35)" : "rgba(120,80,50,0.18)";
-    ctx.lineWidth = 0.6 + r() * 2.2;
+    const dark = r() > 0.45;
+    ctx.strokeStyle = dark ? `rgba(18,9,3,${0.15 + r() * 0.3})` : `rgba(150,100,62,${0.06 + r() * 0.14})`;
+    ctx.lineWidth = 0.5 + r() * 2.6;
     ctx.beginPath();
+    const ph = r() * 10;
     ctx.moveTo(0, y);
-    for (let x = 0; x <= w; x += 32) ctx.lineTo(x, y + Math.sin(x * 0.004 + i) * 6 + Math.sin(x * 0.02 + i * 3) * 1.5);
+    for (let x = 0; x <= w; x += 24) ctx.lineTo(x, y + Math.sin(x * 0.003 + ph) * 9 + Math.sin(x * 0.017 + ph * 3) * 2);
     ctx.stroke();
   }
+  for (let k = 0; k < 3; k += 1) {
+    const cx = r() * w;
+    const cy = r() * h;
+    for (let ring = 1; ring < 9; ring += 1) {
+      ctx.strokeStyle = `rgba(20,10,4,${0.25 - ring * 0.02})`;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, ring * 7, ring * 2.6, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
 };
-
 export const drawPegboard: Draw = (ctx, w, h) => {
   ctx.fillStyle = "#2a2730";
   ctx.fillRect(0, 0, w, h);
@@ -516,4 +533,99 @@ export const drawLaptopDeck: Draw = (ctx, w, h) => {
     }
   }
   ctx.fillStyle = "rgba(0,0,0,0)";
+};
+
+export const drawFaceButton =
+  (letter: string, color: string): Draw =>
+  (ctx, w, h, f) => {
+    ctx.textBaseline = "middle";
+    text(ctx, letter, w / 2, h / 2 + 2, display(f, h * 0.7, 800), color, { align: "center", glow: 6 });
+  };
+
+/** Logo del botón Xbox: esfera con la «X» curvada recortada. */
+export const drawXboxLogo: Draw = (ctx, w, h) => {
+  const r = w * 0.36;
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.arc(w / 2, h / 2, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "#1a1b20";
+  ctx.lineWidth = w * 0.09;
+  ctx.lineCap = "round";
+  for (const s of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(w / 2 - r * 0.75, h / 2 + s * r * 0.75);
+    ctx.quadraticCurveTo(w / 2, h / 2 - s * r * 0.05, w / 2 + r * 0.75, h / 2 + s * r * 0.75);
+    ctx.stroke();
+  }
+};
+
+/**
+ * Ruido de valor tileable en escala de grises, varias octavas. Lo usa el shader del humo
+ * para retorcer y recortar la voluta.
+ */
+export const drawNoise: Draw = (ctx, w, h) => {
+  const img = ctx.createImageData(w, h);
+  const r = rng(29);
+  const octaves = [4, 8, 16, 32].map((cells) => {
+    const grid = Array.from({ length: cells * cells }, () => r());
+    return { cells, grid };
+  });
+  const smooth = (t: number) => t * t * (3 - 2 * t);
+  for (let y = 0; y < h; y += 1) {
+    for (let x = 0; x < w; x += 1) {
+      let v = 0;
+      let amp = 0.5;
+      let norm = 0;
+      for (const { cells, grid } of octaves) {
+        const fx = (x / w) * cells;
+        const fy = (y / h) * cells;
+        const x0 = Math.floor(fx);
+        const y0 = Math.floor(fy);
+        const tx = smooth(fx - x0);
+        const ty = smooth(fy - y0);
+        const at = (i: number, j: number) => grid[((j % cells) * cells + (i % cells)) % grid.length];
+        const a = at(x0, y0) + (at(x0 + 1, y0) - at(x0, y0)) * tx;
+        const b = at(x0, y0 + 1) + (at(x0 + 1, y0 + 1) - at(x0, y0 + 1)) * tx;
+        v += (a + (b - a) * ty) * amp;
+        norm += amp;
+        amp *= 0.5;
+      }
+      const c = Math.round((v / norm) * 255);
+      const i = (y * w + x) * 4;
+      img.data[i] = img.data[i + 1] = img.data[i + 2] = c;
+      img.data[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+};
+
+/** Tela del tapete: trama fina en gris con ligera variación, sirve también de relieve. */
+export const drawFabric: Draw = (ctx, w, h) => {
+  ctx.fillStyle = "#7a7c84";
+  ctx.fillRect(0, 0, w, h);
+  const r = rng(41);
+  const img = ctx.getImageData(0, 0, w, h);
+  for (let y = 0; y < h; y += 1) {
+    for (let x = 0; x < w; x += 1) {
+      // Trama cruzada: hilos alternos horizontales y verticales con ruido
+      const weave = ((x >> 1) + (y >> 1)) % 2 === 0 ? 14 : -14;
+      const n = (r() - 0.5) * 36 + weave;
+      const i = (y * w + x) * 4;
+      img.data[i] += n;
+      img.data[i + 1] += n;
+      img.data[i + 2] += n;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+};
+
+/** Borde cosido del tapete: canal de luminancia para el relieve y el color de la costura. */
+export const drawMatEdge: Draw = (ctx, w, h) => {
+  const inset = 10;
+  ctx.strokeStyle = "#5a5c64";
+  ctx.lineWidth = 6;
+  ctx.setLineDash([10, 6]);
+  ctx.strokeRect(inset, inset, w - inset * 2, h - inset * 2);
+  ctx.setLineDash([]);
 };
