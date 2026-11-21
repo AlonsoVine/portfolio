@@ -19,7 +19,7 @@ export function Desk() {
 
   return (
     <group>
-      <RoundedBox args={[2.6, 0.045, 0.92]} radius={0.012} position={[0, -0.0225, -0.14]} receiveShadow>
+      <RoundedBox args={[2.1, 0.045, 0.92]} radius={0.012} position={[0, -0.0225, -0.14]} receiveShadow>
         <meshStandardMaterial map={wood} bumpMap={wood} bumpScale={0.6} color="#c9a184" roughness={0.5} metalness={0} />
       </RoundedBox>
       <RoundedBox args={[1.5, 0.004, 0.56]} radius={0.002} smoothness={2} position={[-0.02, 0.002, 0.06]} receiveShadow>
@@ -34,13 +34,34 @@ export function Desk() {
         <planeGeometry args={[4.2, 1.9]} />
         <meshStandardMaterial map={peg} bumpMap={peg} bumpScale={1.5} color="#8a8496" roughness={1} />
       </mesh>
+      {/* Paredes laterales: el escritorio está en un hueco, no flotando en el vacío */}
+      {[-1, 1].map((s) => (
+        <mesh key={s} position={[s * 1.05, 0.6, 0.25]} rotation={[0, -s * (Math.PI / 2), 0]} receiveShadow>
+          <planeGeometry args={[1.8, 1.9]} />
+          <meshStandardMaterial color="#2a2830" roughness={0.95} />
+        </mesh>
+      ))}
     </group>
   );
 }
 
-function Wash({ position, scale, color, map, opacity }: { position: [number, number, number]; scale: [number, number]; color: string; map: Texture; opacity: number }) {
+function Wash({
+  position,
+  rotation,
+  scale,
+  color,
+  map,
+  opacity,
+}: {
+  position: [number, number, number];
+  rotation?: [number, number, number];
+  scale: [number, number];
+  color: string;
+  map: Texture;
+  opacity: number;
+}) {
   return (
-    <mesh position={position} scale={[scale[0], scale[1], 1]}>
+    <mesh position={position} rotation={rotation} scale={[scale[0], scale[1], 1]}>
       <planeGeometry />
       <meshBasicMaterial map={map} color={color} transparent opacity={opacity} blending={AdditiveBlending} depthWrite={false} />
     </mesh>
@@ -114,6 +135,9 @@ export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }
       <Wash map={dot} position={[0.78, 0.3, WALL_Z + 0.004]} scale={[1.5, 1.1]} color={AMBER} opacity={0.24} />
       <Wash map={dot} position={[0, 0.12, WALL_Z + 0.005]} scale={[1.9, 0.5]} color={MAGENTA} opacity={0.2} />
       <Wash map={dot} position={[0, 0.66, WALL_Z + 0.003]} scale={[1.3, 0.5]} color={VIOLET} opacity={0.18} />
+      <Wash map={dot} position={[-1.045, 0.35, -0.25]} rotation={[0, Math.PI / 2, 0]} scale={[1.4, 1]} color={MAGENTA} opacity={0.16} />
+      <Wash map={dot} position={[-1.045, 0.25, -0.45]} rotation={[0, Math.PI / 2, 0]} scale={[0.8, 0.7]} color={ICE} opacity={0.18} />
+      <Wash map={dot} position={[1.045, 0.4, -0.3]} rotation={[0, -Math.PI / 2, 0]} scale={[1.4, 1.1]} color={AMBER} opacity={0.2} />
 
       <pointLight ref={(l) => void (lights.current[0] = l)} position={[-0.38, 0.16, -0.46]} color={ICE} intensity={base[0]} distance={1.6} decay={1.6} />
       <pointLight ref={(l) => void (lights.current[1] = l)} position={[0.38, 0.16, -0.46]} color={AMBER} intensity={base[1]} distance={1.6} decay={1.6} />
