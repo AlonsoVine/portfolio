@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import type { Dictionary } from "@/i18n/dictionaries";
 
 // three.js solo existe en el cliente y pesa: se carga aparte para no engordar el hero
@@ -14,15 +14,16 @@ const subscribe = (cb: () => void) => {
   return () => mq.removeEventListener("change", cb);
 };
 
-export function DeskExperience({ t }: { t: Dictionary["desk"] }) {
+export function DeskExperience({ t, lang }: { t: Dictionary["desk"]; lang: string }) {
   const reduceMotion = useSyncExternalStore(
     subscribe,
     () => window.matchMedia(REDUCE).matches,
     () => false,
   );
+  const [ready, setReady] = useState(false);
   return (
-    <section className="desk" aria-label={t.label}>
-      <DeskScene t={t} reduceMotion={reduceMotion} />
+    <section className="desk" aria-label={t.label} data-ready={ready}>
+      <DeskScene t={t} lang={lang} reduceMotion={reduceMotion} onReady={() => setReady(true)} />
       <p className="desk-hint">
         <span data-pointer>{t.hintPointer}</span>
         <span data-touch>{t.hintTouch}</span>

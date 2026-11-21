@@ -1,51 +1,80 @@
 "use client";
 
+import { Environment, Lightformer } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
+import { Bloom, EffectComposer, Noise, ToneMapping, Vignette } from "@react-three/postprocessing";
+import { BlendFunction, ToneMappingMode } from "postprocessing";
+import { RectAreaLightUniformsLib } from "three/examples/jsm/lights/RectAreaLightUniformsLib.js";
 import type { Dictionary } from "@/i18n/dictionaries";
+import { Laptop, SideMonitor, Ultrawide } from "./Displays";
+import { Coffee, Phone, Tablet } from "./Gadgets";
 import { EYE, LookControls } from "./LookControls";
-import { BackLeds, Coffee, Controller, Desk, Keyboard, Laptop, Mouse, Phone, SideMonitor, Tablet, Ultrawide } from "./Props";
+import { AMBER, ICE, VIOLET } from "./palette";
+import { Controller, Keyboard, Mouse } from "./Peripherals";
+import { Desk, Leds } from "./Room";
 
-export default function DeskScene({ t, reduceMotion }: { t: Dictionary["desk"]; reduceMotion: boolean }) {
+// Las pantallas iluminan la mesa con luces de área; sus tablas se cargan una sola vez
+RectAreaLightUniformsLib.init();
+
+type Props = { t: Dictionary["desk"]; lang: string; reduceMotion: boolean; onReady: () => void };
+
+export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
   return (
     <Canvas
       className="desk-canvas"
       shadows
+      flat
       dpr={[1, 1.5]}
-      camera={{ position: EYE, fov: 58, near: 0.02, far: 10 }}
-      gl={{ antialias: true, powerPreference: "high-performance" }}
+      camera={{ position: EYE, fov: 56, near: 0.02, far: 8 }}
+      gl={{ antialias: false, powerPreference: "high-performance", stencil: false }}
+      onCreated={() => requestAnimationFrame(onReady)}
     >
-      <color attach="background" args={["#07080d"]} />
-      <fog attach="fog" args={["#07080d", 1.2, 3.2]} />
-      <hemisphereLight args={["#8fa8ff", "#2a1a12", 0.35]} />
-      <ambientLight intensity={0.12} />
-      <directionalLight
-        position={[0.6, 1.6, 1.2]}
-        intensity={0.45}
-        color="#b9c8ff"
-        castShadow
-        shadow-mapSize={[1024, 1024]}
-        shadow-camera-left={-1.1}
-        shadow-camera-right={1.1}
-        shadow-camera-top={0.8}
-        shadow-camera-bottom={-0.8}
-        shadow-bias={-0.0004}
-      />
-      {/* Luz que emiten las pantallas sobre la mesa */}
-      <pointLight position={[0, 0.3, -0.15]} color="#7fb8ff" intensity={0.8} distance={1.1} />
+      <color attach="background" args={["#05060a"]} />
+      <fog attach="fog" args={["#05060a", 1.3, 3]} />
 
-      <Desk />
-      <BackLeds />
-      <Ultrawide copy={t.screens} position={[0, 0, -0.32]} />
-      <Laptop copy={t.screens} position={[-0.66, 0, -0.14]} rotation={[0, 0.6, 0]} />
-      <SideMonitor copy={t.screens} position={[0.68, 0, -0.22]} rotation={[0, -0.6, 0]} />
-      <Keyboard position={[-0.03, 0, 0.1]} />
-      <Mouse position={[0.29, 0, 0.13]} rotation={[0, -0.1, 0]} />
-      <Phone copy={t.screens} position={[0.29, 0, -0.08]} rotation={[0, -0.12, 0]} />
-      <Coffee position={[0.44, 0, -0.06]} />
-      <Controller position={[-0.5, 0, 0.2]} rotation={[0, 0.35, 0]} />
-      <Tablet position={[0.62, 0, 0.18]} rotation={[0, -0.45, 0]} />
+      {/* Entorno solo para reflejos: paneles de luz fríos y cálidos, sin imagen HDR que descargar */}
+      <Environment resolution={128} frames={1} environmentIntensity={0.35}>
+        <Lightformer form="rect" intensity={2} color={ICE} position={[-2, 1, 0]} scale={[2, 1, 1]} rotation-y={Math.PI / 2} />
+        <Lightformer form="rect" intensity={2} color={AMBER} position={[2, 1, 0]} scale={[2, 1, 1]} rotation-y={-Math.PI / 2} />
+        <Lightformer form="rect" intensity={1.2} color={VIOLET} position={[0, 2, -1]} scale={[3, 1, 1]} rotation-x={Math.PI / 2} />
+        <Lightformer form="ring" intensity={1.5} color="#ffffff" position={[0, 1, 2]} scale={0.8} />
+      </Environment>
+
+      <hemisphereLight args={["#6f86c9", "#1a0f0a", 0.18]} />
+      <directionalLight
+        position={[-0.6, 1.8, 1.1]}
+        intensity={0.35}
+        color="#a8b8ff"
+        castShadow
+        shadow-mapSize={[2048, 2048]}
+        shadow-camera-left={-1.2}
+        shadow-camera-right={1.2}
+        shadow-camera-top={0.9}
+        shadow-camera-bottom={-0.9}
+        shadow-bias={-0.0003}
+        shadow-normalBias={0.02}
+      />
+
+      <Desk t={t} />
+      <Leds t={t} reduceMotion={reduceMotion} />
+      <Ultrawide t={t} position={[0, 0, -0.3]} />
+      <Laptop t={t} position={[-0.585, 0, -0.21]} rotation={[0, 0.46, 0]} />
+      <SideMonitor t={t} position={[0.675, 0, -0.22]} rotation={[0, -0.56, 0]} />
+      <Keyboard position={[-0.04, 0, 0.1]} reduceMotion={reduceMotion} />
+      <Mouse position={[0.27, 0, 0.13]} rotation={[0, -0.12, 0]} />
+      <Phone t={t} lang={lang} position={[0.27, 0, -0.1]} rotation={[0, -0.15, 0]} />
+      <Coffee position={[0.425, 0, -0.06]} reduceMotion={reduceMotion} />
+      <Controller position={[-0.47, 0, 0.2]} rotation={[0, 0.38, 0]} />
+      <Tablet t={t} lang={lang} position={[0.6, 0, 0.15]} rotation={[0, -0.42, 0]} />
 
       <LookControls reduceMotion={reduceMotion} />
+
+      <EffectComposer multisampling={4} enableNormalPass={false}>
+        <Bloom mipmapBlur intensity={0.85} luminanceThreshold={1} luminanceSmoothing={0.25} radius={0.72} />
+        <ToneMapping mode={ToneMappingMode.NEUTRAL} />
+        <Vignette offset={0.28} darkness={0.72} />
+        <Noise premultiply blendFunction={BlendFunction.SOFT_LIGHT} opacity={0.35} />
+      </EffectComposer>
     </Canvas>
   );
 }

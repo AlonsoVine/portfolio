@@ -729,6 +729,12 @@ html[data-cursor="custom"] * {
 .desk-canvas {
   position: absolute !important;
   inset: 0;
+  opacity: 0;
+  transition: opacity 1.6s var(--ease-out, ease-out) 0.1s;
+}
+
+.desk[data-ready="true"] .desk-canvas {
+  opacity: 1;
 }
 
 .desk-hint {

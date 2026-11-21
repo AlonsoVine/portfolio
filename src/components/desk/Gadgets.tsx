@@ -1,0 +1,160 @@
+"use client";
+
+import { RoundedBox } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
+import { useMemo, useRef } from "react";
+import { type Mesh, type MeshBasicMaterial, Vector2 } from "three";
+import { hdr, ICE } from "./palette";
+import { drawPhone, drawSoftDot, drawTablet, type DeskCopy } from "./screens";
+import { useCanvasTexture } from "./useCanvasTexture";
+
+type Placed = { position: [number, number, number]; rotation?: [number, number, number] };
+
+const SCREEN = hdr("#ffffff", 1.08);
+const GLASS = { color: "#05060a", roughness: 0.08, metalness: 0.1, clearcoat: 1, clearcoatRoughness: 0.05 } as const;
+const CLOCK_REFRESH_MS = 20_000;
+
+export function Phone({ t, lang, position, rotation }: { t: DeskCopy; lang: string } & Placed) {
+  const draw = useMemo(() => drawPhone(t, lang), [t, lang]);
+  const map = useCanvasTexture(360, 800, draw, { refreshMs: CLOCK_REFRESH_MS });
+  return (
+    <group position={position} rotation={rotation}>
+      {/* Soporte: base con tira LED y respaldo inclinado */}
+      <RoundedBox args={[0.09, 0.022, 0.08]} radius={0.01} smoothness={4} position={[0, 0.011, 0]} castShadow receiveShadow>
+        <meshStandardMaterial color="#121318" roughness={0.4} metalness={0.4} />
+      </RoundedBox>
+      <mesh position={[0, 0.0225, 0.028]}>
+        <boxGeometry args={[0.07, 0.002, 0.004]} />
+        <meshBasicMaterial color={hdr(ICE, 3.5)} toneMapped={false} />
+      </mesh>
+      <RoundedBox args={[0.06, 0.12, 0.008]} radius={0.004} position={[0, 0.07, -0.03]} rotation={[-0.32, 0, 0]} castShadow>
+        <meshStandardMaterial color="#121318" roughness={0.4} metalness={0.4} />
+      </RoundedBox>
+      <RoundedBox args={[0.08, 0.012, 0.02]} radius={0.004} position={[0, 0.026, 0.012]}>
+        <meshStandardMaterial color="#121318" roughness={0.4} metalness={0.4} />
+      </RoundedBox>
+      <group position={[0, 0.105, -0.012]} rotation={[-0.3, 0, 0]}>
+        <RoundedBox args={[0.077, 0.165, 0.0085]} radius={0.0042} smoothness={4} castShadow>
+          <meshStandardMaterial color="#2a2d36" roughness={0.25} metalness={0.85} />
+        </RoundedBox>
+        <mesh position={[0, 0, 0.0043]}>
+          <planeGeometry args={[0.074, 0.162]} />
+          <meshPhysicalMaterial {...GLASS} />
+        </mesh>
+        <mesh position={[0, 0, 0.0045]}>
+          <planeGeometry args={[0.07, 0.155]} />
+          <meshBasicMaterial map={map} color={SCREEN} toneMapped={false} />
+        </mesh>
+        <mesh position={[0, 0.071, 0.0047]}>
+          <circleGeometry args={[0.0018, 16]} />
+          <meshBasicMaterial color="#000000" />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+/** Tablet sobre su funda, con un borde levantado para que quede ligeramente inclinada hacia la silla. */
+export function Tablet({ t, lang, position, rotation }: { t: DeskCopy; lang: string } & Placed) {
+  const draw = useMemo(() => drawTablet(t, lang), [t, lang]);
+  const map = useCanvasTexture(540, 800, draw, { refreshMs: CLOCK_REFRESH_MS });
+  return (
+    <group position={position} rotation={rotation}>
+      <group rotation={[0.07, 0, 0]} position={[0, 0.008, 0]}>
+        {/* Funda */}
+        <RoundedBox args={[0.188, 0.012, 0.27]} radius={0.006} smoothness={4} castShadow receiveShadow>
+          <meshStandardMaterial color="#1b1d26" roughness={0.85} />
+        </RoundedBox>
+        <RoundedBox args={[0.174, 0.007, 0.256]} radius={0.0035} smoothness={4} position={[0, 0.008, 0]} castShadow>
+          <meshStandardMaterial color="#3a3d46" roughness={0.3} metalness={0.85} />
+        </RoundedBox>
+        <mesh position={[0, 0.0117, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[0.17, 0.252]} />
+          <meshPhysicalMaterial {...GLASS} />
+        </mesh>
+        <mesh position={[0, 0.0119, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[0.158, 0.236]} />
+          <meshBasicMaterial map={map} color={SCREEN} toneMapped={false} />
+        </mesh>
+      </group>
+      <rectAreaLight position={[0, 0.03, 0]} rotation={[Math.PI / 2, 0, 0]} width={0.16} height={0.24} intensity={1.2} color="#5f86ff" />
+    </group>
+  );
+}
+
+const STEAM = 12;
+
+/** Perfil de la taza para el torno: exterior, borde y paredes interiores. */
+const MUG = (() => {
+  const p: [number, number][] = [
+    [0, 0],
+    [0.036, 0],
+    [0.039, 0.003],
+    [0.042, 0.02],
+    [0.046, 0.06],
+    [0.0475, 0.084],
+    [0.046, 0.087],
+    [0.0435, 0.085],
+    [0.042, 0.06],
+    [0.038, 0.02],
+    [0.034, 0.008],
+    [0, 0.008],
+  ];
+  return p.map(([x, y]) => new Vector2(x, y));
+})();
+
+export function Coffee({ position, reduceMotion }: Placed & { reduceMotion: boolean }) {
+  const puff = useCanvasTexture(128, 128, drawSoftDot);
+  const puffs = useRef<(Mesh | null)[]>([]);
+
+  useFrame(({ clock, camera }) => {
+    const t = clock.elapsedTime;
+    puffs.current.forEach((m, i) => {
+      if (!m) return;
+      const p = (t * 0.16 + i / STEAM) % 1;
+      // Volutas: cada bocanada sube girando y se ensancha hasta desvanecerse
+      const swirl = t * 0.9 + i * 1.7;
+      m.position.set(Math.sin(swirl) * 0.018 * p + Math.sin(t * 0.4) * 0.01 * p, 0.082 + p * 0.2, Math.cos(swirl * 0.8) * 0.012 * p);
+      m.scale.setScalar(0.026 + p * 0.085);
+      m.quaternion.copy(camera.quaternion);
+      m.rotateZ(i + t * 0.2);
+      (m.material as MeshBasicMaterial).opacity = Math.sin(Math.PI * Math.min(1, p * 1.4)) * 0.13 * (1 - p * 0.4);
+    });
+  });
+
+  return (
+    <group position={position}>
+      {/* Posavasos de mandala */}
+      <mesh position={[0, 0.003, 0]} receiveShadow castShadow>
+        <cylinderGeometry args={[0.062, 0.062, 0.006, 12]} />
+        <meshStandardMaterial color="#9b3a55" roughness={0.7} />
+      </mesh>
+      <mesh position={[0, 0.0062, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.03, 0.055, 12]} />
+        <meshStandardMaterial color="#d38b4a" roughness={0.6} />
+      </mesh>
+      <group position={[0, 0.006, 0]}>
+        <mesh castShadow receiveShadow>
+          <latheGeometry args={[MUG, 48]} />
+          <meshPhysicalMaterial color="#8c7a2c" roughness={0.38} clearcoat={0.6} clearcoatRoughness={0.25} side={2} />
+        </mesh>
+        {/* Café con algo de crema y reflejo */}
+        <mesh position={[0, 0.074, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <circleGeometry args={[0.0428, 40]} />
+          <meshPhysicalMaterial color="#2a150a" roughness={0.08} clearcoat={1} />
+        </mesh>
+        <mesh position={[0.046, 0.045, 0]} rotation={[0, 0, -Math.PI / 2]} castShadow>
+          <torusGeometry args={[0.018, 0.0055, 12, 32, Math.PI]} />
+          <meshPhysicalMaterial color="#8c7a2c" roughness={0.38} clearcoat={0.6} />
+        </mesh>
+      </group>
+      {!reduceMotion &&
+        Array.from({ length: STEAM }, (_, i) => (
+          <mesh key={i} ref={(m) => void (puffs.current[i] = m)}>
+            <planeGeometry />
+            <meshBasicMaterial map={puff} color="#e8eefc" transparent depthWrite={false} opacity={0} />
+          </mesh>
+        ))}
+    </group>
+  );
+}
