@@ -24,6 +24,10 @@ export function DeskExperience({ t, lang }: { t: Dictionary["desk"]; lang: strin
   return (
     <section className="desk" aria-label={t.label} data-ready={ready}>
       <DeskScene t={t} lang={lang} reduceMotion={reduceMotion} onReady={() => setReady(true)} />
+      <div className="desk-loader" aria-hidden="true">
+        <span className="desk-loader-label">{t.loading}</span>
+        <span className="desk-loader-bar" />
+      </div>
       <p className="desk-hint">
         <span data-pointer>{t.hintPointer}</span>
         <span data-touch>{t.hintTouch}</span>

@@ -514,27 +514,71 @@ export const drawNeonSign =
     }
   };
 
-/** Teclado y touchpad del portátil, dibujados: no merece la pena modelar teclas a ese tamaño. */
-export const drawLaptopDeck: Draw = (ctx, w, h) => {
-  ctx.fillStyle = "#151a26";
+/** Teclado, touchpad y rejillas del portátil, dibujados: a ese tamaño no merece la pena modelar teclas. */
+export const drawLaptopDeck: Draw = (ctx, w, h, f) => {
+  ctx.fillStyle = "#1b2131";
   ctx.fillRect(0, 0, w, h);
-  const cols = 14;
-  const kw = (w - 40) / cols;
-  const kh = h * 0.12;
-  for (let r = 0; r < 6; r += 1) {
-    for (let c = 0; c < cols; c += 1) {
-      const x = 20 + c * kw;
-      const y = 14 + r * (kh + 6);
-      ctx.fillStyle = "#07090e";
-      rrect(ctx, x + 3, y, kw - 6, kh, 6);
+  // Rejillas de altavoz a los lados
+  ctx.fillStyle = "#121722";
+  for (const x0 of [w * 0.02, w * 0.93]) {
+    for (let y = h * 0.05; y < h * 0.52; y += 9) for (let x = x0; x < x0 + w * 0.05; x += 9) {
+      ctx.beginPath();
+      ctx.arc(x, y, 2, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = "rgba(200,180,255,0.55)";
-      ctx.fillRect(x + kw / 2 - 5, y + kh / 2 - 2, 10, 4);
     }
   }
-  ctx.fillStyle = "rgba(0,0,0,0)";
+  const rows = [
+    "Esc F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12 Supr",
+    "º 1 2 3 4 5 6 7 8 9 0 ' ¡ ⌫",
+    "⇥ Q W E R T Y U I O P ` + ↵",
+    "⇪ A S D F G H J K L Ñ ´ Ç",
+    "⇧ < Z X C V B N M , . - ⇧",
+    "Ctrl Fn ⊞ Alt ␣ AltGr Ctrl ◂ ▴▾ ▸",
+  ].map((r) => r.split(" "));
+  const wide: Record<string, number> = { "⌫": 1.6, "⇥": 1.4, "↵": 1.4, "⇪": 1.7, Ç: 1.1, "⇧": 1.9, "␣": 5.2, Esc: 1.1, Supr: 1.1 };
+  const left = w * 0.09;
+  const right = w * 0.91;
+  const top = h * 0.04;
+  const rowH = h * 0.075;
+  rows.forEach((keys, r) => {
+    const units = keys.reduce((s, k) => s + (wide[k] ?? 1), 0);
+    const u = (right - left) / units;
+    const kh = r === 0 ? rowH * 0.6 : rowH * 0.86;
+    const y = top + (r === 0 ? 0 : rowH * 0.7 + (r - 1) * rowH);
+    let x = left;
+    for (const k of keys) {
+      const kw = u * (wide[k] ?? 1);
+      ctx.fillStyle = "#0a0d14";
+      rrect(ctx, x + 3, y, kw - 6, kh, 7);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,0.05)";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      if (k !== "␣") {
+        ctx.font = mono(f, r === 0 ? 13 : k.length > 2 ? 13 : 19, 500);
+        ctx.fillStyle = "rgba(214,200,255,0.85)";
+        ctx.shadowColor = VIOLET;
+        ctx.shadowBlur = 8;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(k, x + kw / 2, y + kh / 2);
+        ctx.shadowBlur = 0;
+      }
+      x += kw;
+    }
+  });
+  // Touchpad
+  const tw = w * 0.36;
+  const th = h * 0.3;
+  rrect(ctx, (w - tw) / 2, h * 0.62, tw, th, 18);
+  ctx.fillStyle = "#1f2638";
+  ctx.fill();
+  ctx.strokeStyle = "rgba(160,170,200,0.25)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
 };
-
 export const drawFaceButton =
   (letter: string, color: string): Draw =>
   (ctx, w, h, f) => {
@@ -629,3 +673,4 @@ export const drawMatEdge: Draw = (ctx, w, h) => {
   ctx.strokeRect(inset, inset, w - inset * 2, h - inset * 2);
   ctx.setLineDash([]);
 };
+

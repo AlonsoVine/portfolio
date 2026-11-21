@@ -23,7 +23,7 @@ export function Desk() {
         <meshStandardMaterial map={wood} bumpMap={wood} bumpScale={0.6} color="#c9a184" roughness={0.5} metalness={0} />
       </RoundedBox>
       <RoundedBox args={[1.5, 0.004, 0.56]} radius={0.002} smoothness={2} position={[-0.02, 0.002, 0.06]} receiveShadow>
-        <meshStandardMaterial map={fabric} bumpMap={fabric} bumpScale={0.35} color="#5a5c64" roughness={0.95} />
+        <meshStandardMaterial map={fabric} bumpMap={fabric} bumpScale={0.35} color="#45474e" roughness={0.95} />
       </RoundedBox>
       {/* Costura del borde */}
       <mesh position={[-0.02, 0.0041, 0.06]} rotation={[-Math.PI / 2, 0, 0]}>

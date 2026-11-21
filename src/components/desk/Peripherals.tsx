@@ -2,8 +2,7 @@
 
 import { useFrame } from "@react-three/fiber";
 import { useLayoutEffect, useMemo, useRef } from "react";
-import { AdditiveBlending, type InstancedMesh, type MeshBasicMaterial, Object3D } from "three";
-import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
+import { AdditiveBlending, CylinderGeometry, type InstancedMesh, type MeshBasicMaterial, Object3D } from "three";
 import { hdr, ICE, VIOLET } from "./palette";
 import { drawLegends, drawSoftDot, drawStrip } from "./screens";
 import { RoundedBox } from "./primitives";
@@ -58,7 +57,12 @@ export function Keyboard({ position, rotation, reduceMotion }: Placed & { reduce
   const legends = useCanvasTexture(COLS * LEGEND_PX, DEPTH * LEGEND_PX, legendsDraw);
   const glow = useCanvasTexture(512, 4, drawStrip, { tileX: 1 });
   const spill = useCanvasTexture(128, 128, drawSoftDot);
-  const geometry = useMemo(() => new RoundedBoxGeometry(1, 1, 1, 2, 0.18), []);
+  // Tecla con perfil real: tronco de pirámide (base 1, cara superior 0.8) con caras planas
+  const geometry = useMemo(() => {
+    const g = new CylinderGeometry(0.8 / Math.SQRT2, 1 / Math.SQRT2, 1, 4, 1).rotateY(Math.PI / 4).toNonIndexed();
+    g.computeVertexNormals();
+    return g;
+  }, []);
   const width = COLS * U;
   const depth = DEPTH * U;
 
@@ -68,7 +72,7 @@ export function Keyboard({ position, rotation, reduceMotion }: Placed & { reduce
     const o = new Object3D();
     KEYS.forEach((k, i) => {
       o.position.set(k.x * U - width / 2, 0.026, k.z * U - depth / 2 + U / 2);
-      o.scale.set(k.w * U - 0.0028, 0.01, U - 0.0028);
+      o.scale.set(k.w * U - 0.0022, 0.0105, U - 0.0022);
       o.updateMatrix();
       mesh.setMatrixAt(i, o.matrix);
     });
@@ -82,7 +86,7 @@ export function Keyboard({ position, rotation, reduceMotion }: Placed & { reduce
 
   return (
     <group position={position} rotation={rotation}>
-      <RoundedBox args={[width + 0.018, 0.02, depth + 0.018]} radius={0.007} position={[0, 0.011, 0]} castShadow receiveShadow>
+      <RoundedBox args={[width + 0.018, 0.02, depth + 0.018]} radius={0.0035} position={[0, 0.011, 0]} castShadow receiveShadow>
         <meshStandardMaterial color="#0d0e12" roughness={0.35} metalness={0.5} />
       </RoundedBox>
       {/* Retroiluminación que asoma entre las teclas, recorriendo el degradado */}
@@ -91,9 +95,9 @@ export function Keyboard({ position, rotation, reduceMotion }: Placed & { reduce
         <meshBasicMaterial ref={glowMat} map={glow} color={hdr("#ffffff", 2.4)} toneMapped={false} />
       </mesh>
       <instancedMesh ref={keysRef} args={[geometry, undefined, KEYS.length]} castShadow>
-        <meshStandardMaterial color="#121318" roughness={0.42} metalness={0.15} />
+        <meshStandardMaterial color="#16171c" roughness={0.55} metalness={0.05} />
       </instancedMesh>
-      <mesh position={[0, 0.0312, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh position={[0, 0.0315, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[width, depth]} />
         <meshBasicMaterial map={legends} color={hdr("#ffffff", 1.6)} transparent depthWrite={false} toneMapped={false} />
       </mesh>
@@ -120,11 +124,6 @@ export function Mouse({ position, rotation }: Placed) {
         <mesh position={[0, 0.016, 0.004]} scale={[0.031, 0.02, 0.06]} castShadow receiveShadow>
           <sphereGeometry args={[1, 48, 32]} />
           <meshPhysicalMaterial {...shell} />
-        </mesh>
-        {/* Separación entre botones */}
-        <mesh position={[0, 0.0345, -0.026]} rotation={[0.42, 0, 0]}>
-          <boxGeometry args={[0.0011, 0.003, 0.044]} />
-          <meshBasicMaterial color="#050608" />
         </mesh>
         <mesh position={[0, 0.0352, -0.024]} rotation={[0, 0, Math.PI / 2]}>
           <cylinderGeometry args={[0.0058, 0.0058, 0.0055, 24]} />

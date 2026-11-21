@@ -25,6 +25,7 @@ export const es = {
     label: "Escritorio de Alonso en 3D",
     hintPointer: "Mueve el ratón para mirar alrededor",
     hintTouch: "Arrastra para mirar alrededor",
+    loading: "Encendiendo el escritorio",
     screens: {
       cv: "Currículum",
       cvDetail: "Experiencia · Formación · Skills",
@@ -75,6 +76,7 @@ export const en: Dictionary = {
     label: "Alonso's desk in 3D",
     hintPointer: "Move the mouse to look around",
     hintTouch: "Drag to look around",
+    loading: "Powering up the desk",
     screens: {
       cv: "Résumé",
       cvDetail: "Experience · Education · Skills",

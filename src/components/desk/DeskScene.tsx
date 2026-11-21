@@ -55,12 +55,12 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
       />
 
       {/* Relleno cenital suave: la luz de la habitación, para que el primer plano no se pierda en negro */}
-      <spotLight position={[0.1, 1.5, 1.1]} angle={0.75} penumbra={1} intensity={1.6} decay={1.2} color="#8b9ad6" />
+      <spotLight position={[0.1, 1.5, 1.1]} angle={0.75} penumbra={1} intensity={1.2} decay={1.2} color="#8b9ad6" />
 
       <Desk />
       <Leds t={t} reduceMotion={reduceMotion} />
       <Ultrawide t={t} position={[0, 0, -0.3]} />
-      <Laptop t={t} position={[-0.585, 0, -0.21]} rotation={[0, 0.46, 0]} />
+      <Laptop t={t} position={[-0.615, 0, -0.22]} rotation={[0, 0.46, 0]} />
       <SideMonitor t={t} position={[0.675, 0, -0.22]} rotation={[0, -0.56, 0]} />
       <Keyboard position={[-0.04, 0, 0.1]} reduceMotion={reduceMotion} />
       <Mouse position={[0.27, 0, 0.13]} rotation={[0, -0.12, 0]} />
@@ -75,10 +75,10 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
       <EffectComposer multisampling={4} enableNormalPass={false}>
         {/* Oclusión ambiental: asienta los objetos sobre la mesa y oscurece los rincones */}
         <N8AO halfRes aoRadius={0.06} distanceFalloff={0.5} intensity={2.2} color="#05060a" quality="medium" />
-        <Bloom mipmapBlur intensity={0.85} luminanceThreshold={1} luminanceSmoothing={0.25} radius={0.72} />
-        <ToneMapping mode={ToneMappingMode.NEUTRAL} />
+        <Bloom mipmapBlur intensity={0.55} luminanceThreshold={1.05} luminanceSmoothing={0.3} radius={0.65} />
+        <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
         <Vignette offset={0.28} darkness={0.72} />
-        <Noise premultiply blendFunction={BlendFunction.SOFT_LIGHT} opacity={0.35} />
+        <Noise premultiply blendFunction={BlendFunction.SOFT_LIGHT} opacity={0.2} />
       </EffectComposer>
     </Canvas>
   );

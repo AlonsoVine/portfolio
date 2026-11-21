@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BackSide, ExtrudeGeometry, type Object3D, Shape } from "three";
-import { AMBER, hdr, ICE, MAGENTA, VIOLET } from "./palette";
+import { AdditiveBlending, BackSide, ExtrudeGeometry, type Object3D, Shape } from "three";
+import { AMBER, hdr, ICE, MAGENTA } from "./palette";
 import { drawCv, drawGames, drawLaptopDeck, drawProjects, type DeskCopy } from "./screens";
 import { RoundedBox } from "./primitives";
 import { useCanvasTexture } from "./useCanvasTexture";
@@ -13,6 +13,17 @@ type Placed = { position: [number, number, number]; rotation?: [number, number, 
 const SCREEN = hdr("#ffffff", 1.12);
 const BLACK_GLOSS = { color: "#0b0c10", roughness: 0.22, metalness: 0.4 } as const;
 const SHELL = { color: "#15161b", roughness: 0.45, metalness: 0.25 } as const;
+// Cristal: negro en aditivo, así solo suma los reflejos del entorno y de las luces sobre la imagen
+const GLASS_PROPS = { color: "#000000", roughness: 0.1, metalness: 0, transparent: true, blending: AdditiveBlending, depthWrite: false } as const;
+
+function Glass({ w, h, z }: { w: number; h: number; z: number }) {
+  return (
+    <mesh position={[0, 0, z]}>
+      <planeGeometry args={[w, h]} />
+      <meshStandardMaterial {...GLASS_PROPS} />
+    </mesh>
+  );
+}
 
 /** Sección de corona circular extruida: carcasa curva de la ultrawide. */
 function arcPanel(r: number, thickness: number, theta: number, height: number) {
@@ -53,6 +64,10 @@ export function Ultrawide({ t, position }: { t: DeskCopy } & Placed) {
           <cylinderGeometry args={[UW.r - 0.005, UW.r - 0.005, UW.h, 96, 1, true, Math.PI - theta / 2, theta]} />
           <meshBasicMaterial map={map} color={SCREEN} side={BackSide} toneMapped={false} />
         </mesh>
+        <mesh scale={[-1, 1, 1]}>
+          <cylinderGeometry args={[UW.r - 0.0058, UW.r - 0.0058, UW.h, 96, 1, true, Math.PI - theta / 2, theta]} />
+          <meshStandardMaterial {...GLASS_PROPS} side={BackSide} />
+        </mesh>
         <RoundedBox args={[0.34, 0.2, 0.06]} radius={0.025} position={[0, -0.01, -UW.r - 0.05]} castShadow>
           <meshStandardMaterial {...SHELL} />
         </RoundedBox>
@@ -85,9 +100,9 @@ const ZENBOOK = { color: "#1b2131", roughness: 0.38, metalness: 0.55 } as const;
 export function Laptop({ t, position, rotation }: { t: DeskCopy } & Placed) {
   const draw = useMemo(() => drawGames(t), [t]);
   const map = useCanvasTexture(1024, 632, draw);
-  const deck = useCanvasTexture(1024, 420, drawLaptopDeck);
+  const deck = useCanvasTexture(1536, 1030, drawLaptopDeck);
   return (
-    <group position={position} rotation={rotation}>
+    <group position={position} rotation={rotation} scale={1.2}>
       {/* Soporte de aluminio: base, brazo trasero y bandeja inclinada */}
       <RoundedBox args={[0.22, 0.006, 0.2]} radius={0.003} position={[0, 0.003, 0]} castShadow receiveShadow>
         <meshStandardMaterial {...ALU} />
@@ -109,9 +124,9 @@ export function Laptop({ t, position, rotation }: { t: DeskCopy } & Placed) {
           <RoundedBox args={[0.32, 0.014, 0.215]} radius={0.005} castShadow receiveShadow>
             <meshStandardMaterial {...ZENBOOK} />
           </RoundedBox>
-          <mesh position={[0, 0.0072, 0.002]} rotation={[-Math.PI / 2, 0, 0]}>
-            <planeGeometry args={[0.3, 0.123]} />
-            <meshStandardMaterial map={deck} roughness={0.6} emissiveMap={deck} emissive={hdr(VIOLET, 0.35)} />
+          <mesh position={[0, 0.0072, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[0.31, 0.205]} />
+            <meshStandardMaterial map={deck} roughness={0.5} metalness={0.3} emissiveMap={deck} emissive={hdr("#ffffff", 0.18)} />
           </mesh>
           {/* Bisagra: la pantalla queda casi vertical, ligeramente echada hacia atrás */}
           <group position={[0, 0.007, -0.105]} rotation={[-0.36, 0, 0]}>
@@ -131,6 +146,7 @@ export function Laptop({ t, position, rotation }: { t: DeskCopy } & Placed) {
                 <planeGeometry args={[0.3, 0.185]} />
                 <meshBasicMaterial map={map} color={SCREEN} toneMapped={false} />
               </mesh>
+              <Glass w={0.3} h={0.185} z={0.0042} />
               <rectAreaLight position={[0, 0, 0.01]} rotation={[0, Math.PI, 0]} width={0.3} height={0.185} intensity={4} color={MAGENTA} />
             </group>
           </group>
@@ -168,6 +184,7 @@ export function SideMonitor({ t, position, rotation }: { t: DeskCopy } & Placed)
           <planeGeometry args={[0.536, 0.296]} />
           <meshBasicMaterial map={map} color={SCREEN} toneMapped={false} />
         </mesh>
+        <Glass w={0.536} h={0.296} z={0.009} />
         <rectAreaLight position={[0, 0, 0.02]} rotation={[0, Math.PI, 0]} width={0.53} height={0.29} intensity={3} color={AMBER} />
 
         {/* Lámpara de monitor con luz asimétrica hacia la mesa */}
