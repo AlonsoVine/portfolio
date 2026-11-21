@@ -1,10 +1,10 @@
 "use client";
 
-import { RoundedBox } from "@react-three/drei";
 import { useMemo, useState } from "react";
 import { BackSide, ExtrudeGeometry, type Object3D, Shape } from "three";
 import { AMBER, hdr, ICE, MAGENTA, VIOLET } from "./palette";
 import { drawCv, drawGames, drawLaptopDeck, drawProjects, type DeskCopy } from "./screens";
+import { RoundedBox } from "./primitives";
 import { useCanvasTexture } from "./useCanvasTexture";
 
 type Placed = { position: [number, number, number]; rotation?: [number, number, number] };

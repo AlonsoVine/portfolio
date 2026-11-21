@@ -452,40 +452,6 @@ export const drawWood: Draw = (ctx, w, h) => {
   }
 };
 
-/** Alfombrilla de chuletas: columnas de texto tenue con cabeceras de color, como la de las fotos. */
-export const drawMat =
-  (headings: string[]): Draw =>
-  (ctx, w, h, f) => {
-    ctx.fillStyle = "#121318";
-    ctx.fillRect(0, 0, w, h);
-    const r = rng(5);
-    const cols = 7;
-    const colW = w / cols;
-    const accents = [AMBER, ICE, MAGENTA, VIOLET, MINT];
-    for (let c = 0; c < cols; c += 1) {
-      let y = 70 + r() * 60;
-      while (y < h - 40) {
-        const head = headings[Math.floor(r() * headings.length)];
-        const accent = accents[Math.floor(r() * accents.length)];
-        ctx.fillStyle = withAlpha(accent, 0.22);
-        ctx.fillRect(c * colW + 30, y - 15, colW * 0.5, 20);
-        text(ctx, head, c * colW + 38, y, display(f, 17, 800), withAlpha(accent, 0.8), { spacing: 1 });
-        y += 34;
-        const rows = 4 + Math.floor(r() * 6);
-        for (let i = 0; i < rows; i += 1) {
-          ctx.fillStyle = "rgba(190,196,210,0.1)";
-          ctx.fillRect(c * colW + 34, y - 7, colW * (0.25 + r() * 0.15), 6);
-          ctx.fillRect(c * colW + 34 + colW * 0.45, y - 7, colW * (0.15 + r() * 0.25), 6);
-          y += 17;
-        }
-        y += 40;
-      }
-    }
-    ctx.strokeStyle = "rgba(255,255,255,0.08)";
-    ctx.lineWidth = 6;
-    ctx.strokeRect(10, 10, w - 20, h - 20);
-  };
-
 export const drawPegboard: Draw = (ctx, w, h) => {
   ctx.fillStyle = "#2a2730";
   ctx.fillRect(0, 0, w, h);

@@ -1,19 +1,18 @@
 "use client";
 
-import { RoundedBox, Sparkles } from "@react-three/drei";
+
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import { AdditiveBlending, type Color, type MeshBasicMaterial, type PointLight, type Texture } from "three";
 import { AMBER, hdr, ICE, MAGENTA, VIOLET } from "./palette";
-import { drawMat, drawNeonSign, drawPegboard, drawSoftDot, drawStrip, drawWood, type DeskCopy } from "./screens";
+import { drawNeonSign, drawPegboard, drawSoftDot, drawStrip, drawWood, type DeskCopy } from "./screens";
+import { Dust, RoundedBox } from "./primitives";
 import { useCanvasTexture } from "./useCanvasTexture";
 
 export const WALL_Z = -0.6;
 
-export function Desk({ t }: { t: DeskCopy }) {
+export function Desk() {
   const wood = useCanvasTexture(1024, 512, drawWood, { tileX: 2 });
-  const matDraw = useMemo(() => drawMat(t.screens.matHeadings), [t]);
-  const mat = useCanvasTexture(2048, 760, matDraw);
   const peg = useCanvasTexture(512, 512, drawPegboard, { tileX: 10, tileY: 5 });
 
   return (
@@ -22,7 +21,7 @@ export function Desk({ t }: { t: DeskCopy }) {
         <meshStandardMaterial map={wood} color="#c9a184" roughness={0.55} metalness={0} />
       </RoundedBox>
       <RoundedBox args={[1.5, 0.004, 0.56]} radius={0.002} smoothness={2} position={[-0.02, 0.002, 0.06]} receiveShadow>
-        <meshStandardMaterial map={mat} roughness={0.92} />
+        <meshStandardMaterial color="#1d1e24" roughness={0.92} />
       </RoundedBox>
       <mesh position={[0, 0.7, WALL_Z]} receiveShadow>
         <planeGeometry args={[4.2, 1.9]} />
@@ -113,7 +112,7 @@ export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }
       <pointLight ref={(l) => void (lights.current[1] = l)} position={[0.38, 0.16, -0.46]} color={AMBER} intensity={base[1]} distance={1.6} decay={1.6} />
       <pointLight ref={(l) => void (lights.current[2] = l)} position={[0, 0.06, -0.5]} color={MAGENTA} intensity={base[2]} distance={1.1} decay={1.6} />
 
-      {!reduceMotion && <Sparkles count={70} scale={[2.2, 1, 1.2]} position={[0, 0.5, -0.05]} size={1.1} speed={0.12} opacity={0.22} color={ICE} noise={0.6} />}
+      {!reduceMotion && <Dust map={dot} />}
     </group>
   );
 }

@@ -1,12 +1,12 @@
 "use client";
 
-import { RoundedBox } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { type InstancedMesh, type MeshBasicMaterial, Object3D } from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { hdr, ICE, MINT, VIOLET } from "./palette";
 import { drawLegends, drawStrip } from "./screens";
+import { RoundedBox } from "./primitives";
 import { useCanvasTexture } from "./useCanvasTexture";
 
 type Placed = { position: [number, number, number]; rotation?: [number, number, number] };
@@ -105,54 +105,42 @@ export function Keyboard({ position, rotation, reduceMotion }: Placed & { reduce
   );
 }
 
-/**
- * Ratón vertical: cuerpo de huevo inclinado sobre una base con aleta para el meñique,
- * botones en la cara derecha, rueda arriba y un hueco para el pulgar a la izquierda.
- */
+/** Ratón clásico: carcasa ovalada con la joroba atrás, raya entre botones, rueda iluminada y halo LED en la base. */
 export function Mouse({ position, rotation }: Placed) {
-  const soft = { color: "#2a2c33", roughness: 0.62, metalness: 0.08 } as const;
-  const gloss = { color: "#34363e", roughness: 0.22, metalness: 0.35 } as const;
+  const shell = { color: "#1d1e24", roughness: 0.5, metalness: 0.15, clearcoat: 0.4, clearcoatRoughness: 0.35 } as const;
   return (
     <group position={position} rotation={rotation}>
-      <mesh position={[0.004, 0.004, 0.002]} scale={[0.66, 1, 1]} castShadow receiveShadow>
-        <cylinderGeometry args={[0.052, 0.054, 0.008, 40]} />
-        <meshStandardMaterial {...soft} />
-      </mesh>
-      <group position={[0, 0.006, 0]} rotation={[0, 0, -0.42]}>
-        <mesh position={[0, 0.036, 0]} scale={[0.6, 1, 1.3]} castShadow>
-          <sphereGeometry args={[0.042, 40, 28]} />
-          <meshStandardMaterial {...soft} />
+      <group rotation={[0.08, 0, 0]}>
+        <mesh position={[0, 0.016, 0.004]} scale={[0.031, 0.02, 0.06]} castShadow receiveShadow>
+          <sphereGeometry args={[1, 48, 32]} />
+          <meshPhysicalMaterial {...shell} />
         </mesh>
-        {/* Botones: dos placas brillantes sobre la cara derecha */}
-        {[0.016, -0.014].map((z, i) => (
-          <mesh key={z} position={[0.019, 0.05, z]} rotation={[0, 0, -0.1]} scale={[0.25, 0.75, 0.55]}>
-            <sphereGeometry args={[0.042, 32, 20]} />
-            <meshStandardMaterial {...gloss} color={i === 0 ? "#3a3c45" : "#31333b"} />
-          </mesh>
-        ))}
-        <mesh position={[0.012, 0.066, 0.002]} rotation={[0, 0, Math.PI / 2 - 0.1]}>
-          <cylinderGeometry args={[0.007, 0.007, 0.006, 24]} />
-          <meshStandardMaterial color="#3a3c44" roughness={0.6} />
+        {/* Separación entre botones */}
+        <mesh position={[0, 0.0345, -0.026]} rotation={[0.42, 0, 0]}>
+          <boxGeometry args={[0.0011, 0.003, 0.044]} />
+          <meshBasicMaterial color="#050608" />
         </mesh>
-        <mesh position={[0.016, 0.066, 0.002]} rotation={[0, 0, Math.PI / 2 - 0.1]}>
-          <torusGeometry args={[0.0072, 0.0006, 6, 24]} />
-          <meshBasicMaterial color={hdr(ICE, 2)} toneMapped={false} />
+        <mesh position={[0, 0.0352, -0.024]} rotation={[0, 0, Math.PI / 2]}>
+          <cylinderGeometry args={[0.0058, 0.0058, 0.0055, 24]} />
+          <meshStandardMaterial color="#2c2e36" roughness={0.75} />
         </mesh>
-        {/* Hueco del pulgar y botones laterales */}
-        <mesh position={[-0.024, 0.024, 0.002]} scale={[0.3, 0.32, 0.9]}>
-          <sphereGeometry args={[0.04, 24, 16]} />
-          <meshStandardMaterial color="#0e0f13" roughness={0.9} />
+        <mesh position={[0, 0.0352, -0.024]} rotation={[0, Math.PI / 2, 0]}>
+          <torusGeometry args={[0.0059, 0.0007, 6, 28]} />
+          <meshBasicMaterial color={hdr(ICE, 2.4)} toneMapped={false} />
         </mesh>
-        {[0.012, -0.004].map((z) => (
-          <RoundedBox key={z} args={[0.004, 0.006, 0.012]} radius={0.0018} position={[-0.026, 0.04, z]}>
-            <meshStandardMaterial {...gloss} />
-          </RoundedBox>
-        ))}
+        {/* Logo trasero y halo de la base */}
+        <mesh position={[0, 0.03, 0.04]} rotation={[-1.05, 0, 0]}>
+          <circleGeometry args={[0.0045, 20]} />
+          <meshBasicMaterial color={hdr(VIOLET, 2.2)} toneMapped={false} />
+        </mesh>
+        <mesh position={[0, 0.0045, 0.004]} rotation={[Math.PI / 2, 0, 0]} scale={[0.0305, 0.0595, 0.03]}>
+          <torusGeometry args={[1, 0.035, 6, 64]} />
+          <meshBasicMaterial color={hdr(VIOLET, 2.6)} toneMapped={false} />
+        </mesh>
       </group>
     </group>
   );
 }
-
 const FACE = [
   { c: "#f4c430", p: [0.035, -0.018] },
   { c: "#2f7de1", p: [0.025, -0.008] },

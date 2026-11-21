@@ -1,6 +1,5 @@
 "use client";
 
-import { Environment, Lightformer } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Bloom, EffectComposer, Noise, ToneMapping, Vignette } from "@react-three/postprocessing";
 import { BlendFunction, ToneMappingMode } from "postprocessing";
@@ -9,8 +8,8 @@ import type { Dictionary } from "@/i18n/dictionaries";
 import { Laptop, SideMonitor, Ultrawide } from "./Displays";
 import { Coffee, Phone, Tablet } from "./Gadgets";
 import { EYE, LookControls } from "./LookControls";
-import { AMBER, ICE, VIOLET } from "./palette";
 import { Controller, Keyboard, Mouse } from "./Peripherals";
+import { Performance, Reflections } from "./primitives";
 import { Desk, Leds } from "./Room";
 
 // Las pantallas iluminan la mesa con luces de área; sus tablas se cargan una sola vez
@@ -27,18 +26,17 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
       dpr={[1, 1.5]}
       camera={{ position: EYE, fov: 56, near: 0.02, far: 8 }}
       gl={{ antialias: false, powerPreference: "high-performance", stencil: false }}
-      onCreated={() => requestAnimationFrame(onReady)}
+      onCreated={({ gl }) => {
+        // Nada que proyecte sombra se mueve: el mapa de sombras se calcula una vez
+        gl.shadowMap.autoUpdate = false;
+        gl.shadowMap.needsUpdate = true;
+        requestAnimationFrame(onReady);
+      }}
     >
       <color attach="background" args={["#05060a"]} />
       <fog attach="fog" args={["#05060a", 1.3, 3]} />
 
-      {/* Entorno solo para reflejos: paneles de luz fríos y cálidos, sin imagen HDR que descargar */}
-      <Environment resolution={128} frames={1} environmentIntensity={0.35}>
-        <Lightformer form="rect" intensity={2} color={ICE} position={[-2, 1, 0]} scale={[2, 1, 1]} rotation-y={Math.PI / 2} />
-        <Lightformer form="rect" intensity={2} color={AMBER} position={[2, 1, 0]} scale={[2, 1, 1]} rotation-y={-Math.PI / 2} />
-        <Lightformer form="rect" intensity={1.2} color={VIOLET} position={[0, 2, -1]} scale={[3, 1, 1]} rotation-x={Math.PI / 2} />
-        <Lightformer form="ring" intensity={1.5} color="#ffffff" position={[0, 1, 2]} scale={0.8} />
-      </Environment>
+      <Reflections />
 
       <hemisphereLight args={["#6f86c9", "#1a0f0a", 0.18]} />
       <directionalLight
@@ -55,7 +53,7 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
         shadow-normalBias={0.02}
       />
 
-      <Desk t={t} />
+      <Desk />
       <Leds t={t} reduceMotion={reduceMotion} />
       <Ultrawide t={t} position={[0, 0, -0.3]} />
       <Laptop t={t} position={[-0.585, 0, -0.21]} rotation={[0, 0.46, 0]} />
@@ -68,6 +66,7 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
       <Tablet t={t} lang={lang} position={[0.6, 0, 0.15]} rotation={[0, -0.42, 0]} />
 
       <LookControls reduceMotion={reduceMotion} />
+      <Performance />
 
       <EffectComposer multisampling={4} enableNormalPass={false}>
         <Bloom mipmapBlur intensity={0.85} luminanceThreshold={1} luminanceSmoothing={0.25} radius={0.72} />

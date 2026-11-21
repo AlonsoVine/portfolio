@@ -42,7 +42,6 @@ export const es = {
       tabletCityNote: "Hora local",
       tabletNote: "Portfolio — 2026",
       tabletNoteBody: "Mira hacia arriba ↑",
-      matHeadings: ["Git", "Terminal", "TypeScript", "Atajos", "Docker", "Linux", "Debug"],
     },
   },
 };
@@ -93,7 +92,6 @@ export const en: Dictionary = {
       tabletCityNote: "Local time",
       tabletNote: "Portfolio — 2026",
       tabletNoteBody: "Look up ↑",
-      matHeadings: ["Git", "Terminal", "TypeScript", "Shortcuts", "Docker", "Linux", "Debug"],
     },
   },
 };
