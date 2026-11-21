@@ -18,6 +18,22 @@ export const es = {
     cursorLabel: "Decodificar",
     portraitAlt: "Retrato de Alonso Viñé sentado en su silla de escritorio, iluminado por luces neón cian y magenta",
   },
+  desk: {
+    title: "Escritorio — Alonso Viñé",
+    label: "Escritorio de Alonso en 3D",
+    hintPointer: "Mueve el ratón para mirar alrededor",
+    hintTouch: "Arrastra para mirar alrededor",
+    screens: {
+      cv: "Currículum",
+      cvDetail: "Experiencia · Formación · Skills",
+      games: "Juegos",
+      gamesDetail: "Space Invaders · Beta JS",
+      projects: "Proyectos",
+      projectsDetail: "Prensa · Liberty · y más",
+      phoneName: "Alonso Viñé",
+      phoneStatus: "Disponible",
+    },
+  },
 };
 
 export type Dictionary = typeof es;
@@ -41,5 +57,21 @@ export const en: Dictionary = {
     loading: "Booting system",
     cursorLabel: "Decode",
     portraitAlt: "Portrait of Alonso Viñé sitting in his desk chair, lit by cyan and magenta neon lights",
+  },
+  desk: {
+    title: "Desk — Alonso Viñé",
+    label: "Alonso's desk in 3D",
+    hintPointer: "Move the mouse to look around",
+    hintTouch: "Drag to look around",
+    screens: {
+      cv: "Résumé",
+      cvDetail: "Experience · Education · Skills",
+      games: "Games",
+      gamesDetail: "Space Invaders · JS beta",
+      projects: "Projects",
+      projectsDetail: "Prensa · Liberty · and more",
+      phoneName: "Alonso Viñé",
+      phoneStatus: "Available",
+    },
   },
 };

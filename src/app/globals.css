@@ -717,3 +717,46 @@ html[data-cursor="custom"] * {
     opacity: 0.08;
   }
 }
+
+/* ---------- Escritorio 3D ---------- */
+
+.desk {
+  position: fixed;
+  inset: 0;
+  background: var(--stage);
+}
+
+.desk-canvas {
+  position: absolute !important;
+  inset: 0;
+}
+
+.desk-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  font-family: var(--font-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  pointer-events: none;
+}
+
+.desk-hint [data-touch] {
+  display: none;
+}
+
+@media (hover: none) {
+  .desk-hint [data-pointer] {
+    display: none;
+  }
+  .desk-hint [data-touch] {
+    display: inline;
+  }
+}
+
+.desk-canvas canvas {
+  touch-action: none;
+}
