@@ -77,7 +77,6 @@ export function Tablet({ t, lang, position, rotation }: { t: DeskCopy; lang: str
           <meshBasicMaterial map={map} color={SCREEN} toneMapped={false} />
         </mesh>
       </group>
-      <rectAreaLight position={[0, 0.03, 0]} rotation={[Math.PI / 2, 0, 0]} width={0.16} height={0.24} intensity={1.2} color="#5f86ff" />
     </group>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { AdditiveBlending, BackSide, ExtrudeGeometry, type Object3D, Shape } from "three";
-import { AMBER, hdr, ICE, MAGENTA } from "./palette";
+import { AMBER, hdr, MAGENTA } from "./palette";
 import { drawCv, drawGames, drawLaptopDeck, drawProjects, type DeskCopy } from "./screens";
 import { RoundedBox } from "./primitives";
 import { useCanvasTexture } from "./useCanvasTexture";
@@ -224,7 +224,6 @@ export function SideMonitor({ t, position, rotation }: { t: DeskCopy } & Placed)
         <cylinderGeometry args={[0.075, 0.08, 0.01, 40]} />
         <meshStandardMaterial {...SILVER} />
       </mesh>
-      <pointLight position={[0, 0.25, 0.25]} color={ICE} intensity={0.15} distance={0.6} />
     </group>
   );
 }

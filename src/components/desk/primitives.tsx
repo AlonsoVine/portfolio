@@ -122,9 +122,10 @@ export function Dust({ count = 70, map }: { count?: number; map: Texture }) {
 }
 
 /**
- * Ajuste de resolución: si los fotogramas se alargan de forma sostenida, baja el DPR a 1.
+ * Calidad adaptativa: si los fotogramas se alargan de forma sostenida (menos de ~45 fps), baja el DPR a 1
+ * y avisa para quitar los efectos caros. Solo baja una vez, para no oscilar.
  */
-export function Performance() {
+export function Performance({ onLow }: { onLow: () => void }) {
   const setDpr = useThree((s) => s.setDpr);
   const stats = useRef({ acc: 0, n: 0, lowered: false });
   useFrame((_, delta) => {
@@ -133,12 +134,36 @@ export function Performance() {
     s.acc += delta;
     s.n += 1;
     if (s.acc < 2) return;
-    if (s.acc / s.n > 1 / 40) {
+    if (s.acc / s.n > 1 / 45) {
       setDpr(1);
+      onLow();
       s.lowered = true;
     }
     s.acc = 0;
     s.n = 0;
   });
+  return null;
+}
+
+/**
+ * Compila todos los shaders antes de mostrar la escena. Sin esto, cada material se compila la primera vez
+ * que entra en cuadro y girar la cabeza hacia un objeto nuevo pega un tirón.
+ */
+export function Warmup({ onReady }: { onReady: () => void }) {
+  const gl = useThree((s) => s.gl);
+  const scene = useThree((s) => s.scene);
+  const camera = useThree((s) => s.camera);
+  useEffect(() => {
+    let alive = true;
+    gl.compileAsync(scene, camera)
+      .catch(() => undefined)
+      .then(() => {
+        if (alive) requestAnimationFrame(onReady);
+      });
+    if (process.env.NODE_ENV !== "production") Object.assign(window, { __desk: gl });
+    return () => {
+      alive = false;
+    };
+  }, [gl, scene, camera, onReady]);
   return null;
 }

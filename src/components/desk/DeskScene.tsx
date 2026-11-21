@@ -1,6 +1,7 @@
 "use client";
 
 import { Canvas } from "@react-three/fiber";
+import { useState } from "react";
 import { Bloom, EffectComposer, N8AO, Noise, ToneMapping, Vignette } from "@react-three/postprocessing";
 import { BlendFunction, ToneMappingMode } from "postprocessing";
 import { RectAreaLightUniformsLib } from "three/examples/jsm/lights/RectAreaLightUniformsLib.js";
@@ -10,7 +11,7 @@ import { Coffee, Phone, Tablet } from "./Gadgets";
 import { EYE, LookControls } from "./LookControls";
 import { Controller } from "./Controller";
 import { Keyboard, Mouse } from "./Peripherals";
-import { Performance, Reflections } from "./primitives";
+import { Performance, Reflections, Warmup } from "./primitives";
 import { Desk, Leds } from "./Room";
 
 // Las pantallas iluminan la mesa con luces de área; sus tablas se cargan una sola vez
@@ -19,6 +20,7 @@ RectAreaLightUniformsLib.init();
 type Props = { t: Dictionary["desk"]; lang: string; reduceMotion: boolean; onReady: () => void };
 
 export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
+  const [low, setLow] = useState(false);
   return (
     <Canvas
       className="desk-canvas"
@@ -31,7 +33,6 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
         // Nada que proyecte sombra se mueve: el mapa de sombras se calcula una vez
         gl.shadowMap.autoUpdate = false;
         gl.shadowMap.needsUpdate = true;
-        requestAnimationFrame(onReady);
       }}
     >
       <color attach="background" args={["#05060a"]} />
@@ -70,11 +71,12 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
       <Tablet t={t} lang={lang} position={[0.6, 0, 0.15]} rotation={[0, -0.42, 0]} />
 
       <LookControls reduceMotion={reduceMotion} />
-      <Performance />
+      <Performance onLow={() => setLow(true)} />
+      <Warmup onReady={onReady} />
 
-      <EffectComposer multisampling={4} enableNormalPass={false}>
+      <EffectComposer multisampling={low ? 0 : 4} enableNormalPass={false}>
         {/* Oclusión ambiental: asienta los objetos sobre la mesa y oscurece los rincones */}
-        <N8AO halfRes aoRadius={0.06} distanceFalloff={0.5} intensity={2.2} color="#05060a" quality="medium" />
+        <>{!low && <N8AO halfRes aoRadius={0.06} distanceFalloff={0.5} intensity={2.2} color="#05060a" quality="medium" />}</>
         <Bloom mipmapBlur intensity={0.55} luminanceThreshold={1.05} luminanceSmoothing={0.3} radius={0.65} />
         <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
         <Vignette offset={0.28} darkness={0.72} />

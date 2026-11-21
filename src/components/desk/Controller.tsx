@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { ExtrudeGeometry, Shape, Vector2 } from "three";
-import { hdr, MINT } from "./palette";
+import { hdr } from "./palette";
 import { RoundedBox } from "./primitives";
 import { drawFaceButton, drawXboxLogo } from "./screens";
 import { useCanvasTexture } from "./useCanvasTexture";
@@ -175,7 +175,6 @@ export function Controller({ position, rotation }: Placed) {
       <RoundedBox args={[0.009, 0.0035, 0.002]} radius={0.001} position={[0, TOP * 0.55, -0.0345]}>
         <meshStandardMaterial {...BLACK} />
       </RoundedBox>
-      <pointLight position={[0, 0.04, -0.025]} color={MINT} intensity={0.03} distance={0.12} />
     </group>
   );
 }
