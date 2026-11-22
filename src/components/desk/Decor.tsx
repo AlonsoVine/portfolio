@@ -7,7 +7,7 @@ import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeom
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { HangingPothos } from "./Plants";
 import { RoundedBox } from "./primitives";
-import { drawCalendar, drawClockFace, drawRug, drawSoftDot } from "./screens";
+import { drawCalendar, drawClockFace, drawFantasyMap, drawRug, drawSoftDot } from "./screens";
 import { useCanvasTexture } from "./useCanvasTexture";
 
 type Vec3 = [number, number, number];
@@ -18,7 +18,7 @@ export function Rug() {
   return (
     <mesh position={[0.05, -0.7495, 0.12]} rotation={[-Math.PI / 2, 0, 0.03]} receiveShadow>
       <planeGeometry args={[1.85, 1.12]} />
-      <meshStandardMaterial map={map} bumpMap={map} bumpScale={0.6} color="#76604e" roughness={1} alphaTest={0.4} />
+      <meshStandardMaterial map={map} bumpMap={map} bumpScale={0.6} color="#94493a" roughness={1} alphaTest={0.4} />
     </mesh>
   );
 }
@@ -101,7 +101,7 @@ export function Shelf({ position }: { position: Vec3 }) {
 }
 
 /** Reloj de pared con marco de nogal: marca la hora real. */
-export function WallClock({ position, radius = 0.085 }: { position: Vec3; radius?: number }) {
+export function WallClock({ position, radius = 0.093 }: { position: Vec3; radius?: number }) {
   const face = useCanvasTexture(256, 256, drawClockFace);
   const dot = useCanvasTexture(128, 128, drawSoftDot);
   const hour = useRef<Group>(null);
@@ -166,7 +166,7 @@ export function WallCalendar({ position, lang }: { position: Vec3; lang: string 
   // Se repinta cada hora: el día marcado cambia solo a medianoche
   const map = useCanvasTexture(360, 500, draw, { refreshMs: 3_600_000 });
   const dot = useCanvasTexture(128, 128, drawSoftDot);
-  const W = 0.2;
+  const W = 0.218;
   const H = W * (500 / 360);
   return (
     <group position={position}>
@@ -191,6 +191,53 @@ export function WallCalendar({ position, lang }: { position: Vec3; lang: string 
       <mesh position={[0, H / 2 + 0.012, 0.006]} rotation={[Math.PI / 2, 0, 0]}>
         <cylinderGeometry args={[0.0025, 0.0025, 0.012, 10]} />
         <meshStandardMaterial color="#8a8780" roughness={0.3} metalness={0.9} />
+      </mesh>
+    </group>
+  );
+}
+
+/** Cuadro enmarcado con un mapa de fantasía a tinta sobre pergamino: marco de nogal, paspartú y cristal. */
+export function MapFrame({ position, rotation }: { position: Vec3; rotation?: Vec3 }) {
+  const map = useCanvasTexture(1024, 720, drawFantasyMap);
+  const dot = useCanvasTexture(128, 128, drawSoftDot);
+  const W = 0.56;
+  const H = W * (720 / 1024);
+  const F = 0.026;
+  const M = 0.03;
+  const OW = W + M * 2 + F * 2;
+  const OH = H + M * 2 + F * 2;
+  const bars: Vec3[] = [
+    [0, OH / 2 - F / 2, OW],
+    [0, -OH / 2 + F / 2, OW],
+  ];
+  return (
+    <group position={position} rotation={rotation}>
+      <mesh position={[0.01, -0.015, 0.001]} scale={[OW * 1.25, OH * 1.3, 1]}>
+        <planeGeometry />
+        <meshBasicMaterial map={dot} color="#000000" transparent opacity={0.5} depthWrite={false} />
+      </mesh>
+      {bars.map(([x, y, len]) => (
+        <RoundedBox key={y} args={[len, F, 0.022]} radius={0.003} position={[x, y, 0.011]} castShadow>
+          <meshStandardMaterial color="#3e2718" roughness={0.5} />
+        </RoundedBox>
+      ))}
+      {[-1, 1].map((sx) => (
+        <RoundedBox key={sx} args={[F, OH - F * 2, 0.022]} radius={0.003} position={[(sx * (OW - F)) / 2, 0, 0.011]} castShadow>
+          <meshStandardMaterial color="#3e2718" roughness={0.5} />
+        </RoundedBox>
+      ))}
+      <mesh position={[0, 0, 0.004]}>
+        <planeGeometry args={[OW - F * 2, OH - F * 2]} />
+        <meshStandardMaterial color="#efe7d6" roughness={0.95} />
+      </mesh>
+      <mesh position={[0, 0, 0.005]}>
+        <planeGeometry args={[W, H]} />
+        <meshStandardMaterial map={map} roughness={0.9} />
+      </mesh>
+      {/* Cristal: solo un reflejo leve del entorno */}
+      <mesh position={[0, 0, 0.018]}>
+        <planeGeometry args={[OW - F * 2, OH - F * 2]} />
+        <meshStandardMaterial color="#000000" roughness={0.05} metalness={1} transparent opacity={0.1} depthWrite={false} />
       </mesh>
     </group>
   );

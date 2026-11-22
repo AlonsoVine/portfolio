@@ -523,30 +523,36 @@ export const drawNeonSign =
   (ctx, w, h, f) => {
     ctx.fontStretch = "condensed";
     ctx.lineJoin = "round";
-    const size = h * 0.62;
-    ctx.font = display(f, size, 800);
+    // Lienzo con margen de sobra: el halo se desvanece antes del borde y no deja un rectángulo
+    const size = h * 0.36;
+    ctx.font = display(f, size, 600);
     ctx.textBaseline = "middle";
-    const gap = size * 0.25;
+    const gap = size * 0.28;
     const a = first.toUpperCase();
     const b = last.toUpperCase();
     const wa = ctx.measureText(a).width;
     const wb = ctx.measureText(b).width;
     let x = (w - wa - wb - gap) / 2;
-    for (const [word, color, ww] of [
-      [a, ICE, wa],
-      [b, AMBER, wb],
+    // Tubo macizo: halo amplio del color, luego el vidrio teñido y un núcleo casi blanco
+    for (const [word, color, core, ww] of [
+      [a, ICE, "#e8f8ff", wa],
+      [b, AMBER, "#fff1dc", wb],
     ] as const) {
-      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
       ctx.shadowColor = color;
-      ctx.shadowBlur = h * 0.08;
-      ctx.lineWidth = h * 0.035;
+      for (const blur of [size * 0.45, size * 0.16]) {
+        ctx.shadowBlur = blur;
+        ctx.fillText(word, x, h / 2);
+      }
+      ctx.shadowBlur = size * 0.035;
+      ctx.fillStyle = core;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = size * 0.025;
       ctx.strokeText(word, x, h / 2);
-      ctx.shadowBlur = 0;
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = h * 0.012;
-      ctx.strokeText(word, x, h / 2);
+      ctx.fillText(word, x, h / 2);
       x += ww + gap;
     }
+    ctx.shadowBlur = 0;
   };
 
 /** Teclado, touchpad y rejillas del portátil, dibujados: a ese tamaño no merece la pena modelar teclas. */
@@ -719,7 +725,7 @@ export const drawMatEdge: Draw = (ctx, w, h) => {
 };
 
 
-const FONT_FREE = new Set<Draw>([drawRug, drawClockFace, drawUnderglow, drawMugGlaze, drawMugRough, drawLatte, drawPothosLeaf, drawWoodRough, drawSnakeLeaf, drawSpruceTop, drawFretboard, drawWood, drawPegboard, drawFabric, drawMatEdge, drawStrip, drawSoftDot, drawNoise, drawXboxLogo]);
+const FONT_FREE = new Set<Draw>([drawRug, drawFloorFalloff, drawFantasyMap, drawClockFace, drawUnderglow, drawMugGlaze, drawMugRough, drawLatte, drawPothosLeaf, drawWoodRough, drawSnakeLeaf, drawSpruceTop, drawFretboard, drawWood, drawPegboard, drawFabric, drawMatEdge, drawStrip, drawSoftDot, drawNoise, drawXboxLogo]);
 /** Hoja de sansevieria: verde oscuro con bandas onduladas claras y borde amarillo. */
 export function drawSnakeLeaf(ctx: CanvasRenderingContext2D, w: number, h: number) {
   ctx.fillStyle = "#24442a";
@@ -971,13 +977,31 @@ export function drawLatte(ctx: CanvasRenderingContext2D, w: number, h: number) {
 
 /** Tira LED bajo la mesa: degradado continuo de hielo a ámbar, sin puntos de diodo a la vista. */
 export function drawUnderglow(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  // Ciclo cerrado hielo → ámbar → hielo: al desplazar la textura repetida no se ve la costura
   const g = ctx.createLinearGradient(0, 0, w, 0);
   g.addColorStop(0, "#7fd4ff");
-  g.addColorStop(0.45, "#c8c6ff");
-  g.addColorStop(0.55, "#ffd2a0");
-  g.addColorStop(1, "#ffad4a");
+  g.addColorStop(0.18, "#9fdcff");
+  g.addColorStop(0.5, "#ffad4a");
+  g.addColorStop(0.82, "#9fdcff");
+  g.addColorStop(1, "#7fd4ff");
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
+}
+
+/** Máscara en grises del reflejo de la tira en el suelo: intensa bajo el canto, se apaga hacia los bordes. */
+export function drawFloorFalloff(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const img = ctx.createImageData(w, h);
+  for (let y = 0; y < h; y += 1)
+    for (let x = 0; x < w; x += 1) {
+      const dx = (x / (w - 1)) * 2 - 1;
+      const dy = (y / (h - 1)) * 2 - 1;
+      const r2 = Math.min(1, dx ** 6 + dy * dy);
+      const v = Math.round(255 * (1 - r2) ** 3);
+      const i = (y * w + x) * 4;
+      img.data[i] = img.data[i + 1] = img.data[i + 2] = v;
+      img.data[i + 3] = 255;
+    }
+  ctx.putImageData(img, 0, 0);
 }
 
 /** Alfombra bereber de lana: fondo crema con rombos teja y ocre, cenefas y flecos en los extremos cortos. */
@@ -998,7 +1022,7 @@ export function drawRug(ctx: CanvasRenderingContext2D, w: number, h: number) {
     ctx.lineTo(w - 4 - Math.abs(jitter), y - jitter * 0.4);
     ctx.stroke();
   }
-  ctx.fillStyle = "#e6d6bb";
+  ctx.fillStyle = "#d9a894";
   ctx.fillRect(x0, 0, x1 - x0, h);
   // Lana: motas cálidas que rompen el color plano
   for (let i = 0; i < 9000; i += 1) {
@@ -1013,8 +1037,8 @@ export function drawRug(ctx: CanvasRenderingContext2D, w: number, h: number) {
     ctx.lineWidth = width;
     ctx.strokeRect(x0 + inset, inset, x1 - x0 - inset * 2, h - inset * 2);
   };
-  band(18, 10, "#b4623a");
-  band(34, 3, "#c99a52");
+  band(18, 10, "#8e2a22");
+  band(34, 3, "#d0a060");
   // Rombos dibujados a mano, con trazo irregular, en dos tonos
   const cx = (x0 + x1) / 2;
   const cell = 96;
@@ -1025,7 +1049,7 @@ export function drawRug(ctx: CanvasRenderingContext2D, w: number, h: number) {
       const y = h / 2 + gy * cell * 0.9 + (gx % 2 ? cell * 0.45 : 0);
       if (x < x0 + 70 || x > x1 - 70 || y < 70 || y > h - 70) continue;
       const s = cell * 0.42;
-      ctx.strokeStyle = (gx + gy) % 2 ? "rgba(180,98,58,0.85)" : "rgba(122,62,40,0.75)";
+      ctx.strokeStyle = (gx + gy) % 2 ? "rgba(160,44,36,0.85)" : "rgba(110,30,28,0.75)";
       ctx.lineWidth = 6;
       ctx.beginPath();
       ctx.moveTo(x, y - s);
@@ -1039,6 +1063,180 @@ export function drawRug(ctx: CanvasRenderingContext2D, w: number, h: number) {
       ctx.arc(x, y, 5, 0, Math.PI * 2);
       ctx.fill();
     }
+}
+
+/**
+ * Mapa de fantasía en pergamino, a tinta: costa con ondas, cordilleras, bosques, ríos y rosa de los vientos.
+ * Sale de una semilla: un mapa original al estilo de los de las novelas, no la copia de uno.
+ */
+export function drawFantasyMap(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const r = rng(1937);
+  const ink = "#3b2a1a";
+  const land = "#e8d6b0";
+  const paper = ctx.createRadialGradient(w / 2, h / 2, h * 0.2, w / 2, h / 2, w * 0.62);
+  paper.addColorStop(0, "#efdfbc");
+  paper.addColorStop(0.7, "#dcc195");
+  paper.addColorStop(1, "#a98352");
+  ctx.fillStyle = paper;
+  ctx.fillRect(0, 0, w, h);
+  for (let i = 0; i < 2600; i += 1) {
+    ctx.fillStyle = r() > 0.5 ? "rgba(120,84,40,0.07)" : "rgba(255,246,220,0.08)";
+    ctx.fillRect(r() * w, r() * h, 1 + r() * 3, 1 + r() * 3);
+  }
+
+  // Tierra: contorno irregular desplazado al este; el mar queda al oeste y al sur
+  const cx = w * 0.6;
+  const cy = h * 0.46;
+  const ph = [r() * 6, r() * 6, r() * 6];
+  const pts = Array.from({ length: 140 }, (_, i): [number, number] => {
+    const a = (i / 140) * Math.PI * 2;
+    const k = 1 + 0.16 * Math.sin(a * 3 + ph[0]) + 0.09 * Math.sin(a * 7 + ph[1]) + 0.05 * Math.sin(a * 13 + ph[2]) + (r() - 0.5) * 0.05;
+    return [cx + Math.cos(a) * w * 0.42 * k, cy + Math.sin(a) * h * 0.4 * k];
+  });
+  const coast = () => {
+    ctx.beginPath();
+    pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+    ctx.closePath();
+  };
+  ctx.lineJoin = "round";
+  // Ondas de agua alrededor de la costa, cada vez más tenues
+  for (let i = 5; i >= 1; i -= 1) {
+    coast();
+    ctx.strokeStyle = `rgba(70,50,30,${0.12 - i * 0.015})`;
+    ctx.lineWidth = i * 9;
+    ctx.stroke();
+    coast();
+    ctx.strokeStyle = "#e4cfa6";
+    ctx.lineWidth = i * 9 - 3;
+    ctx.stroke();
+  }
+  coast();
+  ctx.fillStyle = land;
+  ctx.fill();
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  ctx.save();
+  coast();
+  ctx.clip();
+  // Cordilleras: picos en V con la ladera de sombra rayada
+  const range = (x0: number, y0: number, x1: number, y1: number, count: number, size: number) => {
+    for (let i = 0; i < count; i += 1) {
+      const t = i / (count - 1);
+      const x = x0 + (x1 - x0) * t + (r() - 0.5) * size * 0.6;
+      const y = y0 + (y1 - y0) * t + (r() - 0.5) * size * 0.5;
+      const s = size * (0.7 + r() * 0.5);
+      ctx.fillStyle = land;
+      ctx.beginPath();
+      ctx.moveTo(x - s * 0.6, y);
+      ctx.lineTo(x, y - s);
+      ctx.lineTo(x + s * 0.6, y);
+      ctx.fill();
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.lineWidth = 1.6;
+      for (let k = 1; k < 5; k += 1) {
+        ctx.beginPath();
+        ctx.moveTo(x + (s * 0.6 * k) / 5, y - s + (s * k) / 5);
+        ctx.lineTo(x + (s * 0.6 * k) / 5 - s * 0.12, y);
+        ctx.stroke();
+      }
+    }
+  };
+  range(w * 0.48, h * 0.2, w * 0.56, h * 0.72, 13, 46);
+  range(w * 0.62, h * 0.18, w * 0.9, h * 0.24, 10, 40);
+  range(w * 0.78, h * 0.6, w * 0.9, h * 0.76, 5, 50);
+  // Bosques: copas redondas a tinta, apiñadas
+  const forest = (fx: number, fy: number, rx: number, ry: number, count: number) => {
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.8;
+    for (let i = 0; i < count; i += 1) {
+      const a = r() * Math.PI * 2;
+      const d = Math.sqrt(r());
+      const x = fx + Math.cos(a) * rx * d;
+      const y = fy + Math.sin(a) * ry * d;
+      ctx.fillStyle = "#c9b98a";
+      ctx.beginPath();
+      ctx.arc(x, y, 8, Math.PI, 0);
+      ctx.lineTo(x + 8, y + 3);
+      ctx.lineTo(x - 8, y + 3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x, y + 3);
+      ctx.lineTo(x, y + 9);
+      ctx.stroke();
+    }
+  };
+  forest(w * 0.72, h * 0.44, 100, 60, 90);
+  forest(w * 0.36, h * 0.62, 50, 40, 50);
+  forest(w * 0.66, h * 0.7, 40, 30, 35);
+  // Ríos que bajan de las montañas al mar del oeste
+  ctx.strokeStyle = "#3f5a6a";
+  ctx.lineWidth = 3.5;
+  for (const [x0, y0, mx, my, x1, y1] of [
+    [w * 0.6, h * 0.24, w * 0.5, h * 0.4, w * 0.24, h * 0.5],
+    [w * 0.66, h * 0.62, w * 0.55, h * 0.8, w * 0.42, h * 0.86],
+  ]) {
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.quadraticCurveTo(mx, my, x1, y1);
+    ctx.stroke();
+  }
+  // Ciudades unidas por un camino punteado
+  ctx.setLineDash([7, 9]);
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(w * 0.34, h * 0.42);
+  ctx.bezierCurveTo(w * 0.45, h * 0.5, w * 0.6, h * 0.5, w * 0.82, h * 0.42);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  for (const [x, y] of [
+    [w * 0.34, h * 0.42],
+    [w * 0.82, h * 0.42],
+    [w * 0.6, h * 0.56],
+  ]) {
+    ctx.fillStyle = "#8e2a22";
+    ctx.beginPath();
+    ctx.arc(x, y, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = ink;
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Rosa de los vientos en el mar
+  const rx = w * 0.12;
+  const ry = h * 0.78;
+  const R = h * 0.1;
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(rx, ry, R * 0.75, 0, Math.PI * 2);
+  ctx.stroke();
+  for (let i = 0; i < 8; i += 1) {
+    const a = (i / 8) * Math.PI * 2 - Math.PI / 2;
+    const len = i % 2 ? R * 0.6 : R;
+    const side = a + Math.PI / 2;
+    ctx.fillStyle = i % 2 ? land : i === 0 ? "#8e2a22" : ink;
+    ctx.beginPath();
+    ctx.moveTo(rx + Math.cos(a) * len, ry + Math.sin(a) * len);
+    ctx.lineTo(rx + Math.cos(side) * R * 0.12, ry + Math.sin(side) * R * 0.12);
+    ctx.lineTo(rx - Math.cos(side) * R * 0.12, ry - Math.sin(side) * R * 0.12);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // Doble filete del borde
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 3;
+  ctx.strokeRect(w * 0.025, h * 0.035, w * 0.95, h * 0.93);
+  ctx.lineWidth = 1;
+  ctx.strokeRect(w * 0.035, h * 0.05, w * 0.93, h * 0.9);
 }
 
 /** Esfera de reloj de pared: blanco roto, sesenta marcas y doce índices gruesos, sin números. */

@@ -3,9 +3,9 @@
 
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
-import { type Color, type MeshBasicMaterial, type PointLight } from "three";
+import { AdditiveBlending, type Color, type MeshBasicMaterial, type PointLight } from "three";
 import { AMBER, hdr, ICE, MAGENTA, VIOLET } from "./palette";
-import { drawFabric, drawMatEdge, drawNeonSign, drawPegboard, drawSoftDot, drawStrip, drawUnderglow, drawWood, drawWoodRough, type DeskCopy } from "./screens";
+import { drawFabric, drawFloorFalloff, drawMatEdge, drawNeonSign, drawPegboard, drawSoftDot, drawStrip, drawUnderglow, drawWood, drawWoodRough, type DeskCopy } from "./screens";
 import { Dust, RoundedBox, SoftPlanes, type SoftPlane } from "./primitives";
 import { useCanvasTexture } from "./useCanvasTexture";
 
@@ -87,19 +87,10 @@ export function Desk() {
   );
 }
 
-const FLOOR: SoftPlane["r"] = [-Math.PI / 2, 0, 0];
 const LEFT: SoftPlane["r"] = [0, Math.PI / 2, 0];
 const RIGHT: SoftPlane["r"] = [0, -Math.PI / 2, 0];
 /** Halos que las tiras LED dejan en suelo y paredes: todos en una sola malla aditiva. */
 const WASHES: SoftPlane[] = [
-  ...(
-    [
-      [-0.62, ICE],
-      [-0.22, "#a9c4ff"],
-      [0.22, "#ffcf9e"],
-      [0.62, AMBER],
-    ] as const
-  ).map(([x, c]): SoftPlane => ({ p: [x, -0.748, 0.2], r: FLOOR, s: [0.85, 0.6], c, o: 0.18 })),
   { p: [-0.75, 0.16, WALL_Z + 0.004], s: [1.4, 0.8], c: ICE, o: 0.2 },
   { p: [0.78, 0.16, WALL_Z + 0.004], s: [1.4, 0.8], c: AMBER, o: 0.18 },
   { p: [0, 0.12, WALL_Z + 0.005], s: [1.9, 0.5], c: MAGENTA, o: 0.035 },
@@ -118,11 +109,14 @@ const WASHES: SoftPlane[] = [
 export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }) {
   const strip = useCanvasTexture(512, 4, drawStrip, { tileX: 1 });
   const dot = useCanvasTexture(256, 256, drawSoftDot);
-  const under = useCanvasTexture(256, 4, drawUnderglow, { tileX: 1 });
+  // Dos ciclos hielo/ámbar a lo largo de la mesa que fluyen como la retroiluminación del teclado
+  const under = useCanvasTexture(256, 4, drawUnderglow, { tileX: 2 });
+  const falloff = useCanvasTexture(128, 64, drawFloorFalloff, { color: false });
   const signDraw = useMemo(() => drawNeonSign(t.firstName, t.lastName), [t]);
-  const sign = useCanvasTexture(1024, 200, signDraw);
+  const sign = useCanvasTexture(1024, 320, signDraw);
   const signMat = useRef<MeshBasicMaterial>(null);
   const stripMat = useRef<MeshBasicMaterial>(null);
+  const underMat = useRef<MeshBasicMaterial>(null);
   const lights = useRef<(PointLight | null)[]>([]);
   const base = useMemo(() => [1.4, 1.2], []);
   const signColor = useMemo<Color>(() => hdr("#ffffff", 1.35), []);
@@ -131,6 +125,8 @@ export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }
     if (reduceMotion) return;
     const map = stripMat.current?.map;
     if (map) map.offset.x = (map.offset.x + delta * 0.03) % 1;
+    const flow = underMat.current?.map;
+    if (flow) flow.offset.x = (flow.offset.x - delta * 0.05) % 1;
     const tt = clock.elapsedTime;
     // Zumbido del neón: parpadeo casi imperceptible y algún fallo esporádico
     // Fallo esporádico del neón: azar por tramos de 0,1 s, de media uno cada ~12 s
@@ -150,18 +146,27 @@ export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }
         <meshBasicMaterial ref={stripMat} map={strip} color={hdr("#ffffff", 3)} toneMapped={false} />
       </mesh>
       <mesh position={[0, 0.66, WALL_Z + 0.012]}>
-        <planeGeometry args={[0.6, 0.117]} />
+        <planeGeometry args={[0.72, 0.225]} />
         <meshBasicMaterial ref={signMat} map={sign} color={signColor} transparent depthWrite={false} toneMapped={false} />
       </mesh>
-      {/* Placa de metacrilato del rótulo */}
-      <RoundedBox args={[0.64, 0.14, 0.006]} radius={0.003} position={[0, 0.66, WALL_Z + 0.006]}>
-        <meshPhysicalMaterial color="#0c0d12" roughness={0.12} transparent opacity={0.35} />
-      </RoundedBox>
+      {/* Rótulo montado directo en la pared con cuatro separadores metálicos, sin placa */}
+      {[-0.27, 0.27].flatMap((x) =>
+        [-0.04, 0.04].map((y) => (
+          <mesh key={`${x}${y}`} position={[x, 0.66 + y, WALL_Z + 0.006]} rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.0035, 0.0035, 0.012, 10]} />
+            <meshStandardMaterial color="#9a9aa0" roughness={0.3} metalness={0.9} />
+          </mesh>
+        )),
+      )}
 
-      {/* Luz bajo la mesa: tira oculta tras el canto delantero; solo se ve su reflejo en el suelo, de hielo a ámbar */}
+      {/* Luz bajo la mesa: tira oculta tras el canto delantero; se ve su reflejo en el suelo, que fluye igual que ella */}
       <mesh position={[0, -0.047, 0.25]} rotation={[Math.PI / 2, 0, 0]}>
         <planeGeometry args={[1.96, 0.008]} />
-        <meshBasicMaterial map={under} color={hdr("#ffffff", 2.2)} toneMapped={false} />
+        <meshBasicMaterial ref={underMat} map={under} color={hdr("#ffffff", 4)} toneMapped={false} />
+      </mesh>
+      <mesh position={[0, -0.7475, 0.18]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[2.1, 0.95]} />
+        <meshBasicMaterial map={under} alphaMap={falloff} transparent opacity={0.3} blending={AdditiveBlending} depthWrite={false} />
       </mesh>
       <SoftPlanes map={dot} items={WASHES} additive />
 
