@@ -697,7 +697,7 @@ export const drawMatEdge: Draw = (ctx, w, h) => {
 };
 
 
-const FONT_FREE = new Set<Draw>([drawPothosLeaf, drawWoodRough, drawSnakeLeaf, drawSpruceTop, drawFretboard, drawWood, drawPegboard, drawFabric, drawMatEdge, drawStrip, drawSoftDot, drawNoise, drawXboxLogo]);
+const FONT_FREE = new Set<Draw>([drawMugGlaze, drawMugRough, drawLatte, drawPothosLeaf, drawWoodRough, drawSnakeLeaf, drawSpruceTop, drawFretboard, drawWood, drawPegboard, drawFabric, drawMatEdge, drawStrip, drawSoftDot, drawNoise, drawXboxLogo]);
 /** Hoja de sansevieria: verde oscuro con bandas onduladas claras y borde amarillo. */
 export function drawSnakeLeaf(ctx: CanvasRenderingContext2D, w: number, h: number) {
   ctx.fillStyle = "#24442a";
@@ -822,4 +822,127 @@ export function drawPothosLeaf(ctx: CanvasRenderingContext2D, w: number, h: numb
   ctx.moveTo(w / 2, h);
   ctx.lineTo(w / 2, h * 0.05);
   ctx.stroke();
+}
+
+/**
+ * Esmalte de la taza artesanal, en las UV del torno (v: 0 pie, 0,72 borde, 1 fondo interior).
+ * Con `rough` pinta la rugosidad: el gres crudo es mate y el esmalte, vidriado.
+ */
+function mugPass(ctx: CanvasRenderingContext2D, w: number, h: number, rough: boolean) {
+  const Y = (v: number) => (1 - v) * h;
+  const r = rng(5);
+  // Exterior: azul reactivo, más claro y verdoso arriba donde el esmalte es fino
+  if (rough) ctx.fillStyle = "#262626";
+  else {
+    const g = ctx.createLinearGradient(0, Y(0.72), 0, Y(0.15));
+    g.addColorStop(0, "#4f8e98");
+    g.addColorStop(0.25, "#2a6378");
+    g.addColorStop(1, "#102a42");
+    ctx.fillStyle = g;
+  }
+  ctx.fillRect(0, Y(0.78), w, h - Y(0.78));
+  if (!rough) {
+    for (let i = 0; i < 160; i += 1) {
+      const x = r() * w;
+      const y = Y(0.2 + r() * 0.5);
+      const rad = 2 + r() * 10;
+      ctx.fillStyle = r() > 0.75 ? `rgba(150, 95, 55, ${0.15 + r() * 0.2})` : `rgba(120, 190, 205, ${0.08 + r() * 0.18})`;
+      ctx.beginPath();
+      ctx.ellipse(x, y, rad * 0.6, rad * (1.2 + r()), 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  // Borde: el esmalte se retira de la arista y deja ver el gres tostado
+  ctx.fillStyle = rough ? "#4a4a4a" : "#a27a52";
+  ctx.fillRect(0, Y(0.785), w, Y(0.715) - Y(0.785));
+  // Interior: esmalte crema con motas
+  ctx.fillStyle = rough ? "#303030" : "#e8dfcf";
+  ctx.fillRect(0, 0, w, Y(0.785));
+  if (!rough) {
+    for (let i = 0; i < 140; i += 1) {
+      ctx.fillStyle = `rgba(90, 70, 50, ${0.2 + r() * 0.3})`;
+      ctx.fillRect(r() * w, r() * Y(0.785), 1 + r() * 1.5, 1 + r() * 1.5);
+    }
+  }
+  // Pie de gres crudo bajo una línea de goteo irregular (periódica en u para cerrar la vuelta)
+  const drips = Array.from({ length: 7 }, () => ({ u: r(), len: 0.03 + r() * 0.07, wd: 0.02 + r() * 0.025 }));
+  const dripV = (u: number) => {
+    let v = 0.21 + 0.012 * Math.sin(u * Math.PI * 2 * 3) + 0.006 * Math.sin(u * Math.PI * 2 * 7 + 1);
+    for (const d of drips) {
+      const du = Math.min(Math.abs(u - d.u), 1 - Math.abs(u - d.u));
+      v -= d.len * Math.exp(-((du / d.wd) ** 2));
+    }
+    return v;
+  };
+  ctx.beginPath();
+  ctx.moveTo(0, h);
+  for (let x = 0; x <= w; x += 2) ctx.lineTo(x, Y(dripV(x / w)));
+  ctx.lineTo(w, h);
+  ctx.closePath();
+  ctx.fillStyle = rough ? "#dadada" : "#cbb79a";
+  ctx.fill();
+  if (!rough) {
+    ctx.save();
+    ctx.clip();
+    for (let i = 0; i < 500; i += 1) {
+      ctx.fillStyle = `rgba(60, 40, 25, ${0.25 + r() * 0.4})`;
+      ctx.fillRect(r() * w, Y(0.25 * r()), 1 + r() * 2, 1 + r() * 2);
+    }
+    ctx.restore();
+    // El esmalte se engrosa al final de la gota: borde más oscuro
+    ctx.strokeStyle = "rgba(8, 22, 36, 0.85)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    for (let x = 0; x <= w; x += 2) ctx[x ? "lineTo" : "moveTo"](x, Y(dripV(x / w)) - 1);
+    ctx.stroke();
+  }
+}
+
+export function drawMugGlaze(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  mugPass(ctx, w, h, false);
+}
+export function drawMugRough(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  mugPass(ctx, w, h, true);
+}
+
+/** Cappuccino visto desde arriba: crema tostada al borde, roseta de leche y microburbujas. */
+export function drawLatte(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const c = w / 2;
+  const g = ctx.createRadialGradient(c, c, 0, c, c, c);
+  g.addColorStop(0, "#b77d4c");
+  g.addColorStop(0.75, "#9a6236");
+  g.addColorStop(0.93, "#5f3519");
+  g.addColorStop(1, "#3a1d0c");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+  const r = rng(3);
+  ctx.fillStyle = "#f2e5d0";
+  ctx.strokeStyle = "#f2e5d0";
+  // Roseta: hojas apiladas que se estrechan hacia arriba, atravesadas por el tallo
+  for (let i = 0; i < 7; i += 1) {
+    const y = h * (0.72 - i * 0.075);
+    const rw = w * (0.3 - i * 0.03);
+    const rh = h * 0.055;
+    ctx.beginPath();
+    ctx.moveTo(c - rw, y + rh * 0.3);
+    ctx.quadraticCurveTo(c, y - rh * 1.6, c + rw, y + rh * 0.3);
+    ctx.quadraticCurveTo(c, y - rh * 0.2, c - rw, y + rh * 0.3);
+    ctx.fill();
+  }
+  ctx.beginPath();
+  ctx.ellipse(c, h * 0.2, w * 0.05, h * 0.045, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.lineWidth = w * 0.012;
+  ctx.beginPath();
+  ctx.moveTo(c, h * 0.82);
+  ctx.lineTo(c, h * 0.2);
+  ctx.stroke();
+  for (let i = 0; i < 260; i += 1) {
+    const a = r() * Math.PI * 2;
+    const d = c * (0.8 + r() * 0.18);
+    ctx.fillStyle = `rgba(230, 200, 160, ${0.2 + r() * 0.35})`;
+    ctx.beginPath();
+    ctx.arc(c + Math.cos(a) * d, c + Math.sin(a) * d, 0.6 + r() * 1.6, 0, Math.PI * 2);
+    ctx.fill();
+  }
 }

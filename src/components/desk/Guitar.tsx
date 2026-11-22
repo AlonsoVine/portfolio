@@ -1,7 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef } from "react";
-import { CylinderGeometry, ExtrudeGeometry, Float32BufferAttribute, type InstancedMesh, Object3D, Path, Shape, ShapeGeometry, Vector2 } from "three";
+import { BackSide, CylinderGeometry, ExtrudeGeometry, Float32BufferAttribute, type InstancedMesh, Object3D, Path, Shape, ShapeGeometry, Vector2 } from "three";
 import { RoundedBox } from "./primitives";
 import { drawFretboard, drawSoftDot, drawSpruceTop } from "./screens";
 import { useCanvasTexture } from "./useCanvasTexture";
@@ -64,7 +64,7 @@ function topGeometry() {
 }
 const TOP = topGeometry();
 // Filete crema: un contorno medio milímetro mayor justo en el canto de la tapa
-const BINDING = new ExtrudeGeometry(outline(false), { depth: 0.002, curveSegments: 48, bevelEnabled: true, bevelThickness: 0.001, bevelSize: BEVEL + 0.0007, bevelSegments: 1 });
+const BINDING = new ExtrudeGeometry(outline(true), { depth: 0.002, curveSegments: 48, bevelEnabled: true, bevelThickness: 0.001, bevelSize: BEVEL + 0.0007, bevelSegments: 1 });
 const STRING = new CylinderGeometry(1, 1, 1, 6, 1);
 
 /** Seis cuerdas de entorchado metálico, de la selleta a la cejuela, más gruesas en los graves. */
@@ -113,7 +113,12 @@ export function Guitar({ position, rotation }: Placed) {
       {/* Fondo de la caja visto por la boca */}
       <mesh position={[0, HOLE_Y, 0.004]}>
         <circleGeometry args={[HOLE_R * 1.1, 32]} />
-        <meshStandardMaterial color="#120a06" roughness={0.9} />
+        <meshBasicMaterial color="#030201" />
+      </mesh>
+      {/* Garganta de la boca: dentro de la caja apenas entra luz, se ve casi negra */}
+      <mesh position={[0, HOLE_Y, (FRONT + 0.004) / 2]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[HOLE_R * 0.995, HOLE_R * 0.995, FRONT - 0.004, 40, 1, true]} />
+        <meshBasicMaterial color="#070403" side={BackSide} />
       </mesh>
       <mesh geometry={TOP} position={[0, 0, FRONT + 0.0004]} receiveShadow>
         <meshStandardMaterial map={spruce} roughness={0.26} />

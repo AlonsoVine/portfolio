@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
-import { Vector2 } from "three";
+import { CatmullRomCurve3, LatheGeometry, TubeGeometry, Vector2, Vector3 } from "three";
 import { hdr, ICE } from "./palette";
-import { drawNoise, drawPhone, drawTablet, type DeskCopy } from "./screens";
+import { drawLatte, drawMugGlaze, drawMugRough, drawNoise, drawPhone, drawTablet, type DeskCopy } from "./screens";
 import { RoundedBox } from "./primitives";
 import { Steam } from "./Steam";
 import { useCanvasTexture } from "./useCanvasTexture";
@@ -83,60 +83,96 @@ export function Tablet({ t, lang, position, rotation }: { t: DeskCopy; lang: str
 
 
 /** Perfil de la taza para el torno: exterior, borde y paredes interiores. */
-const MUG = (() => {
-  const p: [number, number][] = [
-    [0, 0],
-    [0.036, 0],
-    [0.039, 0.003],
-    [0.042, 0.02],
-    [0.046, 0.06],
-    [0.0475, 0.084],
-    [0.046, 0.087],
-    [0.0435, 0.085],
-    [0.042, 0.06],
-    [0.038, 0.02],
-    [0.034, 0.008],
-    [0, 0.008],
-  ];
-  return p.map(([x, y]) => new Vector2(x, y));
-})();
+// Taza de gres hecha a torno: barriga suave, marcas de los dedos al subir el barro y pie de anillo
+const MUG_H = 0.092;
+const WALL = 0.0045;
+const radius = (y: number) => 0.037 + 0.0075 * Math.sin(Math.PI * Math.min(1, (y / MUG_H) ** 0.85) * 0.9) + 0.00045 * Math.sin(y * 880);
+const COFFEE_Y = 0.074;
 
+function mugGeometry() {
+  const pts: [number, number, number][] = [
+    [0, 0, 0],
+    [0.03, 0, 0.005],
+    [0.034, 0.0015, 0.01],
+    [0.0355, 0.004, 0.02],
+  ];
+  for (let i = 1; i <= 36; i += 1) {
+    const y = 0.004 + (MUG_H - 0.004) * (i / 36);
+    pts.push([radius(y), y, 0.02 + 0.7 * (y / MUG_H)]);
+  }
+  const top = radius(MUG_H);
+  pts.push([top - 0.0006, MUG_H + 0.0018, 0.745], [top - WALL / 2, MUG_H + 0.0026, 0.76], [top - WALL + 0.0004, MUG_H + 0.0016, 0.78]);
+  for (let i = 1; i <= 24; i += 1) {
+    const y = MUG_H - (MUG_H - 0.012) * (i / 24);
+    pts.push([radius(y) - WALL, y, 0.78 + 0.2 * (1 - y / MUG_H)]);
+  }
+  pts.push([0.024, 0.0095, 0.99], [0, 0.0095, 1]);
+  const g = new LatheGeometry(
+    pts.map(([x, y]) => new Vector2(x, y)),
+    64,
+  );
+  // La UV del torno va por índice de punto; se fija la v a mano para que el esmalte caiga donde toca
+  const uv = g.attributes.uv;
+  for (let i = 0; i < uv.count; i += 1) uv.setY(i, pts[i % pts.length][2]);
+  g.computeVertexNormals();
+  return g;
+}
+
+function handleGeometry() {
+  // Asa en oreja: sale casi horizontal del hombro, baja curvada y vuelve a la barriga
+  const x0 = radius(0.075) - 0.001;
+  const x1 = radius(0.03) - 0.001;
+  const curve = new CatmullRomCurve3([
+    new Vector3(x0, 0.075, 0),
+    new Vector3(x0 + 0.018, 0.078, 0),
+    new Vector3(x0 + 0.028, 0.062, 0),
+    new Vector3(x1 + 0.024, 0.04, 0),
+    new Vector3(x1 + 0.01, 0.028, 0),
+    new Vector3(x1, 0.03, 0),
+  ]);
+  return new TubeGeometry(curve, 40, 0.0052, 10, false);
+}
+
+const MUG = mugGeometry();
+const HANDLE = handleGeometry();
+
+/** Cappuccino en taza de gres esmaltada a mano, sobre posavasos de corcho, con una galleta al lado. */
 export function Coffee({ position, reduceMotion }: Placed & { reduceMotion: boolean }) {
   const noise = useCanvasTexture(128, 128, drawNoise, { tileX: 1, color: false });
+  const glaze = useCanvasTexture(512, 512, drawMugGlaze);
+  const glazeRough = useCanvasTexture(512, 512, drawMugRough, { color: false });
+  const latte = useCanvasTexture(256, 256, drawLatte);
+  const cork = useCanvasTexture(128, 128, drawNoise, { tileX: 3, color: false });
+  const inner = radius(COFFEE_Y) - WALL;
   return (
     <group position={position}>
-      {/* Posavasos de mandala */}
+      {/* Posavasos de corcho */}
       <mesh position={[0, 0.003, 0]} receiveShadow castShadow>
-        <cylinderGeometry args={[0.062, 0.062, 0.006, 48]} />
-        <meshStandardMaterial color="#6e3a44" roughness={0.9} />
+        <cylinderGeometry args={[0.055, 0.055, 0.006, 64]} />
+        <meshStandardMaterial color="#a77b52" roughness={0.95} bumpMap={cork} bumpScale={1.2} />
       </mesh>
-      <mesh position={[0, 0.0062, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.03, 0.055, 48]} />
-        <meshStandardMaterial color="#d38b4a" roughness={0.6} />
-      </mesh>
-      <group position={[0, 0.006, 0]}>
-        <mesh castShadow receiveShadow>
-          <latheGeometry args={[MUG, 48]} />
-          <meshStandardMaterial color="#8c7a2c" roughness={0.32} side={2} />
+      <group position={[0, 0.006, 0]} rotation={[0, -0.75, 0]}>
+        <mesh geometry={MUG} castShadow receiveShadow>
+          <meshPhysicalMaterial map={glaze} roughnessMap={glazeRough} roughness={1} clearcoat={1} clearcoatRoughnessMap={glazeRough} clearcoatRoughness={0.5} />
         </mesh>
-        {/* Café con algo de crema y reflejo */}
-        <mesh position={[0, 0.074, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <circleGeometry args={[0.0428, 40]} />
-          <meshStandardMaterial color="#140904" roughness={0.1} envMapIntensity={0.35} />
+        {/* El asa va esmaltada del mismo azul; ovalada, no un tubo redondo */}
+        <mesh geometry={HANDLE} scale={[1, 1, 0.62]} castShadow>
+          <meshStandardMaterial color="#1f5268" roughness={0.18} />
         </mesh>
-        <mesh position={[0, 0.0742, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[0.033, 0.0428, 40]} />
-          <meshStandardMaterial color="#5a3519" roughness={0.6} transparent opacity={0.55} />
-        </mesh>
-        <mesh position={[0.046, 0.045, 0]} rotation={[0, 0, -Math.PI / 2]} castShadow>
-          <torusGeometry args={[0.018, 0.0055, 12, 32, Math.PI]} />
-          <meshStandardMaterial color="#8c7a2c" roughness={0.32} />
+        {/* Cappuccino: espuma con roseta y un menisco oscuro donde toca la pared */}
+        <mesh position={[0, COFFEE_Y, 0]} rotation={[-Math.PI / 2, 0, 0.9]}>
+          <circleGeometry args={[inner, 48]} />
+          <meshStandardMaterial map={latte} roughness={0.45} />
         </mesh>
       </group>
+      {/* Galleta caramelizada apoyada en el posavasos */}
+      <RoundedBox args={[0.046, 0.005, 0.03]} radius={0.002} position={[-0.03, 0.009, 0.05]} rotation={[0.06, 0.5, -0.12]} castShadow>
+        <meshStandardMaterial color="#b0682e" roughness={0.75} bumpMap={noise} bumpScale={2} />
+      </RoundedBox>
       {!reduceMotion && (
         <>
-          <Steam position={[0.004, 0.075, 0]} height={0.14} width={0.075} noise={noise} />
-          <Steam position={[-0.008, 0.075, 0.006]} height={0.11} width={0.06} seed={1} noise={noise} />
+          <Steam position={[0.004, COFFEE_Y + 0.006, 0]} height={0.14} width={0.075} noise={noise} />
+          <Steam position={[-0.008, COFFEE_Y + 0.006, 0.006]} height={0.11} width={0.06} seed={1} noise={noise} />
         </>
       )}
     </group>
