@@ -79,7 +79,7 @@ function Strings() {
       const x0 = k * 0.054;
       const x1 = k * 0.036;
       const len = NUT_Y - SADDLE_Y;
-      const r = 0.0006 - i * 0.00005;
+      const r = 0.0009 - i * 0.00004;
       o.position.set((x0 + x1) / 2, (SADDLE_Y + NUT_Y) / 2, FRONT + 0.0093);
       o.rotation.set(0, 0, Math.atan2(x0 - x1, len));
       o.scale.set(r, len, r);
@@ -91,7 +91,7 @@ function Strings() {
   }, []);
   return (
     <instancedMesh ref={ref} args={[STRING, undefined, 6]}>
-      <meshStandardMaterial color="#d8d2c4" roughness={0.3} metalness={1} />
+      <meshStandardMaterial color="#d8d2c4" roughness={0.18} metalness={1} envMapIntensity={1.5} />
     </instancedMesh>
   );
 }
@@ -105,7 +105,7 @@ export function Guitar({ position, rotation }: Placed) {
   return (
     <group position={position} rotation={rotation}>
       <mesh geometry={BODY} castShadow receiveShadow>
-        <meshPhysicalMaterial color="#5c2e18" roughness={0.5} clearcoat={0.7} clearcoatRoughness={0.35} />
+        <meshPhysicalMaterial color="#3a1a0c" roughness={0.5} clearcoat={0.7} clearcoatRoughness={0.35} />
       </mesh>
       <mesh geometry={BINDING} position={[0, 0, DEPTH - 0.0015]}>
         <meshStandardMaterial color="#e8dcc0" roughness={0.35} />
@@ -121,7 +121,7 @@ export function Guitar({ position, rotation }: Placed) {
         <meshBasicMaterial color="#070403" side={BackSide} />
       </mesh>
       <mesh geometry={TOP} position={[0, 0, FRONT + 0.0004]} receiveShadow>
-        <meshPhysicalMaterial map={spruce} roughness={0.45} clearcoat={0.5} clearcoatRoughness={0.4} />
+        <meshPhysicalMaterial map={spruce} roughness={0.35} clearcoat={0.6} clearcoatRoughness={0.32} />
       </mesh>
 
       {/* Puente con selleta de hueso */}

@@ -26,7 +26,7 @@ export function Desk() {
         <meshStandardMaterial map={wood} roughnessMap={woodRough} roughness={0.85} bumpMap={woodRough} bumpScale={-0.06} color="#d6b293" metalness={0} />
       </RoundedBox>
       <RoundedBox args={[1.5, 0.004, 0.53]} radius={0.0018} smoothness={3} position={[-0.02, 0.002, 0.045]} receiveShadow>
-        <meshStandardMaterial map={fabric} bumpMap={fabric} bumpScale={0.35} color="#6e7078" roughness={0.95} />
+        <meshPhysicalMaterial map={fabric} color="#6e7078" roughness={1} sheen={0.45} sheenRoughness={0.8} sheenColor="#5a5f6a" />
       </RoundedBox>
       {/* Costura del borde */}
       <mesh position={[-0.02, 0.0041, 0.045]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -116,14 +116,14 @@ function Wash({
  */
 export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }) {
   const strip = useCanvasTexture(512, 4, drawStrip, { tileX: 1 });
-  const dot = useCanvasTexture(128, 128, drawSoftDot);
+  const dot = useCanvasTexture(256, 256, drawSoftDot);
   const under = useCanvasTexture(256, 4, drawUnderglow, { tileX: 1 });
   const signDraw = useMemo(() => drawNeonSign(t.firstName, t.lastName), [t]);
   const sign = useCanvasTexture(1024, 200, signDraw);
   const signMat = useRef<MeshBasicMaterial>(null);
   const stripMat = useRef<MeshBasicMaterial>(null);
   const lights = useRef<(PointLight | null)[]>([]);
-  const base = useMemo(() => [1.4, 1.2, 0.5], []);
+  const base = useMemo(() => [1.4, 1.2, 0.25], []);
   const signColor = useMemo<Color>(() => hdr("#ffffff", 1.35), []);
 
   useFrame(({ clock }, delta) => {
@@ -148,25 +148,6 @@ export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }
         <capsuleGeometry args={[0.006, 1.7, 4, 8]} />
         <meshBasicMaterial ref={stripMat} map={strip} color={hdr("#ffffff", 3)} toneMapped={false} />
       </mesh>
-      {/* Barras verticales detrás de la ultrawide: izquierda fría, derecha cálida */}
-      {(
-        [
-          [-0.34, ICE],
-          [0.34, AMBER],
-        ] as const
-      ).map(([x, c]) => (
-        <group key={x} position={[x, 0, -0.5]}>
-          <mesh position={[0, 0.13, 0]}>
-            <capsuleGeometry args={[0.011, 0.2, 4, 12]} />
-            <meshBasicMaterial color={hdr(c, 2.2)} toneMapped={false} />
-          </mesh>
-          <mesh position={[0, 0.01, 0]}>
-            <cylinderGeometry args={[0.022, 0.026, 0.02, 20]} />
-            <meshStandardMaterial color="#16171c" roughness={0.4} />
-          </mesh>
-        </group>
-      ))}
-
       <mesh position={[0, 0.66, WALL_Z + 0.012]}>
         <planeGeometry args={[0.6, 0.117]} />
         <meshBasicMaterial ref={signMat} map={sign} color={signColor} transparent depthWrite={false} toneMapped={false} />
@@ -191,7 +172,7 @@ export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }
       ))}
       <Wash map={dot} position={[-0.75, 0.3, WALL_Z + 0.004]} scale={[1.5, 1.1]} color={ICE} opacity={0.16} />
       <Wash map={dot} position={[0.78, 0.3, WALL_Z + 0.004]} scale={[1.5, 1.1]} color={AMBER} opacity={0.15} />
-      <Wash map={dot} position={[0, 0.12, WALL_Z + 0.005]} scale={[1.9, 0.5]} color={MAGENTA} opacity={0.12} />
+      <Wash map={dot} position={[0, 0.12, WALL_Z + 0.005]} scale={[1.9, 0.5]} color={MAGENTA} opacity={0.06} />
       <Wash map={dot} position={[0, 0.66, WALL_Z + 0.003]} scale={[1.3, 0.5]} color={VIOLET} opacity={0.11} />
       <Wash map={dot} position={[-1.045, 0.35, -0.25]} rotation={[0, Math.PI / 2, 0]} scale={[1.7, 1.3]} color={ICE} opacity={0.42} />
       <Wash map={dot} position={[-1.045, 0.25, -0.45]} rotation={[0, Math.PI / 2, 0]} scale={[0.8, 0.7]} color={VIOLET} opacity={0.06} />

@@ -36,7 +36,7 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
       className="desk-canvas"
       shadows
       flat
-      dpr={[1, 1.5]}
+      dpr={[1, 1.25]}
       camera={{ position: EYE, fov: 56, near: 0.02, far: 8 }}
       gl={{ antialias: false, powerPreference: "high-performance", stencil: false }}
       onCreated={({ gl }) => {
@@ -46,11 +46,10 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
       }}
     >
       <color attach="background" args={["#05060a"]} />
-      <fog attach="fog" args={["#05060a", 2.4, 5]} />
 
       <Reflections />
 
-      <hemisphereLight args={["#6f86c9", "#1a0f0a", 0.2]} />
+      <hemisphereLight args={["#6f86c9", "#2b1d14", 0.28]} />
       <directionalLight
         position={[-0.6, 1.8, 1.1]}
         intensity={0.35}
@@ -90,8 +89,8 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
 
       <EffectComposer multisampling={0} enableNormalPass={false}>
         {/* Oclusión ambiental: asienta los objetos sobre la mesa y oscurece los rincones */}
-        <>{!low && <N8AO ref={opaqueAO} halfRes aoRadius={0.045} distanceFalloff={0.5} intensity={1.6} color="#05060a" quality="low" />}</>
-        <Bloom mipmapBlur intensity={0.28} luminanceThreshold={1.0} luminanceSmoothing={0.2} radius={0.65} />
+        <>{!low && <N8AO ref={opaqueAO} halfRes aoRadius={0.045} distanceFalloff={0.5} intensity={1.6} color="#05060a" quality="performance" />}</>
+        <Bloom mipmapBlur levels={5} intensity={0.28} luminanceThreshold={1.0} luminanceSmoothing={0.2} radius={0.65} />
         <ToneMapping mode={ToneMappingMode.NEUTRAL} />
         <Vignette offset={0.3} darkness={0.45} />
         {/* SMAA en vez de MSAA: sobre un buffer HalfFloat a resolución completa sale mucho más barato */}

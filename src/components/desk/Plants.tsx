@@ -106,7 +106,7 @@ const translucent = (shader: { fragmentShader: string }) => {
     `#include <lights_fragment_end>
     // Normal en espacio mundo: la contraluz viene de la pared azul y no gira con la cabeza
     vec3 leafN = inverseTransformDirection(normal, viewMatrix);
-    reflectedLight.indirectDiffuse += diffuseColor.rgb * vec3(0.22, 0.32, 0.4) * max(dot(-leafN, normalize(vec3(-1.0, 0.4, -0.3))), 0.0);`,
+    reflectedLight.indirectDiffuse += diffuseColor.rgb * vec3(0.12, 0.18, 0.12) * max(dot(-leafN, normalize(vec3(-1.0, 0.4, -0.3))), 0.0);`,
   );
 };
 
@@ -401,7 +401,7 @@ const ARECA: { canes: Vec3[][]; leaflets: Instance[] } = (() => {
   const m = new Matrix4();
   const q = new Quaternion();
   const e = new Euler();
-  const greens = ["#4f8a33", "#5f9a3a", "#6aa53f", "#477d2e", "#7bb247"];
+  const greens = ["#3e6b2a", "#4b7a30", "#58873a", "#35602a", "#6a9440"];
   // Abanico hacia la izquierda y hacia delante: lo que mira al usuario, no a la pared
   [-2.2, -2.9, 2.6, 1.9, 3.3, -1.6, -2.55, 2.25, -1.9, 2.95].forEach((phi, k) => {
     const c = Math.cos(phi);
@@ -432,7 +432,7 @@ const ARECA: { canes: Vec3[][]; leaflets: Instance[] } = (() => {
         q.setFromRotationMatrix(m);
         e.setFromQuaternion(q, "YXZ");
         const len = (0.05 + r() * 0.012) * Math.sin(Math.PI * (0.15 + (i / n) * 0.8));
-        leaflets.push({ p: [p.x, p.y, p.z], r: [e.x, e.y, e.z], s: [0.018, len * 1.35, 0.018], c: greens[Math.floor(r() * greens.length)] });
+        leaflets.push({ p: [p.x, p.y, p.z], r: [e.x, e.y, e.z], s: [0.012 + r() * 0.01, len * 1.35, 0.018], c: greens[Math.floor(r() * greens.length)] });
       }
     }
   });
@@ -457,7 +457,7 @@ const CELLS = [-1, 0, 1].map((i) => TROUGH.z + (i * TROUGH.len) / 3);
 
 function Planter() {
   const { x, z, len, w, h, wall } = TROUGH;
-  const ceramic = <meshStandardMaterial color="#e6e1d8" roughness={0.62} />;
+  const ceramic = <meshStandardMaterial color="#cdc8bd" roughness={0.72} />;
   return (
     <group position={[x, 0, z]}>
       <RoundedBox args={[w, wall, len]} radius={0.003} position={[0, wall / 2 + 0.006, 0]} castShadow receiveShadow>
@@ -532,7 +532,7 @@ function MushroomLamp({ position }: { position: Vec3 }) {
         <circleGeometry args={[0.069, 40]} />
         <meshBasicMaterial color={hdr("#ffd8a8", 1.6)} toneMapped={false} side={DoubleSide} />
       </mesh>
-      <pointLight position={[0, 0.16, 0]} color="#ffc98f" intensity={0.9} distance={0.9} decay={1.8} />
+      <pointLight position={[0, 0.16, 0]} color="#ffc98f" intensity={0.9} distance={0.65} decay={1.8} />
     </group>
   );
 }

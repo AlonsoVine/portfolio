@@ -4,14 +4,14 @@ import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
 import type { PerspectiveCamera } from "three";
 
-export const EYE: [number, number, number] = [0, 0.47, 0.74];
+export const EYE: [number, number, number] = [0, 0.485, 0.81];
 
 // Límites del giro de cabeza (radianes). Hacia abajo se llega más lejos para ver la tablet y el teclado
 const YAW = 0.72;
 const PITCH_REST = -0.27;
 const PITCH_UP = 0.08;
 const PITCH_DOWN = -0.64;
-export const BASE_FOV = 56;
+export const BASE_FOV = 52;
 const MAX_FOV = 92;
 const MIN_HFOV = (68 * Math.PI) / 180;
 // Una cabeza pesa más que una mano: muelle blando y amortiguamiento crítico (2·√k)

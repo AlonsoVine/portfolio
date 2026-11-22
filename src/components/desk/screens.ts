@@ -431,9 +431,11 @@ export const drawStrip: Draw = (ctx, w, h) => {
 
 export const drawSoftDot: Draw = (ctx, w, h) => {
   const g = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
-  g.addColorStop(0, "rgba(255,255,255,1)");
-  g.addColorStop(0.35, "rgba(255,255,255,0.45)");
-  g.addColorStop(1, "rgba(255,255,255,0)");
+  // Caída (1-r²)³: sin saltos de pendiente, así no aparecen aros ni bandas en el halo
+  for (let i = 0; i <= 11; i += 1) {
+    const r = i / 11;
+    g.addColorStop(r, `rgba(255,255,255,${(1 - r * r) ** 3})`);
+  }
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
 };
@@ -499,13 +501,19 @@ export const drawWoodRough: Draw = (ctx, w, h) => woodPass(ctx, w, h, true);
 export const drawPegboard: Draw = (ctx, w, h) => {
   ctx.fillStyle = "#2a2730";
   ctx.fillRect(0, 0, w, h);
-  ctx.fillStyle = "#121116";
   const step = 32;
+  ctx.lineWidth = 1;
   for (let y = step / 2; y < h; y += step)
     for (let x = step / 2; x < w; x += step) {
+      ctx.fillStyle = "#050408";
       ctx.beginPath();
-      ctx.arc(x, y, 5, 0, Math.PI * 2);
+      ctx.arc(x, y, 6, 0, Math.PI * 2);
       ctx.fill();
+      // Canto del taladro iluminado desde arriba: el agujero se lee hundido, no pintado
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.beginPath();
+      ctx.arc(x, y, 6.5, 0.1, Math.PI * 0.9);
+      ctx.stroke();
     }
 };
 
