@@ -42,7 +42,7 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
 
       <Reflections />
 
-      <hemisphereLight args={["#6f86c9", "#1a0f0a", 0.14]} />
+      <hemisphereLight args={["#6f86c9", "#1a0f0a", 0.2]} />
       <directionalLight
         position={[-0.6, 1.8, 1.1]}
         intensity={0.35}
@@ -75,20 +75,20 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
       </group>
       <Mouse position={[0.27, 0, 0.13]} rotation={[0, -0.12, 0]} />
       <Plants />
-      <Guitar position={[1.02, 0.1, 0.11]} rotation={[0, -Math.PI / 2, 0]} />
+      <Guitar position={[1.02, 0.2, 0.11]} rotation={[0, -Math.PI / 2, 0]} />
 
       <LookControls reduceMotion={reduceMotion} />
       <Warmup onReady={onReady} onLow={() => setLow(true)} />
 
       <EffectComposer multisampling={low ? 0 : 2} enableNormalPass={false}>
         {/* Oclusión ambiental: asienta los objetos sobre la mesa y oscurece los rincones */}
-        <>{!low && <N8AO halfRes aoRadius={0.06} distanceFalloff={0.5} intensity={2.2} color="#05060a" quality="low" />}</>
-        <Bloom mipmapBlur intensity={0.28} luminanceThreshold={1.15} luminanceSmoothing={0.3} radius={0.65} />
+        <>{!low && <N8AO halfRes aoRadius={0.045} distanceFalloff={0.5} intensity={1.6} color="#05060a" quality="low" />}</>
+        <Bloom mipmapBlur intensity={0.28} luminanceThreshold={1.0} luminanceSmoothing={0.2} radius={0.65} />
         <ToneMapping mode={ToneMappingMode.NEUTRAL} />
-        <Vignette offset={0.28} darkness={0.58} />
+        <Vignette offset={0.3} darkness={0.45} />
         {/* Sin MSAA en el modo bajo: SMAA evita los dientes de sierra a coste casi nulo */}
         <>{low && <SMAA />}</>
-        <Noise premultiply blendFunction={BlendFunction.SOFT_LIGHT} opacity={0.08} />
+        <Noise premultiply blendFunction={BlendFunction.SOFT_LIGHT} opacity={0.04} />
       </EffectComposer>
     </Canvas>
   );

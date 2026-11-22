@@ -150,7 +150,6 @@ export function Warmup({ onReady, onLow }: { onReady: () => void; onLow: () => v
     gl.setRenderTarget(prev);
     compiling
       .catch(() => undefined)
-      .then(() => new Promise((done) => setTimeout(done, 600)))
       .then(() => {
         target.dispose();
         if (!alive) return;

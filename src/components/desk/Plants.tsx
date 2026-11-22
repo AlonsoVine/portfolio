@@ -23,7 +23,6 @@ import {
   Vector2,
   Vector3,
 } from "three";
-import { ICE } from "./palette";
 import { RoundedBox } from "./primitives";
 import { drawPothosLeaf, drawSnakeLeaf } from "./screens";
 import { useCanvasTexture } from "./useCanvasTexture";
@@ -105,7 +104,9 @@ const translucent = (shader: { fragmentShader: string }) => {
   shader.fragmentShader = shader.fragmentShader.replace(
     "#include <lights_fragment_end>",
     `#include <lights_fragment_end>
-    reflectedLight.indirectDiffuse += diffuseColor.rgb * 0.28 * max(dot(-normal, normalize(vec3(-0.3, 0.4, -1.0))), 0.0);`,
+    // Normal en espacio mundo: la contraluz viene de la pared azul y no gira con la cabeza
+    vec3 leafN = inverseTransformDirection(normal, viewMatrix);
+    reflectedLight.indirectDiffuse += diffuseColor.rgb * vec3(0.22, 0.32, 0.4) * max(dot(-leafN, normalize(vec3(-1.0, 0.4, -0.3))), 0.0);`,
   );
 };
 
@@ -394,10 +395,10 @@ function Pothos({ position }: { position: Vec3 }) {
 
 const BLADES: Instance[] = (() => {
   const r = rng(53);
-  return Array.from({ length: 11 }, (_, i) => {
+  return Array.from({ length: 16 }, (_, i) => {
     const a = i * 2.39996 + r() * 0.4;
     const d = 0.004 + r() * 0.018;
-    const h = 0.2 + r() * 0.14 - d * 2;
+    const h = 0.3 + r() * 0.16 - d * 2;
     const w = 0.026 + r() * 0.012;
     return {
       p: [Math.cos(a) * d, 0.07, Math.sin(a) * d] as Vec3,
@@ -443,7 +444,7 @@ const ARECA: { canes: Vec3[][]; leaflets: Instance[] } = (() => {
   const e = new Euler();
   const greens = ["#4f8a33", "#5f9a3a", "#6aa53f", "#477d2e", "#7bb247"];
   // Abanico hacia la izquierda y hacia delante: lo que mira al usuario, no a la pared
-  [-2.2, -2.9, 2.6, 1.9, 3.3, -1.6].forEach((phi, k) => {
+  [-2.2, -2.9, 2.6, 1.9, 3.3, -1.6, -2.55, 2.25, -1.9, 2.95].forEach((phi, k) => {
     const c = Math.cos(phi);
     const s = Math.sin(phi);
     const h = 0.55 + r() * 0.2 - (k > 3 ? 0.12 : 0);
@@ -516,7 +517,6 @@ export function Plants() {
         <Bonsai position={[0, 0, 0]} />
       </group>
       {/* Contraluz frío desde la pared azul: recorta las hojas y les da volumen */}
-      <pointLight position={[-0.8, 0.5, -0.35]} intensity={0.45} distance={0.9} decay={1.5} color={ICE} />
     </group>
   );
 }

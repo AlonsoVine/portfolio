@@ -688,10 +688,11 @@ export const drawFabric: Draw = (ctx, w, h) => {
 
 /** Borde cosido del tapete: canal de luminancia para el relieve y el color de la costura. */
 export const drawMatEdge: Draw = (ctx, w, h) => {
-  const inset = 10;
-  ctx.strokeStyle = "rgba(120,122,130,0.4)";
-  ctx.lineWidth = 2;
-  ctx.setLineDash([8, 6]);
+  // Pespunte fino de tapete, no una línea de carretera
+  const inset = 5;
+  ctx.strokeStyle = "rgba(150,152,160,0.26)";
+  ctx.lineWidth = 1.2;
+  ctx.setLineDash([4, 3]);
   ctx.strokeRect(inset, inset, w - inset * 2, h - inset * 2);
   ctx.setLineDash([]);
 };

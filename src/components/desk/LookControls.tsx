@@ -15,8 +15,9 @@ export const BASE_FOV = 56;
 const MAX_FOV = 92;
 const MIN_HFOV = (68 * Math.PI) / 180;
 // Una cabeza pesa más que una mano: muelle blando y amortiguamiento crítico (2·√k)
-const STIFFNESS = 30;
-const DAMPING = 2 * Math.sqrt(STIFFNESS);
+const STIFFNESS = 45;
+// Algo menos que crítico: un asomo de inercia al frenar, como una cabeza y no como un trípode
+const DAMPING = 2 * 0.9 * Math.sqrt(STIFFNESS);
 
 /**
  * Mirada en primera persona: con ratón, la posición del puntero decide hacia dónde mira la cabeza;
@@ -30,7 +31,7 @@ export function LookControls({ reduceMotion }: { reduceMotion: boolean }) {
   useEffect(() => {
     const clamp = (v: number) => Math.max(-1, Math.min(1, v));
     // Zona muerta central y respuesta progresiva: leer el aviso no mueve la vista, los bordes sí
-    const shape = (v: number) => Math.sign(v) * Math.max(0, Math.abs(v) - 0.05) ** 1.35 / 0.95 ** 1.35;
+    const shape = (v: number) => Math.sign(v) * Math.max(0, Math.abs(v) - 0.03) ** 1.15 / 0.97 ** 1.15;
     let drag: { id: number; x: number; y: number } | null = null;
 
     const onMove = (e: PointerEvent) => {
@@ -73,8 +74,10 @@ export function LookControls({ reduceMotion }: { reduceMotion: boolean }) {
   useFrame(({ camera, clock }, delta) => {
     const c = spring.current;
     if (reduceMotion) {
-      c.x = target.current.x;
-      c.y = target.current.y;
+      // Sin muelle ni balanceo, pero sin saltos: aproximación exponencial suave
+      const k = 1 - Math.exp(-10 * delta);
+      c.x += (target.current.x - c.x) * k;
+      c.y += (target.current.y - c.y) * k;
       c.vx = c.vy = 0;
     } else {
       // Subpasos fijos: estable aunque un fotograma se alargue

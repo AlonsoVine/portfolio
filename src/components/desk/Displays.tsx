@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { AdditiveBlending, BackSide, ExtrudeGeometry, type Object3D, Shape } from "three";
-import { AMBER, hdr } from "./palette";
+import { hdr } from "./palette";
 import { drawCv, drawGames, drawLaptopDeck, drawProjects, type DeskCopy } from "./screens";
 import { RoundedBox } from "./primitives";
 import { useCanvasTexture } from "./useCanvasTexture";
@@ -34,11 +34,11 @@ function arcPanel(r: number, thickness: number, theta: number, height: number) {
   s.absarc(0, 0, r, a1, a0, true);
   const g = new ExtrudeGeometry(s, {
     depth: height,
-    curveSegments: 64,
+    curveSegments: 40,
     bevelEnabled: true,
     bevelThickness: 0.004,
     bevelSize: 0.004,
-    bevelSegments: 4,
+    bevelSegments: 2,
   });
   // Extruido en Z → vertical, centrado en altura
   g.rotateX(-Math.PI / 2);
@@ -82,7 +82,7 @@ export function Ultrawide({ t, position }: { t: DeskCopy } & Placed) {
       </RoundedBox>
       <mesh position={[0, 0.045, -0.1]}>
         <torusGeometry args={[0.032, 0.004, 8, 32]} />
-        <meshBasicMaterial color={hdr("#ff2b3a", 0.7)} />
+        <meshBasicMaterial color={hdr("#ff2b3a", 0.35)} />
       </mesh>
       {[-1, 1].map((s) => (
         <RoundedBox key={s} args={[0.03, 0.012, 0.26]} radius={0.005} position={[s * 0.07, 0.006, -0.05]} rotation={[0, s * 0.62, 0]} castShadow>
@@ -184,7 +184,6 @@ export function SideMonitor({ t, position, rotation }: { t: DeskCopy } & Placed)
           <meshBasicMaterial map={map} color={SCREEN} toneMapped={false} />
         </mesh>
         <Glass w={0.536} h={0.296} z={0.009} />
-        <rectAreaLight position={[0, 0, 0.02]} rotation={[0, Math.PI, 0]} width={0.53} height={0.29} intensity={3} color={AMBER} />
 
         {/* Lámpara de monitor con luz asimétrica hacia la mesa */}
         <group position={[0, 0.172, 0.012]}>
@@ -205,7 +204,7 @@ export function SideMonitor({ t, position, rotation }: { t: DeskCopy } & Placed)
             position={[0, -0.01, 0.02]}
             angle={0.95}
             penumbra={0.9}
-            intensity={2.6}
+            intensity={3.2}
             distance={1.4}
             decay={1.4}
             color="#ffd9a0"

@@ -17,14 +17,16 @@ export function Desk() {
   const peg = useCanvasTexture(512, 512, drawPegboard, { tileX: 10, tileY: 5 });
   const fabric = useCanvasTexture(256, 256, drawFabric, { tileX: 14, tileY: 5.2 });
   const edge = useCanvasTexture(750, 280, drawMatEdge);
+  const dot = useCanvasTexture(128, 128, drawSoftDot);
+  const shade = (o: number) => <meshBasicMaterial map={dot} color="#000000" transparent opacity={o} depthWrite={false} />;
 
   return (
     <group>
       <RoundedBox args={[2.1, 0.045, 0.92]} radius={0.012} position={[0, -0.0225, -0.14]} receiveShadow>
-        <meshStandardMaterial map={wood} roughnessMap={woodRough} roughness={0.85} bumpMap={woodRough} bumpScale={-0.06} color="#c4a088" metalness={0} />
+        <meshStandardMaterial map={wood} roughnessMap={woodRough} roughness={0.85} bumpMap={woodRough} bumpScale={-0.06} color="#d6b293" metalness={0} />
       </RoundedBox>
       <RoundedBox args={[1.5, 0.004, 0.56]} radius={0.002} smoothness={2} position={[-0.02, 0.002, 0.06]} receiveShadow>
-        <meshStandardMaterial map={fabric} bumpMap={fabric} bumpScale={0.35} color="#45474e" roughness={0.95} />
+        <meshStandardMaterial map={fabric} bumpMap={fabric} bumpScale={0.35} color="#5c5e66" roughness={0.95} />
       </RoundedBox>
       {/* Costura del borde */}
       <mesh position={[-0.02, 0.0041, 0.06]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -35,6 +37,40 @@ export function Desk() {
         <planeGeometry args={[4.2, 1.9]} />
         <meshLambertMaterial map={peg} bumpMap={peg} bumpScale={1.5} color="#8a8496" />
       </mesh>
+      {/* Oclusión en las uniones: donde la mesa toca la pared y en las esquinas apenas llega luz */}
+      <mesh position={[0, 0.0006, WALL_Z]} rotation={[-Math.PI / 2, 0, 0]} scale={[2.3, 0.2, 1]}>
+        <planeGeometry />
+        {shade(0.5)}
+      </mesh>
+      <mesh position={[0, 0, WALL_Z + 0.001]} scale={[2.3, 0.22, 1]}>
+        <planeGeometry />
+        {shade(0.45)}
+      </mesh>
+      {[-1, 1].map((s) => (
+        <group key={s}>
+          <mesh position={[s * 1.05, 0.6, WALL_Z + 0.001]} scale={[0.36, 2.2, 1]}>
+            <planeGeometry />
+            {shade(0.4)}
+          </mesh>
+          <mesh position={[s * 1.049, 0.6, WALL_Z]} rotation={[0, -s * (Math.PI / 2), 0]} scale={[0.36, 2.2, 1]}>
+            <planeGeometry />
+            {shade(0.4)}
+          </mesh>
+        </group>
+      ))}
+
+      {/* Estructura: faldón bajo el canto y patas de acero hasta el suelo */}
+      <RoundedBox args={[2.02, 0.06, 0.02]} radius={0.004} position={[0, -0.075, 0.27]}>
+        <meshStandardMaterial color="#141417" roughness={0.5} metalness={0.6} />
+      </RoundedBox>
+      {[-0.97, 0.97].flatMap((x) =>
+        [0.24, -0.5].map((z) => (
+          <RoundedBox key={`${x}${z}`} args={[0.05, 0.705, 0.05]} radius={0.006} position={[x, -0.3975, z]}>
+            <meshStandardMaterial color="#1b1c20" roughness={0.45} metalness={0.7} />
+          </RoundedBox>
+        )),
+      )}
+
       {/* Suelo: al mirar hacia abajo se intuye, en vez de un vacío negro */}
       <mesh position={[0, -0.75, 0.3]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[2.2, 2]} />
@@ -86,7 +122,7 @@ export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }
   const signMat = useRef<MeshBasicMaterial>(null);
   const stripMat = useRef<MeshBasicMaterial>(null);
   const lights = useRef<(PointLight | null)[]>([]);
-  const base = useMemo(() => [1.4, 1.2, 0.9], []);
+  const base = useMemo(() => [1.4, 1.2, 0.5], []);
   const signColor = useMemo<Color>(() => hdr("#ffffff", 1.7), []);
 
   useFrame(({ clock }, delta) => {
@@ -150,7 +186,7 @@ export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }
 
       <pointLight ref={(l) => void (lights.current[0] = l)} position={[-0.38, 0.16, -0.46]} color={ICE} intensity={base[0]} distance={1.6} decay={1.6} />
       <pointLight ref={(l) => void (lights.current[1] = l)} position={[0.38, 0.16, -0.46]} color={AMBER} intensity={base[1]} distance={1.6} decay={1.6} />
-      <pointLight ref={(l) => void (lights.current[2] = l)} position={[0, 0.03, -0.5]} color={MAGENTA} intensity={base[2]} distance={1.1} decay={1.6} />
+      <pointLight ref={(l) => void (lights.current[2] = l)} position={[0, 0.1, -0.5]} color={MAGENTA} intensity={base[2]} distance={0.6} decay={1.6} />
 
       {!reduceMotion && <Dust map={dot} />}
     </group>

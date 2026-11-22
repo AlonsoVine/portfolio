@@ -107,7 +107,7 @@ export function Keyboard({ position, rotation, reduceMotion }: Placed & { reduce
       {/* Retroiluminación que asoma entre las teclas, recorriendo el degradado */}
       <mesh position={[0, 0.0212, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[width, depth]} />
-        <meshBasicMaterial ref={glowMat} map={glow} color={hdr("#ffffff", 1.1)} toneMapped={false} />
+        <meshBasicMaterial ref={glowMat} map={glow} color={hdr("#ffffff", 0.75)} toneMapped={false} />
       </mesh>
       <instancedMesh ref={keysRef} args={[geometry, undefined, KEYS.length]} castShadow>
         <meshStandardMaterial color="#16171c" roughness={0.55} metalness={0.05} />
@@ -123,7 +123,7 @@ export function Keyboard({ position, rotation, reduceMotion }: Placed & { reduce
       {/* Reflejo del RGB sobre el tapete alrededor del teclado */}
       <mesh position={[0, 0.0045, 0.01]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[width * 1.7, depth * 2.6]} />
-        <meshBasicMaterial map={spill} color={VIOLET} transparent opacity={0.4} blending={AdditiveBlending} depthWrite={false} />
+        <meshBasicMaterial map={spill} color={VIOLET} transparent opacity={0.2} blending={AdditiveBlending} depthWrite={false} />
       </mesh>
     </group>
   );

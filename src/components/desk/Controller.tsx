@@ -44,11 +44,11 @@ function bodyGeometry() {
   shape.splineThru([...right.slice(1), ...left, right[0]]);
   const g = new ExtrudeGeometry(shape, {
     depth: DEPTH,
-    curveSegments: 40,
+    curveSegments: 24,
     bevelEnabled: true,
     bevelThickness: BEVEL,
     bevelSize: BEVEL * 0.9,
-    bevelSegments: 8,
+    bevelSegments: 5,
   });
   // De planta (XY) a tumbado sobre la mesa: la extrusión pasa a ser la altura
   g.rotateX(Math.PI / 2);
