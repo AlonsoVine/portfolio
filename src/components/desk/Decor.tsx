@@ -1,13 +1,13 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
-import { BufferGeometry, Color, DoubleSide, Euler, Float32BufferAttribute, type Group, Matrix4, PlaneGeometry, Quaternion, Vector3 } from "three";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { BufferGeometry, Color, DoubleSide, SRGBColorSpace, TextureLoader, Euler, Float32BufferAttribute, type Group, Matrix4, PlaneGeometry, Quaternion, Vector3 } from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { HangingPothos } from "./Plants";
 import { RoundedBox } from "./primitives";
-import { drawCalendar, drawClockFace, drawFantasyMap, drawRug, drawSoftDot } from "./screens";
+import { drawCalendar, drawClockFace, drawRug, drawSoftDot } from "./screens";
 import { useCanvasTexture } from "./useCanvasTexture";
 
 type Vec3 = [number, number, number];
@@ -196,12 +196,21 @@ export function WallCalendar({ position, lang }: { position: Vec3; lang: string 
   );
 }
 
-/** Cuadro enmarcado con un mapa de fantasía a tinta sobre pergamino: marco de nogal, paspartú y cristal. */
+const MAP_URL = `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/desk/mapa.webp`;
+
+/** Cuadro enmarcado con el mapa de la Tierra Media: marco de nogal, paspartú y cristal. */
 export function MapFrame({ position, rotation }: { position: Vec3; rotation?: Vec3 }) {
-  const map = useCanvasTexture(1024, 720, drawFantasyMap);
   const dot = useCanvasTexture(128, 128, drawSoftDot);
+  // La textura existe desde el principio: el shader se compila con ella en el calentamiento y la imagen entra al llegar
+  const [map] = useState(() => {
+    const t = new TextureLoader().load(MAP_URL);
+    t.colorSpace = SRGBColorSpace;
+    t.anisotropy = 8;
+    return t;
+  });
+  useEffect(() => () => map.dispose(), [map]);
   const W = 0.56;
-  const H = W * (720 / 1024);
+  const H = W * 0.75;
   const F = 0.026;
   const M = 0.03;
   const OW = W + M * 2 + F * 2;

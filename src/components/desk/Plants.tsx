@@ -528,7 +528,7 @@ export function Plants({ reduceMotion }: { reduceMotion: boolean }) {
       {/* Clavado al fondo del cajón central, entre la sansevieria y el poto: el mástil se pierde entre las hojas */}
       <Lantern position={[TROUGH.x - 0.04, SOIL, CELLS[1] + 0.06]} rotation={[0, -Math.PI / 4, 0]} />
       <Incense position={[TROUGH.x, 0, 0.125]} reduceMotion={reduceMotion} />
-      <Candle position={[TROUGH.x + 0.07, 0, 0.05]} reduceMotion={reduceMotion} />
+      <Candle position={[TROUGH.x + 0.045, 0, 0.08]} reduceMotion={reduceMotion} />
     </group>
   );
 }
@@ -572,12 +572,15 @@ function Candle({ position, reduceMotion }: { position: Vec3; reduceMotion: bool
   useFrame(({ clock }) => {
     if (reduceMotion) return;
     const t = clock.elapsedTime;
-    const f = 0.9 + 0.1 * Math.sin(t * 9.1) * Math.sin(t * 4.3 + 0.7);
+    // Titileo de llama: varias ondas sin relación entre sí más algún bajón breve, para que no se note el ciclo
+    const wave = Math.sin(t * 9.1) * 0.5 + Math.sin(t * 13.7 + 1.3) * 0.3 + Math.sin(t * 4.3 + 0.7) * 0.2;
+    const dip = Math.max(0, Math.sin(t * 1.7) * Math.sin(t * 0.63 + 2)) ** 6 * 0.35;
+    const f = 0.82 + wave * 0.14 - dip;
     if (flame.current) {
-      flame.current.scale.set(1, f, 1);
-      flame.current.rotation.z = Math.sin(t * 2.1) * 0.06;
+      flame.current.scale.set(1 - wave * 0.05, f, 1 - wave * 0.05);
+      flame.current.rotation.z = Math.sin(t * 2.1) * 0.06 + Math.sin(t * 7.9) * 0.025;
     }
-    if (light.current) light.current.intensity = 0.35 * f;
+    if (light.current) light.current.intensity = 0.55 * f;
   });
   const H = 0.045;
   return (
@@ -610,7 +613,7 @@ function Candle({ position, reduceMotion }: { position: Vec3; reduceMotion: bool
           <meshBasicMaterial color={hdr("#fff4dc", 4)} toneMapped={false} />
         </mesh>
       </group>
-      <pointLight ref={light} position={[0, H + 0.03, 0]} color="#ffb366" intensity={0.35} distance={0.4} decay={2} />
+      <pointLight ref={light} position={[0, H + 0.03, 0]} color="#ff9a4d" intensity={0.55} distance={0.45} decay={2} />
     </group>
   );
 }
