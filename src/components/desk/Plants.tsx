@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { createContext, type ReactNode, useContext, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { mergeGeometries, mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import {
@@ -119,6 +119,29 @@ function padGeometry() {
 const PAD = padGeometry();
 
 const leafKey = () => "leaf";
+type Uniform = { value: number };
+// Reloj común de todas las hojas y el «roce» de la planta que las agita (lo alimenta Sway)
+const LEAF_TIME: Uniform = { value: 0 };
+const SwayContext = createContext<{ rustle: { current: Uniform }; calm: boolean }>({ rustle: { current: { value: 0 } }, calm: false });
+
+// Cada hoja se mece por su cuenta: la fase sale de su posición, la base queda fija y la punta es la que más se mueve
+const leafVertex = (shader: { vertexShader: string; uniforms: Record<string, Uniform> }, rustle: Uniform, flex: Uniform) => {
+  shader.uniforms.uTime = LEAF_TIME;
+  shader.uniforms.uRustle = rustle;
+  shader.uniforms.uFlex = flex;
+  shader.vertexShader = `uniform float uTime;\nuniform float uRustle;\nuniform float uFlex;\n${shader.vertexShader}`.replace(
+    "#include <begin_vertex>",
+    `#include <begin_vertex>
+    #ifdef USE_INSTANCING
+      float ph = dot(instanceMatrix[3].xyz, vec3(917.0, 573.0, 331.0));
+      float w = uFlex * smoothstep(-0.2, 1.0, position.y);
+      float breeze = 0.035 + uRustle * 0.4;
+      transformed.x += (sin(uTime * 1.7 + ph) * breeze + sin(uTime * 9.3 + ph * 1.7) * uRustle * 0.5) * w;
+      transformed.z += (sin(uTime * 1.3 + ph * 0.7) * breeze + cos(uTime * 11.1 + ph) * uRustle * 0.6) * w;
+    #endif`,
+  );
+};
+
 // Translucidez barata: la cara en sombra recoge algo de la luz que atraviesa la hoja
 const translucent = (shader: { fragmentShader: string }) => {
   shader.fragmentShader = shader.fragmentShader.replace(
@@ -136,14 +159,27 @@ function Instances({
   roughness = 0.7,
   side,
   map,
+  flex = 1,
 }: {
   geometry: BufferGeometry;
   items: Instance[];
   roughness?: number;
   side?: typeof DoubleSide;
   map?: Texture;
+  /** Cuánto se doblan las hojas con la brisa y al tocarlas: 0 las deja quietas (el musgo). */
+  flex?: number;
 }) {
   const ref = useRef<InstancedMesh>(null);
+  const { rustle, calm } = useContext(SwayContext);
+  const bend = useRef<Uniform>({ value: flex });
+  const compile = (shader: { vertexShader: string; fragmentShader: string; uniforms: Record<string, Uniform> }) => {
+    translucent(shader);
+    leafVertex(shader, rustle.current, bend.current);
+  };
+  useFrame(({ clock }) => {
+    LEAF_TIME.value = calm ? 0 : clock.elapsedTime;
+    bend.current.value = flex;
+  });
   useLayoutEffect(() => {
     const mesh = ref.current;
     if (!mesh) return;
@@ -164,7 +200,7 @@ function Instances({
   }, [items]);
   return (
     <instancedMesh ref={ref} args={[geometry, undefined, items.length]} castShadow receiveShadow>
-      <meshStandardMaterial roughness={roughness} side={side} map={map} onBeforeCompile={translucent} customProgramCacheKey={leafKey} />
+      <meshStandardMaterial roughness={roughness} side={side} map={map} onBeforeCompile={compile} customProgramCacheKey={leafKey} />
     </instancedMesh>
   );
 }
@@ -250,15 +286,25 @@ const BONSAI_FOLIAGE: Instance[] = (() => {
   );
 })();
 
+// Colina de tierra que asoma por encima del borde de la maceta
+const MOUND = { y: 0.0235, rx: 0.044, ry: 0.0105, rz: 0.028 };
+const moundY = (x: number, z: number) => MOUND.y + MOUND.ry * Math.sqrt(Math.max(0, 1 - (x / MOUND.rx) ** 2 - (z / MOUND.rz) ** 2));
+
+// Cojines de musgo de varios verdes que tapizan la colina, más tupidos hacia el tronco
 const MOSS: Instance[] = (() => {
   const r = rng(11);
-  return Array.from({ length: 26 }, () => {
-    const s = 0.003 + r() * 0.004;
+  const greens = ["#4f6b2c", "#3f5a24", "#5d7a30", "#6b8a38", "#36501f"];
+  return Array.from({ length: 90 }, () => {
+    const a = r() * Math.PI * 2;
+    const d = Math.sqrt(r()) * 0.95;
+    const x = Math.cos(a) * d * MOUND.rx;
+    const z = Math.sin(a) * d * MOUND.rz;
+    const s = 0.0028 + r() * 0.0042;
     return {
-      p: [(r() - 0.5) * 0.085, 0.0255, (r() - 0.5) * 0.05] as Vec3,
-      r: [0, r() * 3, 0] as Vec3,
-      s: [s * 1.6, s * 0.5, s * 1.6] as Vec3,
-      c: r() > 0.5 ? "#4f6b2c" : "#3f5a24",
+      p: [x, moundY(x, z) - s * 0.15, z] as Vec3,
+      r: [(r() - 0.5) * 0.4, r() * 3, (r() - 0.5) * 0.4] as Vec3,
+      s: [s * 1.5, s * 0.55, s * 1.5] as Vec3,
+      c: greens[Math.floor(r() * greens.length)],
     };
   });
 })();
@@ -266,9 +312,9 @@ const MOSS: Instance[] = (() => {
 const BONSAI_STEMS: Stem[] = [
   ...[0, 1.6, 3.4, 4.8].map((a) => ({
     points: [
-      [0.004, 0.034, 0],
-      [0.004 + Math.cos(a) * 0.008, 0.029, Math.sin(a) * 0.006],
-      [0.004 + Math.cos(a) * 0.015, 0.026, Math.sin(a) * 0.011],
+      [0.004, 0.039, 0],
+      [0.004 + Math.cos(a) * 0.009, 0.0355, Math.sin(a) * 0.007],
+      [0.004 + Math.cos(a) * 0.017, 0.0325, Math.sin(a) * 0.012],
     ] as Vec3[],
     r0: 0.0045,
     r1: 0.0016,
@@ -280,25 +326,34 @@ const BONSAI_STEMS: Stem[] = [
 function Bonsai({ position }: { position: Vec3 }) {
   return (
     <group position={position} rotation={[0, 0.25, 0]}>
-      {/* Maceta rectangular esmaltada en azul cobalto con patas */}
-      <RoundedBox args={[0.1, 0.022, 0.066]} radius={0.004} position={[0, 0.014, 0]} castShadow receiveShadow>
+      {/* Maceta esmaltada en azul cobalto: cuerpo, labio superior más claro y un filete dorado */}
+      <RoundedBox args={[0.1, 0.02, 0.066]} radius={0.004} position={[0, 0.0135, 0]} castShadow receiveShadow>
         <meshPhysicalMaterial color="#20324f" roughness={0.28} clearcoat={0.8} clearcoatRoughness={0.25} />
       </RoundedBox>
+      <RoundedBox args={[0.106, 0.0048, 0.072]} radius={0.0022} position={[0, 0.0238, 0]} castShadow receiveShadow>
+        <meshPhysicalMaterial color="#2d4c78" roughness={0.22} clearcoat={0.9} clearcoatRoughness={0.2} />
+      </RoundedBox>
+      <mesh position={[0, 0.0105, 0]}>
+        <boxGeometry args={[0.1006, 0.0012, 0.0666]} />
+        <meshStandardMaterial color="#c9a24a" roughness={0.3} metalness={1} />
+      </mesh>
+      {/* Patas en nube */}
       {[-1, 1].flatMap((sx) =>
         [-1, 1].map((sz) => (
-          <RoundedBox key={`${sx}${sz}`} args={[0.012, 0.004, 0.01]} radius={0.0015} position={[sx * 0.04, 0.002, sz * 0.025]}>
+          <RoundedBox key={`${sx}${sz}`} args={[0.014, 0.0045, 0.011]} radius={0.002} position={[sx * 0.039, 0.0024, sz * 0.024]}>
             <meshStandardMaterial color="#1a2840" roughness={0.4} />
           </RoundedBox>
         )),
       )}
-      <mesh position={[0, 0.0248, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[0.092, 0.058]} />
+      {/* Tierra: colina que asoma del borde, con su musgo */}
+      <mesh position={[0, MOUND.y, 0]} scale={[MOUND.rx, MOUND.ry, MOUND.rz]} receiveShadow>
+        <sphereGeometry args={[1, 32, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
         <meshStandardMaterial color="#3a2a1e" roughness={1} />
       </mesh>
-      <Instances geometry={PAD} items={MOSS} roughness={1} />
+      <Instances geometry={PAD} items={MOSS} roughness={1} flex={0} />
       {/* Nebari (raíces abiertas), tronco y ramas en una sola malla */}
       <Stems stems={BONSAI_STEMS} color="#5a4434" roughness={0.95} />
-      <Instances geometry={PAD} items={BONSAI_FOLIAGE} roughness={0.85} />
+      <Instances geometry={PAD} items={BONSAI_FOLIAGE} roughness={0.85} flex={0.35} />
     </group>
   );
 }
@@ -413,7 +468,7 @@ function SnakePlant({ position }: { position: Vec3 }) {
   const leafTex = useCanvasTexture(64, 256, drawSnakeLeaf);
   return (
     <group position={position} rotation={[0, 0.5, 0]}>
-      <Instances geometry={BLADE} items={BLADES} roughness={0.5} side={DoubleSide} map={leafTex} />
+      <Instances geometry={BLADE} items={BLADES} roughness={0.5} side={DoubleSide} map={leafTex} flex={0.3} />
     </group>
   );
 }
@@ -527,32 +582,40 @@ function Planter() {
  * Planta que se mece al rozarla: muelle amortiguado con pivote en la tierra. Pasar el puntero la empuja
  * un poco; un clic, más.
  */
-export function Sway({ label, position, stiffness = 26, children }: { label: string; position: Vec3; stiffness?: number; children: ReactNode }) {
+export function Sway({ label, position, stiffness = 26, calm = false, children }: { label: string; position: Vec3; stiffness?: number; calm?: boolean; children: ReactNode }) {
   const g = useRef<Group>(null);
-  const s = useRef({ x: 0, z: 0, vx: 0, vz: 0 });
+  const s = useRef({ x: 0, z: 0, vx: 0, vz: 0, energy: 0 });
+  const rustle = useRef<Uniform>({ value: 0 });
+  const ctx = useMemo(() => ({ rustle, calm }), [calm]);
   const push = (k: number) => {
     const a = Math.random() * Math.PI * 2;
-    s.current.vx += Math.cos(a) * k;
-    s.current.vz += Math.sin(a) * k;
+    s.current.vx += Math.cos(a) * k * 0.4;
+    s.current.vz += Math.sin(a) * k * 0.4;
+    s.current.energy = Math.min(1, s.current.energy + k * 0.8);
   };
   const hover = useHoverable(label, () => push(0.55), () => push(0.22));
   useFrame(({ gl }, delta) => {
     const m = s.current;
     const node = g.current;
-    if (!node || Math.abs(m.x) + Math.abs(m.z) + Math.abs(m.vx) + Math.abs(m.vz) < 1e-4) return;
+    if (!node || Math.abs(m.x) + Math.abs(m.z) + Math.abs(m.vx) + Math.abs(m.vz) + m.energy < 1e-4) return;
     const dt = Math.min(delta, 0.05);
     const damp = 2 * 0.25 * Math.sqrt(stiffness);
     m.vx += (-stiffness * m.x - damp * m.vx) * dt;
     m.vz += (-stiffness * m.z - damp * m.vz) * dt;
     m.x += m.vx * dt;
     m.z += m.vz * dt;
+    m.energy *= Math.exp(-dt * 1.4);
+    if (m.energy < 1e-3) m.energy = 0;
+    rustle.current.value = m.energy * 0.45;
     node.rotation.set(m.x * 0.35, 0, m.z * 0.35);
     gl.shadowMap.needsUpdate = true;
   });
   return (
-    <group ref={g} position={position} {...hover}>
-      {children}
-    </group>
+    <SwayContext.Provider value={ctx}>
+      <group ref={g} position={position} {...hover}>
+        {children}
+      </group>
+    </SwayContext.Provider>
   );
 }
 
@@ -561,19 +624,19 @@ export function Plants({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean
   return (
     <group>
       <Planter />
-      <Sway label={label} position={[TROUGH.x, SOIL - 0.087, CELLS[0]]} stiffness={14}>
+      <Sway label={label} position={[TROUGH.x, SOIL - 0.087, CELLS[0]]} stiffness={14} calm={reduceMotion}>
         <Areca position={[0, 0, 0]} />
       </Sway>
-      <Sway label={label} position={[TROUGH.x, SOIL - 0.07, CELLS[1]]} stiffness={30}>
+      <Sway label={label} position={[TROUGH.x, SOIL - 0.07, CELLS[1]]} stiffness={30} calm={reduceMotion}>
         <SnakePlant position={[0, 0, 0]} />
       </Sway>
-      <Sway label={label} position={[TROUGH.x, SOIL - 0.058 * 1.3, CELLS[2]]} stiffness={20}>
+      <Sway label={label} position={[TROUGH.x, SOIL - 0.058 * 1.3, CELLS[2]]} stiffness={20} calm={reduceMotion}>
         <group scale={1.3}>
           <Pothos position={[0, 0, 0]} />
         </group>
       </Sway>
       {/* En la misma línea que la jardinera y con el lado largo paralelo a ella, junto al canto de la mesa */}
-      <Sway label={label} position={[TROUGH.x, 0, 0.25]} stiffness={60}>
+      <Sway label={label} position={[TROUGH.x, 0, 0.25]} stiffness={60} calm={reduceMotion}>
         <group rotation={[0, Math.PI / 2, 0]} scale={1.15}>
           <Bonsai position={[0, 0, 0]} />
         </group>
