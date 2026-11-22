@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { AdditiveBlending, BackSide, ExtrudeGeometry, type Object3D, Shape } from "three";
-import { hdr } from "./palette";
-import { drawCv, drawGames, drawLaptopDeck, drawProjects, type DeskCopy } from "./screens";
+import { hdr, ICE } from "./palette";
+import { drawCv, drawGames, drawLaptopDeck, drawProjects, drawSoftDot, type DeskCopy } from "./screens";
 import { RoundedBox } from "./primitives";
 import { useCanvasTexture } from "./useCanvasTexture";
 
@@ -101,6 +101,7 @@ export function Laptop({ t, position, rotation }: { t: DeskCopy } & Placed) {
   const draw = useMemo(() => drawGames(t), [t]);
   const map = useCanvasTexture(1024, 632, draw);
   const deck = useCanvasTexture(1536, 1030, drawLaptopDeck);
+  const dot = useCanvasTexture(128, 128, drawSoftDot);
   return (
     <group position={position} rotation={rotation} scale={1.2}>
       {/* Soporte de aluminio: base, brazo trasero y bandeja inclinada */}
@@ -110,10 +111,28 @@ export function Laptop({ t, position, rotation }: { t: DeskCopy } & Placed) {
       <RoundedBox args={[0.05, 0.13, 0.012]} radius={0.004} position={[0, 0.065, -0.085]} rotation={[-0.25, 0, 0]} castShadow>
         <meshStandardMaterial {...ALU} />
       </RoundedBox>
+      {/* Resplandor de la tira LED de la bandeja sobre la base y la mesa */}
+      <mesh position={[0, 0.0075, 0.02]} rotation={[-Math.PI / 2, 0, 0]} scale={[0.42, 0.36, 1]}>
+        <planeGeometry />
+        <meshBasicMaterial map={dot} color={ICE} transparent opacity={0.4} blending={AdditiveBlending} depthWrite={false} toneMapped={false} />
+      </mesh>
       <group position={[0, 0.1, 0]} rotation={[0.28, 0, 0]}>
         <RoundedBox args={[0.24, 0.006, 0.22]} radius={0.003} castShadow>
           <meshStandardMaterial {...ALU} />
         </RoundedBox>
+        {/* Tira LED escondida bajo el canto de la bandeja: se ve la luz, no el diodo */}
+        {(
+          [
+            [0, 0.104, 0.21, 0],
+            [-0.114, 0, 0.2, Math.PI / 2],
+            [0.114, 0, 0.2, Math.PI / 2],
+          ] as const
+        ).map(([x, z, len, r]) => (
+          <mesh key={x} position={[x, -0.0038, z]} rotation={[0, r, 0]}>
+            <boxGeometry args={[len, 0.0016, 0.003]} />
+            <meshBasicMaterial color={hdr(ICE, 2.4)} toneMapped={false} />
+          </mesh>
+        ))}
         {[-1, 1].map((s) => (
           <mesh key={s} position={[s * 0.08, 0.006, 0.108]}>
             <boxGeometry args={[0.03, 0.012, 0.006]} />

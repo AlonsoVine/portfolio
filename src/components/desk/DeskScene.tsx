@@ -82,7 +82,7 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
       </group>
       <Mouse position={[0.27, 0, 0.13]} rotation={[0, -0.12, 0]} />
       <Plants />
-      <Guitar position={[1.02, 0.2, 0.11]} rotation={[0, -Math.PI / 2, 0]} />
+      <Guitar position={[1.02, 0.1, 0.11]} rotation={[0, -Math.PI / 2, 0]} />
 
       <LookControls reduceMotion={reduceMotion} />
       <Warmup onReady={onReady} onLow={() => setLow(true)} />

@@ -12,7 +12,6 @@ import {
   BufferGeometry,
   IcosahedronGeometry,
   type InstancedMesh,
-
   Object3D,
   PlaneGeometry,
   Quaternion,
@@ -20,7 +19,6 @@ import {
   ShapeGeometry,
   type Texture,
   TubeGeometry,
-
   Vector3,
 } from "three";
 import { RoundedBox } from "./primitives";
@@ -505,34 +503,74 @@ export function Plants() {
       <group position={[-0.8, 0, 0.2]} scale={1.15}>
         <Bonsai position={[0, 0, 0]} />
       </group>
-      <MushroomLamp position={[-0.975, 0, 0.27]} />
+      {/* Clavada al fondo del cajón central, entre la sansevieria y el poto: el mástil se pierde entre las hojas */}
+      <Lantern position={[TROUGH.x - 0.04, SOIL, CELLS[1] + 0.06]} rotation={[0, -Math.PI / 4, 0]} />
     </group>
   );
 }
 
-/** Lamparita seta: pie y vástago de latón, tulipa de vidrio opalino. Luz cálida y tenue sobre las plantas. */
-function MushroomLamp({ position }: { position: Vec3 }) {
-  const brass = <meshStandardMaterial color="#b08a4a" roughness={0.28} metalness={0.9} />;
+// Mástil de farolillo: sube recto entre las plantas y se curva como un cayado hacia la mesa
+const POST = new TubeGeometry(
+  new CatmullRomCurve3([
+    new Vector3(0, 0, 0),
+    new Vector3(0, 0.3, 0),
+    new Vector3(0.006, 0.36, 0),
+    new Vector3(0.04, 0.385, 0),
+    new Vector3(0.075, 0.37, 0),
+    new Vector3(0.082, 0.345, 0),
+  ]),
+  48,
+  0.0032,
+  8,
+);
+const LANTERN_AT: Vec3 = [0.082, 0.3, 0];
+
+/** Farolillo de jardín de hierro negro con cristal esmerilado: luz cálida que cae sobre las plantas. */
+function Lantern({ position, rotation }: { position: Vec3; rotation?: Vec3 }) {
+  const iron = <meshStandardMaterial color="#17171a" roughness={0.45} metalness={0.7} />;
   return (
-    <group position={position}>
-      <mesh position={[0, 0.005, 0]} castShadow>
-        <cylinderGeometry args={[0.042, 0.046, 0.01, 40]} />
-        {brass}
+    <group position={position} rotation={rotation}>
+      <mesh geometry={POST} castShadow>
+        {iron}
       </mesh>
-      <mesh position={[0, 0.1, 0]} castShadow>
-        <cylinderGeometry args={[0.005, 0.006, 0.18, 16]} />
-        {brass}
-      </mesh>
-      <mesh position={[0, 0.186, 0]} scale={[1, 0.72, 1]} castShadow>
-        <sphereGeometry args={[0.07, 40, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshStandardMaterial color="#f3ece0" roughness={0.35} emissive="#ffcf98" emissiveIntensity={1.15} />
-      </mesh>
-      {/* Bajo la tulipa, la bombilla vista desde abajo */}
-      <mesh position={[0, 0.185, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[0.069, 40]} />
-        <meshBasicMaterial color={hdr("#ffd8a8", 1.6)} toneMapped={false} side={DoubleSide} />
-      </mesh>
-      <pointLight position={[0, 0.16, 0]} color="#ffc98f" intensity={0.9} distance={0.65} decay={1.8} />
+      <group position={LANTERN_AT}>
+        <mesh position={[0, 0.033, 0]}>
+          <cylinderGeometry args={[0.0025, 0.0025, 0.014, 8]} />
+          {iron}
+        </mesh>
+        {/* Tejadillo a cuatro aguas y aro de remate */}
+        <mesh position={[0, 0.019, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
+          <coneGeometry args={[0.034, 0.022, 4]} />
+          {iron}
+        </mesh>
+        <mesh position={[0, 0.006, 0]}>
+          <boxGeometry args={[0.042, 0.004, 0.042]} />
+          {iron}
+        </mesh>
+        {/* Cristal esmerilado iluminado desde dentro */}
+        <mesh position={[0, -0.022, 0]}>
+          <boxGeometry args={[0.032, 0.052, 0.032]} />
+          <meshStandardMaterial color="#f4e6cf" roughness={0.4} emissive="#ffc98f" emissiveIntensity={1.4} />
+        </mesh>
+        {/* Montantes de las esquinas */}
+        {[-1, 1].flatMap((a) =>
+          [-1, 1].map((b) => (
+            <mesh key={`${a}${b}`} position={[a * 0.0165, -0.022, b * 0.0165]}>
+              <boxGeometry args={[0.003, 0.054, 0.003]} />
+              {iron}
+            </mesh>
+          )),
+        )}
+        <mesh position={[0, -0.05, 0]}>
+          <boxGeometry args={[0.038, 0.005, 0.038]} />
+          {iron}
+        </mesh>
+        <mesh position={[0, -0.022, 0]}>
+          <sphereGeometry args={[0.009, 12, 8]} />
+          <meshBasicMaterial color={hdr("#ffd8a8", 2.2)} toneMapped={false} />
+        </mesh>
+        <pointLight position={[0, -0.03, 0]} color="#ffc98f" intensity={1.2} distance={0.7} decay={1.8} />
+      </group>
     </group>
   );
 }
