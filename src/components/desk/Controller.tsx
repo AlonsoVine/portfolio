@@ -103,7 +103,7 @@ function FaceButton({ l, c, x, z }: { l: string; c: string; x: number; z: number
       </mesh>
       <mesh position={[0, 0.0031, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[0.0042, 24]} />
-        <meshBasicMaterial map={tex} color={hdr("#ffffff", 1.4)} transparent toneMapped={false} />
+        <meshBasicMaterial map={tex} color="#d8d8d8" transparent />
       </mesh>
     </group>
   );
@@ -170,7 +170,7 @@ export function Controller({ position, rotation }: Placed) {
         </mesh>
         <mesh position={[0, 0.0022, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <circleGeometry args={[0.0072, 32]} />
-          <meshBasicMaterial map={logo} color={hdr("#ffffff", 2.6)} toneMapped={false} />
+          <meshBasicMaterial map={logo} color={hdr("#ffffff", 1.3)} toneMapped={false} />
         </mesh>
       </group>
       <RoundedBox args={[0.009, 0.0035, 0.002]} radius={0.001} position={[0, TOP * 0.55, -0.0345]}>

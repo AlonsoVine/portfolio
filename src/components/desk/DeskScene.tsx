@@ -10,6 +10,7 @@ import { Laptop, SideMonitor, Ultrawide } from "./Displays";
 import { Coffee, Phone, Tablet } from "./Gadgets";
 import { EYE, LookControls } from "./LookControls";
 import { Controller } from "./Controller";
+import { Guitar } from "./Guitar";
 import { Keyboard, Mouse } from "./Peripherals";
 import { Plants } from "./Plants";
 import { Reflections, Warmup } from "./primitives";
@@ -37,11 +38,11 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
       }}
     >
       <color attach="background" args={["#05060a"]} />
-      <fog attach="fog" args={["#05060a", 1.3, 3]} />
+      <fog attach="fog" args={["#05060a", 1.8, 4]} />
 
       <Reflections />
 
-      <hemisphereLight args={["#6f86c9", "#1a0f0a", 0.08]} />
+      <hemisphereLight args={["#6f86c9", "#1a0f0a", 0.14]} />
       <directionalLight
         position={[-0.6, 1.8, 1.1]}
         intensity={0.35}
@@ -63,14 +64,18 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
       <Leds t={t} reduceMotion={reduceMotion} />
       <Ultrawide t={t} position={[0, 0, -0.3]} />
       <Laptop t={t} position={[-0.615, 0, -0.22]} rotation={[0, 0.46, 0]} />
-      <SideMonitor t={t} position={[0.675, 0, -0.22]} rotation={[0, -0.56, 0]} />
-      <Keyboard position={[-0.04, 0, 0.1]} reduceMotion={reduceMotion} />
+      <SideMonitor t={t} position={[0.655, 0, -0.22]} rotation={[0, -0.56, 0]} />
+      {/* Lo que va sobre el tapete se apoya en su cara superior (4 mm), no lo atraviesa */}
+      <group position={[0, 0.004, 0]}>
+        <Keyboard position={[-0.04, 0, 0.1]} reduceMotion={reduceMotion} />
+        <Controller position={[-0.47, 0, 0.2]} rotation={[0, 0.38, 0]} />
+        <Phone t={t} lang={lang} position={[0.27, 0, -0.1]} rotation={[0, -0.15, 0]} />
+        <Coffee position={[0.425, 0, -0.06]} reduceMotion={reduceMotion} />
+        <Tablet t={t} lang={lang} position={[0.6, 0, 0.15]} rotation={[0, -0.42, 0]} />
+      </group>
       <Mouse position={[0.27, 0, 0.13]} rotation={[0, -0.12, 0]} />
-      <Phone t={t} lang={lang} position={[0.27, 0, -0.1]} rotation={[0, -0.15, 0]} />
-      <Coffee position={[0.425, 0, -0.06]} reduceMotion={reduceMotion} />
-      <Controller position={[-0.47, 0, 0.2]} rotation={[0, 0.38, 0]} />
       <Plants />
-      <Tablet t={t} lang={lang} position={[0.6, 0, 0.15]} rotation={[0, -0.42, 0]} />
+      <Guitar position={[1.02, 0.1, 0.11]} rotation={[0, -Math.PI / 2, 0]} />
 
       <LookControls reduceMotion={reduceMotion} />
       <Warmup onReady={onReady} onLow={() => setLow(true)} />
@@ -78,10 +83,10 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
       <EffectComposer multisampling={low ? 0 : 4} enableNormalPass={false}>
         {/* Oclusión ambiental: asienta los objetos sobre la mesa y oscurece los rincones */}
         <>{!low && <N8AO halfRes aoRadius={0.06} distanceFalloff={0.5} intensity={2.2} color="#05060a" quality="medium" />}</>
-        <Bloom mipmapBlur intensity={0.55} luminanceThreshold={1.05} luminanceSmoothing={0.3} radius={0.65} />
-        <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
-        <Vignette offset={0.28} darkness={0.72} />
-        <Noise premultiply blendFunction={BlendFunction.SOFT_LIGHT} opacity={0.2} />
+        <Bloom mipmapBlur intensity={0.4} luminanceThreshold={1.15} luminanceSmoothing={0.3} radius={0.65} />
+        <ToneMapping mode={ToneMappingMode.NEUTRAL} />
+        <Vignette offset={0.28} darkness={0.58} />
+        <Noise premultiply blendFunction={BlendFunction.SOFT_LIGHT} opacity={0.08} />
       </EffectComposer>
     </Canvas>
   );

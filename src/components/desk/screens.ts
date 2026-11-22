@@ -676,4 +676,106 @@ export const drawMatEdge: Draw = (ctx, w, h) => {
 };
 
 
-const FONT_FREE = new Set<Draw>([drawWood, drawPegboard, drawFabric, drawMatEdge, drawStrip, drawSoftDot, drawNoise, drawXboxLogo]);
+const FONT_FREE = new Set<Draw>([drawSnakeLeaf, drawSpruceTop, drawFretboard, drawWood, drawPegboard, drawFabric, drawMatEdge, drawStrip, drawSoftDot, drawNoise, drawXboxLogo]);
+/** Hoja de sansevieria: verde oscuro con bandas onduladas claras y borde amarillo. */
+export function drawSnakeLeaf(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  ctx.fillStyle = "#24442a";
+  ctx.fillRect(0, 0, w, h);
+  for (let y = 0; y < h; y += 7 + (y % 5)) {
+    ctx.strokeStyle = `rgba(150, 180, 130, ${0.18 + ((y * 37) % 10) / 60})`;
+    ctx.lineWidth = 2 + (y % 3);
+    ctx.beginPath();
+    for (let x = 0; x <= w; x += 4) ctx.lineTo(x, y + Math.sin(x * 0.15 + y) * 3);
+    ctx.stroke();
+  }
+  const edge = ctx.createLinearGradient(0, 0, w, 0);
+  edge.addColorStop(0, "#d6c25a");
+  edge.addColorStop(0.1, "#c9b850");
+  edge.addColorStop(0.16, "rgba(201,184,80,0)");
+  edge.addColorStop(0.84, "rgba(201,184,80,0)");
+  edge.addColorStop(0.9, "#c9b850");
+  edge.addColorStop(1, "#d6c25a");
+  ctx.fillStyle = edge;
+  ctx.fillRect(0, 0, w, h);
+}
+
+/** Tapa de abeto (lienzo = 0,4 × 0,5 m): veta vertical, ligero sombreado de borde, roseta, boca y golpeador. */
+export function drawSpruceTop(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const px = w / 0.4;
+  const g = ctx.createRadialGradient(w / 2, h * 0.62, 20, w / 2, h * 0.55, w * 0.75);
+  g.addColorStop(0, "#e9c58e");
+  g.addColorStop(0.6, "#d9ae72");
+  g.addColorStop(1, "#9c6a35");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+  for (let x = 0; x < w; x += 1 + ((x * 7) % 3)) {
+    ctx.fillStyle = `rgba(120, 78, 40, ${0.05 + ((x * 13) % 7) / 70})`;
+    ctx.fillRect(x, 0, 1, h);
+  }
+  const cx = w / 2;
+  const cy = h * (1 - 0.39 / 0.5);
+  const r = 0.05 * px;
+  // Golpeador de carey bajo la boca, hacia el lado de la mano que rasguea
+  ctx.save();
+  ctx.translate(cx + r * 0.55, cy + r * 0.55);
+  ctx.rotate(0.5);
+  const pg = ctx.createLinearGradient(-r, -r, r, r);
+  pg.addColorStop(0, "rgba(46, 20, 10, 0.92)");
+  pg.addColorStop(0.5, "rgba(84, 36, 14, 0.9)");
+  pg.addColorStop(1, "rgba(30, 12, 6, 0.92)");
+  ctx.fillStyle = pg;
+  ctx.beginPath();
+  ctx.ellipse(0, r * 0.55, r * 0.95, r * 1.35, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  for (const [rr, c, lw] of [
+    [1.42, "#1c120c", 3],
+    [1.34, "#f0e6cf", 2],
+    [1.27, "#3a2416", 6],
+    [1.2, "#f0e6cf", 2],
+    [1.12, "#1c120c", 3],
+  ] as const) {
+    ctx.strokeStyle = c;
+    ctx.lineWidth = lw;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * rr, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  const hole = ctx.createRadialGradient(cx, cy - r * 0.2, r * 0.2, cx, cy, r);
+  hole.addColorStop(0, "#0c0705");
+  hole.addColorStop(0.85, "#1a0f08");
+  hole.addColorStop(1, "#3b2414");
+  ctx.fillStyle = hole;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+/** Diapasón de palosanto: trastes en posición temperada desde la cejuela (arriba) y marcadores de nácar. */
+export function drawFretboard(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const len = 0.4377;
+  ctx.fillStyle = "#2a1912";
+  ctx.fillRect(0, 0, w, h);
+  for (let y = 0; y < h; y += 2) {
+    ctx.fillStyle = `rgba(0, 0, 0, ${((y * 17) % 9) / 60})`;
+    ctx.fillRect(0, y, w, 1);
+  }
+  const at = (n: number) => ((0.645 * (1 - 2 ** (-n / 12))) / len) * h;
+  for (let n = 1; n <= 19; n += 1) {
+    const y = at(n);
+    ctx.fillStyle = "#cfcbc2";
+    ctx.fillRect(0, y - 1.5, w, 3);
+    ctx.fillStyle = "rgba(255,255,255,0.6)";
+    ctx.fillRect(0, y - 1.5, w, 1);
+  }
+  ctx.fillStyle = "#e9e4da";
+  for (const n of [3, 5, 7, 9, 12, 15, 17]) {
+    const y = (at(n - 1) + at(n)) / 2;
+    const xs = n === 12 ? [w * 0.3, w * 0.7] : [w / 2];
+    for (const x of xs) {
+      ctx.beginPath();
+      ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+}

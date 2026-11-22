@@ -82,7 +82,7 @@ export function Ultrawide({ t, position }: { t: DeskCopy } & Placed) {
       </RoundedBox>
       <mesh position={[0, 0.045, -0.1]}>
         <torusGeometry args={[0.032, 0.004, 8, 32]} />
-        <meshBasicMaterial color={hdr("#ff2b3a", 2.2)} toneMapped={false} />
+        <meshBasicMaterial color={hdr("#ff2b3a", 0.7)} />
       </mesh>
       {[-1, 1].map((s) => (
         <RoundedBox key={s} args={[0.03, 0.012, 0.26]} radius={0.005} position={[s * 0.07, 0.006, -0.05]} rotation={[0, s * 0.62, 0]} castShadow>

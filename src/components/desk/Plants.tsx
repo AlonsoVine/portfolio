@@ -2,8 +2,11 @@
 
 import { useLayoutEffect, useMemo, useRef } from "react";
 import {
+  CatmullRomCurve3,
   Color,
   DoubleSide,
+  Euler,
+  Matrix4,
   type BufferGeometry,
   IcosahedronGeometry,
   type InstancedMesh,
@@ -11,11 +14,16 @@ import {
   Object3D,
   PlaneGeometry,
   Quaternion,
-  SphereGeometry,
+  Shape,
+  ShapeGeometry,
+  type Texture,
   Vector2,
   Vector3,
 } from "three";
+import { ICE } from "./palette";
 import { RoundedBox } from "./primitives";
+import { drawSnakeLeaf } from "./screens";
+import { useCanvasTexture } from "./useCanvasTexture";
 
 type Vec3 = [number, number, number];
 type Instance = { p: Vec3; r: Vec3; s: Vec3; c: string };
@@ -31,42 +39,65 @@ function rng(seed: number) {
   };
 }
 
-function leafGeometry() {
-  // Hoja lanceolada: ancha en el centro, punta afilada y curvada hacia fuera
-  const g = new PlaneGeometry(1, 1, 2, 8);
+function bladeGeometry() {
+  // Hoja de sansevieria: espada larga en canal (sección en V) que se afila en la punta y se arquea un poco
+  const g = new PlaneGeometry(1, 1, 2, 12);
   g.translate(0, 0.5, 0);
   const pos = g.attributes.position;
   for (let i = 0; i < pos.count; i += 1) {
     const v = pos.getY(i);
-    const w = Math.sin(Math.PI * Math.min(1, v * 1.15)) ** 0.8 * (1 - v * 0.35);
-    pos.setX(i, pos.getX(i) * w);
-    pos.setZ(i, v * v * 0.35 - Math.abs(pos.getX(i)) * 0.4);
+    const w = (1 - v ** 5) * (0.75 + 0.25 * Math.sin(Math.PI * v));
+    const x = pos.getX(i) * w;
+    pos.setX(i, x);
+    pos.setZ(i, -Math.abs(x) * 0.45 + v * v * 0.08);
   }
   g.computeVertexNormals();
   return g;
 }
 
-const LEAF = leafGeometry();
+function heartGeometry() {
+  // Hoja acorazonada del poto: base escotada, punta en gota y un poco cóncava
+  const s = new Shape();
+  s.moveTo(0, 0.08);
+  s.bezierCurveTo(0.2, -0.06, 0.55, 0.12, 0.46, 0.45);
+  s.bezierCurveTo(0.38, 0.72, 0.12, 0.88, 0, 1);
+  s.bezierCurveTo(-0.12, 0.88, -0.38, 0.72, -0.46, 0.45);
+  s.bezierCurveTo(-0.55, 0.12, -0.2, -0.06, 0, 0.08);
+  const g = new ShapeGeometry(s, 10);
+  const pos = g.attributes.position;
+  for (let i = 0; i < pos.count; i += 1) {
+    const x = pos.getX(i);
+    const y = pos.getY(i);
+    pos.setZ(i, x * x * 0.5 - y * y * 0.12);
+  }
+  g.computeVertexNormals();
+  return g;
+}
+
+const BLADE = bladeGeometry();
+const HEART = heartGeometry();
 const PAD = new IcosahedronGeometry(1, 0);
-const JADE_LEAF = new SphereGeometry(1, 10, 6);
-const NODE = new SphereGeometry(1, 12, 4);
+
 
 function Instances({
   geometry,
   items,
   roughness = 0.7,
   side,
+  map,
 }: {
   geometry: BufferGeometry;
   items: Instance[];
   roughness?: number;
   side?: typeof DoubleSide;
+  map?: Texture;
 }) {
   const ref = useRef<InstancedMesh>(null);
   useLayoutEffect(() => {
     const mesh = ref.current;
     if (!mesh) return;
     const o = new Object3D();
+    o.rotation.order = "YXZ";
     const c = new Color();
     items.forEach((it, i) => {
       o.position.set(...it.p);
@@ -82,7 +113,7 @@ function Instances({
   }, [items]);
   return (
     <instancedMesh ref={ref} args={[geometry, undefined, items.length]} castShadow receiveShadow>
-      <meshStandardMaterial roughness={roughness} side={side} />
+      <meshStandardMaterial roughness={roughness} side={side} map={map} />
     </instancedMesh>
   );
 }
@@ -228,168 +259,239 @@ function Bonsai({ position }: { position: Vec3 }) {
   );
 }
 
-// ——— Crásula (árbol de jade): hojas carnosas y redondas, la planta de la prosperidad ———
+// ——— Poto dorado: la «planta del dinero», con guías de hojas acorazonadas que caen por la maceta ———
 
-const JADE_STEMS: Vec3[][] = [
-  [[0, 0.05, 0], [0.006, 0.08, 0.004], [0.022, 0.11, 0.01]],
-  [[0.004, 0.07, 0.002], [-0.016, 0.098, -0.006], [-0.03, 0.118, -0.012]],
-  [[0.006, 0.08, 0.004], [0.004, 0.11, -0.016], [0.0, 0.13, -0.022]],
-  [[0, 0.05, 0], [-0.012, 0.076, 0.016], [-0.02, 0.1, 0.026]],
-];
+const POTHOS_GREENS = ["#3f7a2e", "#4d8a34", "#5c9a3a", "#7da844", "#3a6e2a"];
 
-const JADE_LEAVES: Instance[] = (() => {
-  const r = rng(23);
-  return JADE_STEMS.flatMap((stem) => {
-    const tip = new Vector3(...stem[stem.length - 1]);
-    const prev = new Vector3(...stem[stem.length - 2]);
-    return Array.from({ length: 18 }, (_, i) => {
-      // Rosetas en cruz al final de cada rama: pares opuestos que giran 90°
-      const k = i / 18;
-      const along = prev.clone().lerp(tip, 0.4 + k * 0.7);
-      const a = (i % 2) * Math.PI + Math.floor(i / 2) * (Math.PI / 2) + r() * 0.4;
-      const out = 0.009 + r() * 0.006;
-      const s = 0.009 + r() * 0.004;
-      const tint = r();
-      return {
-        p: [along.x + Math.cos(a) * out, along.y + (r() - 0.3) * 0.012, along.z + Math.sin(a) * out] as Vec3,
-        r: [0.5 + r() * 0.5, -a, 0.3] as Vec3,
-        s: [s * 0.62, s * 0.26, s] as Vec3,
-        c: tint > 0.75 ? "#5b7d3a" : tint > 0.3 ? "#4d7a3c" : "#3f6c35",
-      };
+const POTHOS: { vines: Vec3[][]; leaves: Instance[] } = (() => {
+  const r = rng(31);
+  const vines: Vec3[][] = [];
+  const leaves: Instance[] = [];
+  const leaf = (p: Vec3, out: [number, number], tilt: number, size: number) => {
+    leaves.push({
+      p,
+      // Primero se inclina la hoja y luego se orienta hacia fuera (orden YXZ)
+      r: [tilt, Math.atan2(-out[0], -out[1]), (r() - 0.5) * 0.8],
+      s: [size, size, size],
+      c: POTHOS_GREENS[Math.floor(r() * POTHOS_GREENS.length)],
     });
+  };
+  const along = (pts: Vec3[], n: number, size: number, from = 0.1) => {
+    const curve = new CatmullRomCurve3(pts.map((p) => new Vector3(...p)));
+    for (let i = 0; i < n; i += 1) {
+      const t = from + (i / n) * (1 - from);
+      const p = curve.getPoint(t);
+      const tan = curve.getTangent(t);
+      const side = i % 2 ? 1 : -1;
+      const nx = -tan.z * side;
+      const nz = tan.x * side;
+      leaf([p.x + nx * 0.008, p.y + 0.003, p.z + nz * 0.008], [tan.x + nx * 0.8, tan.z + nz * 0.8], -1.1 + r() * 0.4, size * (1.1 - t * 0.45) * (0.85 + r() * 0.3));
+    }
+  };
+  // Guías colgantes hacia delante y hacia fuera, lejos del portátil, cada una con un brote lateral
+  [1.6, 2.0, 2.4, 2.8, 3.2, 3.6].forEach((phi, k) => {
+    const c = Math.cos(phi);
+    const s = Math.sin(phi);
+    const reach = 0.09 + (k % 3) * 0.025 + r() * 0.02;
+    const pts: Vec3[] = [
+      [c * 0.012, 0.075, s * 0.012],
+      [c * 0.038, 0.08, s * 0.038],
+      [c * 0.05, 0.055, s * 0.05],
+      [c * 0.062, 0.024, s * 0.062],
+      [c * reach, 0.006, s * reach],
+      [c * (reach + 0.04) + s * 0.015, 0.004, s * (reach + 0.04) - c * 0.015],
+    ];
+    vines.push(pts);
+    along(pts, 9, 0.026);
+    if (k % 2 === 0) {
+      const fork: Vec3[] = [pts[3], [c * (reach - 0.01) - s * 0.03, 0.005, s * (reach - 0.01) + c * 0.03], [c * reach - s * 0.06, 0.004, s * reach + c * 0.06]];
+      vines.push(fork);
+      along(fork, 4, 0.02, 0.2);
+    }
   });
+  // Tallos que trepan: dan altura y volumen a la mata
+  [0.4, 2.6, 4.6].forEach((phi, k) => {
+    const c = Math.cos(phi);
+    const s = Math.sin(phi);
+    const h = 0.15 + k * 0.03;
+    const pts: Vec3[] = [
+      [c * 0.008, 0.06, s * 0.008],
+      [c * 0.02, 0.06 + h * 0.4, s * 0.02],
+      [c * 0.03 - s * 0.01, 0.06 + h * 0.75, s * 0.03 + c * 0.01],
+      [c * 0.045, 0.06 + h, s * 0.045],
+    ];
+    vines.push(pts);
+    along(pts, 7, 0.034, 0.15);
+  });
+  // Corona: hojas grandes que salen del centro de la maceta
+  for (let i = 0; i < 16; i += 1) {
+    const a = i * 2.39996;
+    const d = 0.006 + r() * 0.026;
+    leaf([Math.cos(a) * d, 0.07 + r() * 0.045, Math.sin(a) * d], [Math.cos(a), Math.sin(a)], -0.6 - r() * 0.6, 0.036 + r() * 0.014);
+  }
+  return { vines, leaves };
 })();
 
-const POT_PROFILE = [
-  new Vector2(0, 0),
-  new Vector2(0.03, 0),
-  new Vector2(0.033, 0.003),
-  new Vector2(0.04, 0.05),
-  new Vector2(0.043, 0.053),
-  new Vector2(0.043, 0.056),
-  new Vector2(0.039, 0.056),
-  new Vector2(0.036, 0.05),
-  new Vector2(0, 0.05),
-];
-const POT = new LatheGeometry(POT_PROFILE, 40);
+const TERRACOTTA = new LatheGeometry(
+  [
+    [0, 0],
+    [0.03, 0],
+    [0.031, 0.002],
+    [0.036, 0.048],
+    [0.041, 0.049],
+    [0.042, 0.062],
+    [0.038, 0.062],
+    [0.037, 0.05],
+    [0, 0.05],
+  ].map(([x, y]) => new Vector2(x, y)),
+  40,
+);
 
-function Jade({ position }: { position: Vec3 }) {
+function Pothos({ position }: { position: Vec3 }) {
   return (
-    <group position={position} rotation={[0, -0.4, 0]}>
-      {/* Maceta redonda de gres crema: el feng shui pide formas suaves para el metal y el agua */}
-      <mesh geometry={POT} castShadow receiveShadow>
-        <meshStandardMaterial color="#d9d2c4" roughness={0.75} />
+    <group position={position}>
+      <mesh geometry={TERRACOTTA} castShadow receiveShadow>
+        <meshStandardMaterial color="#b0643f" roughness={0.92} />
       </mesh>
-      <mesh position={[0, 0.049, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+      <mesh position={[0, 0.058, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <circleGeometry args={[0.037, 28]} />
-        <meshStandardMaterial color="#2f241c" roughness={1} />
+        <meshStandardMaterial color="#2c221a" roughness={1} />
       </mesh>
-      {JADE_STEMS.map((s, i) => (
-        <Branch key={i} points={s} r0={0.0045} r1={0.0025} color="#6b5a3e" roughness={0.7} />
+      {POTHOS.vines.map((v, i) => (
+        <Branch key={i} points={v} r0={0.0016} r1={0.001} color="#6f8f3a" roughness={0.6} />
       ))}
-      <Instances geometry={JADE_LEAF} items={JADE_LEAVES} roughness={0.45} />
+      <Instances geometry={HEART} items={POTHOS.leaves} roughness={0.38} side={DoubleSide} />
     </group>
   );
 }
 
-// ——— Bambú de la suerte: tres tallos (felicidad) en jarrón de cristal con agua y guijarros ———
+// ——— Sansevieria: hojas en espada, erguidas, para la esquina del fondo (protección en el feng shui) ———
 
-const STALKS = [
-  { x: -0.008, z: 0.004, h: 0.34 },
-  { x: 0.01, z: 0.006, h: 0.27 },
-  { x: 0.001, z: -0.011, h: 0.21 },
-];
-
-const BAMBOO_LEAVES: Instance[] = (() => {
-  const r = rng(41);
-  const greens = ["#4d8c2f", "#5a9a36", "#447f2a", "#68a63e"];
-  return STALKS.flatMap((st) =>
-    Array.from({ length: 9 }, (_, i) => {
-      const a = i * 2.4 + r() * 0.5;
-      const y = st.h - 0.012 - (i % 3) * 0.022 + r() * 0.01;
-      const len = 0.06 + r() * 0.035;
-      return {
-        p: [st.x, y, st.z] as Vec3,
-        r: [0.55 + r() * 0.45, a, 0] as Vec3,
-        s: [len * 0.2, len, len] as Vec3,
-        c: greens[Math.floor(r() * greens.length)],
-      };
-    }),
-  );
-})();
-
-const NODES: Instance[] = STALKS.flatMap((st) =>
-  Array.from({ length: Math.floor((st.h - 0.04) / 0.055) }, (_, i) => ({
-    p: [st.x, 0.06 + i * 0.055, st.z] as Vec3,
-    r: [0, 0, 0] as Vec3,
-    s: [0.0068, 0.003, 0.0068] as Vec3,
-    c: "#9fb85a",
-  })),
-);
-
-const PEBBLES: Instance[] = (() => {
-  const r = rng(5);
-  return Array.from({ length: 22 }, () => {
-    const a = r() * Math.PI * 2;
-    const d = Math.sqrt(r()) * 0.026;
-    const s = 0.004 + r() * 0.003;
+const BLADES: Instance[] = (() => {
+  const r = rng(53);
+  return Array.from({ length: 11 }, (_, i) => {
+    const a = i * 2.39996 + r() * 0.4;
+    const d = 0.004 + r() * 0.018;
+    const h = 0.2 + r() * 0.14 - d * 2;
+    const w = 0.026 + r() * 0.012;
     return {
-      p: [Math.cos(a) * d, 0.006 + r() * 0.008, Math.sin(a) * d] as Vec3,
-      r: [r() * 3, r() * 3, r() * 3] as Vec3,
-      s: [s * 1.3, s * 0.8, s] as Vec3,
-      c: r() > 0.5 ? "#e8e4dc" : "#c9c4ba",
+      p: [Math.cos(a) * d, 0.07, Math.sin(a) * d] as Vec3,
+      // Las de fuera se abren más; todas giran sobre sí mismas para no parecer clonadas
+      r: [-(0.04 + d * 6 + r() * 0.08), Math.atan2(-Math.cos(a), -Math.sin(a)) + Math.PI, (r() - 0.5) * 0.2] as Vec3,
+      s: [w, h, w] as Vec3,
+      c: r() > 0.5 ? "#ffffff" : "#e6ecd8",
     };
   });
 })();
 
-function Bamboo({ position }: { position: Vec3 }) {
+function SnakePlant({ position }: { position: Vec3 }) {
+  const leafTex = useCanvasTexture(64, 256, drawSnakeLeaf);
+  return (
+    <group position={position} rotation={[0, 0.5, 0]}>
+      {/* Macetero cilíndrico de cemento, sobrio y pesado */}
+      <mesh position={[0, 0.037, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[0.046, 0.04, 0.074, 40]} />
+        <meshStandardMaterial color="#6d6c69" roughness={0.95} />
+      </mesh>
+      <mesh position={[0, 0.0745, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.041, 0.046, 40]} />
+        <meshStandardMaterial color="#7a7975" roughness={0.9} />
+      </mesh>
+      <mesh position={[0, 0.07, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <circleGeometry args={[0.042, 28]} />
+        <meshStandardMaterial color="#2c221a" roughness={1} />
+      </mesh>
+      <Instances geometry={BLADE} items={BLADES} roughness={0.5} side={DoubleSide} map={leafTex} />
+    </group>
+  );
+}
+
+// ——— Palmera areca: cañas arqueadas con frondes de foliolos colgantes, la más alta, en la esquina ———
+
+const ARECA: { canes: Vec3[][]; leaflets: Instance[] } = (() => {
+  const r = rng(77);
+  const canes: Vec3[][] = [];
+  const leaflets: Instance[] = [];
+  const up = new Vector3(0, 1, 0);
+  const m = new Matrix4();
+  const q = new Quaternion();
+  const e = new Euler();
+  const greens = ["#4f8a33", "#5f9a3a", "#6aa53f", "#477d2e", "#7bb247"];
+  // Abanico hacia la izquierda y hacia delante: lo que mira al usuario, no a la pared
+  [-2.2, -2.9, 2.6, 1.9, 3.3, -1.6].forEach((phi, k) => {
+    const c = Math.cos(phi);
+    const s = Math.sin(phi);
+    const h = 0.42 + r() * 0.16 - (k > 3 ? 0.1 : 0);
+    const spread = 0.12 + r() * 0.08;
+    const pts: Vec3[] = [
+      [c * 0.006, 0.09, s * 0.006],
+      [c * spread * 0.2, 0.09 + h * 0.45, s * spread * 0.2],
+      [c * spread * 0.6, 0.09 + h * 0.85, s * spread * 0.6],
+      [c * spread, 0.09 + h, s * spread],
+      [c * spread * 1.45, 0.09 + h * 0.86, s * spread * 1.45],
+    ];
+    canes.push(pts);
+    const curve = new CatmullRomCurve3(pts.map((p) => new Vector3(...p)));
+    const n = 22;
+    for (let i = 0; i < n; i += 1) {
+      const t = 0.42 + (i / n) * 0.56;
+      const p = curve.getPoint(t);
+      const tan = curve.getTangent(t);
+      const perp = new Vector3().crossVectors(tan, up).normalize();
+      for (const side of [-1, 1]) {
+        // Foliolo: sale perpendicular al raquis, un poco hacia la punta y caído por su peso
+        const y = perp.clone().multiplyScalar(side).addScaledVector(tan, 0.45).addScaledVector(up, -0.35 - r() * 0.3).normalize();
+        const z = up.clone().addScaledVector(y, -y.y).normalize();
+        const x = new Vector3().crossVectors(y, z);
+        m.makeBasis(x, y, z);
+        q.setFromRotationMatrix(m);
+        e.setFromQuaternion(q, "YXZ");
+        const len = (0.05 + r() * 0.012) * Math.sin(Math.PI * (0.15 + (i / n) * 0.8));
+        leaflets.push({ p: [p.x, p.y, p.z], r: [e.x, e.y, e.z], s: [0.013, len * 1.25, 0.013], c: greens[Math.floor(r() * greens.length)] });
+      }
+    }
+  });
+  return { canes, leaflets };
+})();
+
+function Areca({ position }: { position: Vec3 }) {
   return (
     <group position={position}>
-      <Instances geometry={PAD} items={PEBBLES} roughness={0.5} />
-      {/* Agua: lámina apenas teñida */}
-      <mesh position={[0, 0.045, 0]}>
-        <cylinderGeometry args={[0.029, 0.029, 0.086, 32, 1, true]} />
-        <meshStandardMaterial color="#9fd6e6" transparent opacity={0.12} roughness={0.05} depthWrite={false} />
+      {/* Macetero alto de cerámica mate blanca */}
+      <mesh position={[0, 0.045, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[0.05, 0.043, 0.09, 40]} />
+        <meshStandardMaterial color="#e4e0d8" roughness={0.8} />
       </mesh>
-      <mesh position={[0, 0.088, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[0.029, 32]} />
-        <meshStandardMaterial color="#9fd6e6" transparent opacity={0.28} roughness={0.02} metalness={0.2} depthWrite={false} />
+      <mesh position={[0, 0.087, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <circleGeometry args={[0.047, 28]} />
+        <meshStandardMaterial color="#2c221a" roughness={1} />
       </mesh>
-      {/* Jarrón de vidrio grueso */}
-      <mesh position={[0, 0.06, 0]}>
-        <cylinderGeometry args={[0.032, 0.03, 0.12, 40, 1, true]} />
-        <meshPhysicalMaterial color="#dff4f0" transparent opacity={0.22} roughness={0.04} clearcoat={1} side={DoubleSide} depthWrite={false} />
-      </mesh>
-      <mesh position={[0, 0.003, 0]}>
-        <cylinderGeometry args={[0.03, 0.03, 0.006, 32]} />
-        <meshPhysicalMaterial color="#cfece6" transparent opacity={0.4} roughness={0.05} />
-      </mesh>
-      {STALKS.map((st) => (
-        <mesh key={st.h} position={[st.x, st.h / 2 + 0.005, st.z]} castShadow>
-          <cylinderGeometry args={[0.0052, 0.0058, st.h, 12]} />
-          <meshStandardMaterial color="#7fa241" roughness={0.45} />
-        </mesh>
+      {ARECA.canes.map((c, i) => (
+        <Branch key={i} points={c} r0={0.0032} r1={0.0012} color="#8a9a4a" roughness={0.6} />
       ))}
-      <Instances geometry={NODE} items={NODES} roughness={0.5} />
-      <Instances geometry={LEAF} items={BAMBOO_LEAVES} roughness={0.55} side={DoubleSide} />
+      <Instances geometry={BLADE} items={ARECA.leaflets} roughness={0.5} side={DoubleSide} />
     </group>
   );
 }
 
 /**
  * Rincón verde a la izquierda (el «dragón verde» del feng shui, elemento madera):
- * de fondo a frente y de alto a bajo, bambú en la esquina de la riqueza, crásula y bonsái.
+ * de fondo a frente y de alto a bajo: areca en la esquina, sansevieria, poto y bonsái.
+ * Cada una asoma por encima o al lado de la anterior vista desde la silla.
  */
 export function Plants() {
   return (
     <group>
-      <Bamboo position={[-0.985, 0, -0.2]} />
-      <Jade position={[-0.87, 0, 0.0]} />
+      <Areca position={[-0.97, 0, -0.47]} />
+      <SnakePlant position={[-0.985, 0, -0.24]} />
+      <group position={[-0.885, 0, 0.02]} scale={1.3}>
+        <Pothos position={[0, 0, 0]} />
+      </group>
       <group position={[-0.8, 0, 0.2]} scale={1.15}>
         <Bonsai position={[0, 0, 0]} />
       </group>
-      {/* Luz cálida tenue sobre el rincón: sin ella las hojas se pierden en la penumbra */}
-      <pointLight position={[-0.82, 0.42, 0.05]} intensity={0.35} distance={0.7} decay={1.6} color="#ffe2b8" />
+      {/* Contraluz frío desde la pared azul: recorta las hojas y les da volumen */}
+      <pointLight position={[-0.8, 0.5, -0.35]} intensity={0.45} distance={0.9} decay={1.5} color={ICE} />
     </group>
   );
 }

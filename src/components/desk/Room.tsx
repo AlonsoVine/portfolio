@@ -94,7 +94,9 @@ export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }
     if (map) map.offset.x = (map.offset.x + delta * 0.03) % 1;
     const tt = clock.elapsedTime;
     // Zumbido del neón: parpadeo casi imperceptible y algún fallo esporádico
-    const glitch = Math.sin(tt * 37) > 0.995 ? 0.55 : 1;
+    // Fallo esporádico del neón: azar por tramos de 0,1 s, de media uno cada ~12 s
+    const h = Math.sin(Math.floor(tt * 10) * 12.9898) * 43758.5453;
+    const glitch = h - Math.floor(h) > 0.992 ? 0.6 : 1;
     if (signMat.current) signMat.current.color.copy(signColor).multiplyScalar((0.94 + Math.sin(tt * 2.3) * 0.04) * glitch);
     lights.current.forEach((l, i) => {
       if (l) l.intensity = base[i] * (0.9 + Math.sin(tt * 0.7 + i * 2) * 0.1);
@@ -140,9 +142,10 @@ export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }
       <Wash map={dot} position={[0.78, 0.3, WALL_Z + 0.004]} scale={[1.5, 1.1]} color={AMBER} opacity={0.24} />
       <Wash map={dot} position={[0, 0.12, WALL_Z + 0.005]} scale={[1.9, 0.5]} color={MAGENTA} opacity={0.2} />
       <Wash map={dot} position={[0, 0.66, WALL_Z + 0.003]} scale={[1.3, 0.5]} color={VIOLET} opacity={0.18} />
-      <Wash map={dot} position={[-1.045, 0.35, -0.25]} rotation={[0, Math.PI / 2, 0]} scale={[1.4, 1]} color={ICE} opacity={0.2} />
+      <Wash map={dot} position={[-1.045, 0.35, -0.25]} rotation={[0, Math.PI / 2, 0]} scale={[1.7, 1.3]} color={ICE} opacity={0.42} />
       <Wash map={dot} position={[-1.045, 0.25, -0.45]} rotation={[0, Math.PI / 2, 0]} scale={[0.8, 0.7]} color={VIOLET} opacity={0.1} />
       <Wash map={dot} position={[1.045, 0.4, -0.3]} rotation={[0, -Math.PI / 2, 0]} scale={[1.4, 1.1]} color={AMBER} opacity={0.2} />
+      <Wash map={dot} position={[1.046, 0.62, 0.12]} rotation={[0, -Math.PI / 2, 0]} scale={[1.1, 1.2]} color={AMBER} opacity={0.14} />
 
       <pointLight ref={(l) => void (lights.current[0] = l)} position={[-0.38, 0.16, -0.46]} color={ICE} intensity={base[0]} distance={1.6} decay={1.6} />
       <pointLight ref={(l) => void (lights.current[1] = l)} position={[0.38, 0.16, -0.46]} color={AMBER} intensity={base[1]} distance={1.6} decay={1.6} />

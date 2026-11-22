@@ -2,7 +2,16 @@
 
 import { useFrame } from "@react-three/fiber";
 import { useLayoutEffect, useMemo, useRef } from "react";
-import { AdditiveBlending, CylinderGeometry, type InstancedMesh, type MeshBasicMaterial, Object3D } from "three";
+import {
+  AdditiveBlending,
+  BufferGeometry,
+  CylinderGeometry,
+  Float32BufferAttribute,
+  type InstancedMesh,
+  type MeshBasicMaterial,
+  Object3D,
+  SphereGeometry,
+} from "three";
 import { hdr, ICE, VIOLET } from "./palette";
 import { drawLegends, drawSoftDot, drawStrip } from "./screens";
 import { RoundedBox } from "./primitives";
@@ -92,14 +101,14 @@ export function Keyboard({ position, rotation, reduceMotion }: Placed & { reduce
       {/* Retroiluminación que asoma entre las teclas, recorriendo el degradado */}
       <mesh position={[0, 0.0212, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[width, depth]} />
-        <meshBasicMaterial ref={glowMat} map={glow} color={hdr("#ffffff", 2.4)} toneMapped={false} />
+        <meshBasicMaterial ref={glowMat} map={glow} color={hdr("#ffffff", 1.1)} toneMapped={false} />
       </mesh>
       <instancedMesh ref={keysRef} args={[geometry, undefined, KEYS.length]} castShadow>
         <meshStandardMaterial color="#16171c" roughness={0.55} metalness={0.05} />
       </instancedMesh>
       <mesh position={[0, 0.0315, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[width, depth]} />
-        <meshBasicMaterial map={legends} color={hdr("#ffffff", 1.6)} transparent depthWrite={false} toneMapped={false} />
+        <meshBasicMaterial map={legends} color={hdr("#ffffff", 0.85)} transparent depthWrite={false} />
       </mesh>
       {/* Reposamuñecas */}
       <RoundedBox args={[width, 0.016, 0.07]} radius={0.008} smoothness={4} position={[0, 0.008, depth / 2 + 0.055]} castShadow receiveShadow>
@@ -115,34 +124,120 @@ export function Keyboard({ position, rotation, reduceMotion }: Placed & { reduce
   );
 }
 
-/** Ratón clásico: carcasa ovalada con la joroba atrás, raya entre botones, rueda iluminada y halo LED en la base. */
+const smooth = (e0: number, e1: number, x: number) => {
+  const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0)));
+  return t * t * (3 - 2 * t);
+};
+
+// Medidas de un ratón diestro corriente: 12 × 6,2 × 4 cm
+const MOUSE_SCALE: [number, number, number] = [0.031, 0.032, 0.06];
+const MOUSE_LIFT = 0.0088;
+
+/** Esfera unitaria esculpida: base plana, frontal estrecho, joroba trasera y cintura para el pulgar. */
+function mouseShell() {
+  const g = new SphereGeometry(1, 96, 64);
+  const pos = g.attributes.position;
+  for (let i = 0; i < pos.count; i += 1) {
+    let x = pos.getX(i);
+    let y = pos.getY(i);
+    const z = pos.getZ(i);
+    y = y < 0 ? y * 0.15 : y * (0.8 + 0.25 * smooth(-0.6, 0.5, z));
+    x *= 1 - 0.12 * Math.max(0, -z);
+    x *= 1 - 0.08 * Math.exp(-(((z - 0.05) / 0.35) ** 2)) * smooth(-0.1, 0.4, y);
+    pos.setXYZ(i, x, y, z);
+  }
+  g.computeVertexNormals();
+  return g;
+}
+
+/** Los dos botones: el trozo frontal de la carcasa, separado por la ranura central y el hueco de la rueda. */
+function mouseButtons(shell: SphereGeometry) {
+  const flat = shell.toNonIndexed();
+  const pos = flat.attributes.position;
+  const nor = flat.attributes.normal;
+  const keepP: number[] = [];
+  const keepN: number[] = [];
+  for (let t = 0; t < pos.count; t += 3) {
+    let cx = 0;
+    let cy = 0;
+    let cz = 0;
+    for (let k = 0; k < 3; k += 1) {
+      cx += pos.getX(t + k) / 3;
+      cy += pos.getY(t + k) / 3;
+      cz += pos.getZ(t + k) / 3;
+    }
+    const slot = Math.abs(cx) < 0.16 && cz > -0.62 && cz < -0.2;
+    if (cy > 0.3 && cz < 0.12 && Math.abs(cx) > 0.035 && !slot) {
+      for (let k = 0; k < 3; k += 1) {
+        keepP.push(pos.getX(t + k), pos.getY(t + k), pos.getZ(t + k));
+        keepN.push(nor.getX(t + k), nor.getY(t + k), nor.getZ(t + k));
+      }
+    }
+  }
+  flat.dispose();
+  const g = new BufferGeometry();
+  g.setAttribute("position", new Float32BufferAttribute(keepP, 3));
+  g.setAttribute("normal", new Float32BufferAttribute(keepN, 3));
+  // Un pelo por encima de la carcasa: entre los dos asoma el cuerpo oscuro y se lee la junta
+  g.scale(1.008, 1.012, 1.004);
+  return g;
+}
+
+const SHELL = mouseShell();
+const BUTTONS = mouseButtons(SHELL);
+/** Altura de la carcasa en el eje central para una z unitaria (para asentar la rueda). */
+const shellTop = (z: number) => Math.sqrt(1 - z * z) * (0.8 + 0.25 * smooth(-0.6, 0.5, z));
+
+/** Ratón inalámbrico clásico: carcasa esculpida, botones partidos, rueda de goma en su hueco y patines. */
 export function Mouse({ position, rotation }: Placed) {
-  const shell = { color: "#1d1e24", roughness: 0.5, metalness: 0.15, clearcoat: 0.4, clearcoatRoughness: 0.35 } as const;
+  const wheelZ = -0.42;
+  const wheelY = MOUSE_LIFT + shellTop(wheelZ) * MOUSE_SCALE[1] - 0.0018;
   return (
     <group position={position} rotation={rotation}>
-      <group rotation={[0.08, 0, 0]}>
-        <mesh position={[0, 0.016, 0.004]} scale={[0.031, 0.02, 0.06]} castShadow receiveShadow>
-          <sphereGeometry args={[1, 48, 32]} />
-          <meshPhysicalMaterial {...shell} />
+      <group position={[0, MOUSE_LIFT, 0]} scale={MOUSE_SCALE}>
+        {/* Cuerpo: plástico más mate y algo más oscuro que los botones */}
+        <mesh geometry={SHELL} castShadow receiveShadow>
+          <meshStandardMaterial color="#0e0f12" roughness={0.7} />
         </mesh>
-        <mesh position={[0, 0.0352, -0.024]} rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[0.0058, 0.0058, 0.0055, 24]} />
-          <meshStandardMaterial color="#2c2e36" roughness={0.75} />
-        </mesh>
-        <mesh position={[0, 0.0352, -0.024]} rotation={[0, Math.PI / 2, 0]}>
-          <torusGeometry args={[0.0059, 0.0007, 6, 28]} />
-          <meshBasicMaterial color={hdr(ICE, 2.4)} toneMapped={false} />
-        </mesh>
-        {/* Logo trasero y halo de la base */}
-        <mesh position={[0, 0.03, 0.04]} rotation={[-1.05, 0, 0]}>
-          <circleGeometry args={[0.0045, 20]} />
-          <meshBasicMaterial color={hdr(VIOLET, 2.2)} toneMapped={false} />
-        </mesh>
-        <mesh position={[0, 0.0045, 0.004]} rotation={[Math.PI / 2, 0, 0]} scale={[0.0305, 0.0595, 0.03]}>
-          <torusGeometry args={[1, 0.035, 6, 64]} />
-          <meshBasicMaterial color={hdr(VIOLET, 2.6)} toneMapped={false} />
+        <mesh geometry={BUTTONS} castShadow>
+          <meshStandardMaterial color="#3a3c45" roughness={0.36} metalness={0.1} />
         </mesh>
       </group>
+      {/* Rueda: goma estriada sobre eje, con el hueco negro debajo */}
+      <mesh position={[0, wheelY - 0.0012, wheelZ * MOUSE_SCALE[2]]}>
+        <boxGeometry args={[0.0072, 0.004, 0.017]} />
+        <meshStandardMaterial color="#050506" roughness={1} />
+      </mesh>
+      <mesh position={[0, wheelY, wheelZ * MOUSE_SCALE[2]]} rotation={[0, 0, Math.PI / 2]} castShadow>
+        <cylinderGeometry args={[0.0056, 0.0056, 0.0048, 40]} />
+        <meshStandardMaterial color="#2a2b31" roughness={0.9} />
+      </mesh>
+      {[-1, 1].map((sx) => (
+        <mesh key={sx} position={[sx * 0.0026, wheelY, wheelZ * MOUSE_SCALE[2]]} rotation={[0, 0, Math.PI / 2]}>
+          <cylinderGeometry args={[0.0049, 0.0049, 0.0006, 32]} />
+          <meshStandardMaterial color="#6d717c" roughness={0.35} metalness={0.8} />
+        </mesh>
+      ))}
+      {/* Botón de DPI tras la rueda, con su piloto tenue */}
+      <RoundedBox args={[0.004, 0.0016, 0.007]} radius={0.0007} position={[0, wheelY + 0.0011, -0.0105]} rotation={[-0.12, 0, 0]}>
+        <meshStandardMaterial color="#0d0e11" roughness={0.6} />
+      </RoundedBox>
+      <mesh position={[0, wheelY + 0.0021, -0.0105]} rotation={[-Math.PI / 2 - 0.12, 0, 0]}>
+        <circleGeometry args={[0.0007, 12]} />
+        <meshBasicMaterial color={ICE} />
+      </mesh>
+      {/* Botones laterales para el pulgar */}
+      {[-0.002, 0.016].map((z) => (
+        <RoundedBox key={z} args={[0.002, 0.005, 0.015]} radius={0.0009} position={[-0.0285, 0.016, z]} rotation={[0, -0.08, 0.25]}>
+          <meshStandardMaterial color="#26272e" roughness={0.4} />
+        </RoundedBox>
+      ))}
+      {/* Patines de PTFE: el ratón apoya sobre ellos, no sobre la carcasa */}
+      {[-0.045, 0.045].map((z) => (
+        <RoundedBox key={z} args={[0.03, 0.0012, 0.006]} radius={0.0005} position={[0, 0.0046, z]}>
+          <meshStandardMaterial color="#d8d6d0" roughness={0.3} />
+        </RoundedBox>
+      ))}
     </group>
   );
 }

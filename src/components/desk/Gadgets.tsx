@@ -25,7 +25,7 @@ export function Phone({ t, lang, position, rotation }: { t: DeskCopy; lang: stri
       </RoundedBox>
       <mesh position={[0, 0.0225, 0.028]}>
         <boxGeometry args={[0.07, 0.002, 0.004]} />
-        <meshBasicMaterial color={hdr(ICE, 3.5)} toneMapped={false} />
+        <meshBasicMaterial color={hdr(ICE, 1.2)} toneMapped={false} />
       </mesh>
       <RoundedBox args={[0.06, 0.12, 0.008]} radius={0.004} position={[0, 0.07, -0.03]} rotation={[-0.32, 0, 0]} castShadow>
         <meshStandardMaterial color="#121318" roughness={0.4} metalness={0.4} />
