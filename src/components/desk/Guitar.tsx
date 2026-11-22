@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
-import { BufferGeometry, ExtrudeGeometry, Float32BufferAttribute, Shape, ShapeGeometry, Vector2 } from "three";
+import { useLayoutEffect, useRef } from "react";
+import { CylinderGeometry, ExtrudeGeometry, Float32BufferAttribute, type InstancedMesh, Object3D, Path, Shape, ShapeGeometry, Vector2 } from "three";
 import { RoundedBox } from "./primitives";
 import { drawFretboard, drawSoftDot, drawSpruceTop } from "./screens";
 import { useCanvasTexture } from "./useCanvasTexture";
@@ -32,16 +32,25 @@ const NUT_Y = 0.5 + SCALE * (1 - 2 ** (-14 / 12));
 const SADDLE_Y = NUT_Y - SCALE;
 const BOARD_FROM = 0.42;
 
-function outline() {
+const HOLE_Y = 0.39;
+const HOLE_R = 0.05;
+
+function outline(withHole: boolean) {
   const right = HALF.map(([x, y]) => new Vector2(x, y));
   const left = [...HALF].reverse().slice(1, -1).map(([x, y]) => new Vector2(-x, y));
   const s = new Shape();
   s.moveTo(right[0].x, right[0].y);
   s.splineThru([...right.slice(1), ...left, right[0]]);
+  if (withHole) {
+    const hole = new Path();
+    hole.absarc(0, HOLE_Y, HOLE_R, 0, Math.PI * 2, true);
+    s.holes.push(hole);
+  }
   return s;
 }
 
-const SHAPE = outline();
+// La boca atraviesa tapa y caja: de lado se ve el hueco, no un círculo pintado
+const SHAPE = outline(true);
 const BODY = new ExtrudeGeometry(SHAPE, { depth: DEPTH, curveSegments: 48, bevelEnabled: true, bevelThickness: BEVEL, bevelSize: BEVEL, bevelSegments: 3 });
 
 function topGeometry() {
@@ -54,29 +63,57 @@ function topGeometry() {
   return g;
 }
 const TOP = topGeometry();
+// Filete crema: un contorno medio milímetro mayor justo en el canto de la tapa
+const BINDING = new ExtrudeGeometry(outline(false), { depth: 0.002, curveSegments: 48, bevelEnabled: true, bevelThickness: 0.001, bevelSize: BEVEL + 0.0007, bevelSegments: 1 });
+const STRING = new CylinderGeometry(1, 1, 1, 6, 1);
 
-function stringsGeometry() {
-  const p: number[] = [];
-  for (let i = 0; i < 6; i += 1) {
-    const k = i / 5 - 0.5;
-    p.push(k * 0.054, SADDLE_Y, FRONT + 0.009, k * 0.036, NUT_Y, FRONT + 0.0095);
-  }
-  const g = new BufferGeometry();
-  g.setAttribute("position", new Float32BufferAttribute(p, 3));
-  return g;
+/** Seis cuerdas de entorchado metálico, de la selleta a la cejuela, más gruesas en los graves. */
+function Strings() {
+  const ref = useRef<InstancedMesh>(null);
+  useLayoutEffect(() => {
+    const mesh = ref.current;
+    if (!mesh) return;
+    const o = new Object3D();
+    for (let i = 0; i < 6; i += 1) {
+      const k = i / 5 - 0.5;
+      const x0 = k * 0.054;
+      const x1 = k * 0.036;
+      const len = NUT_Y - SADDLE_Y;
+      const r = 0.0006 - i * 0.00005;
+      o.position.set((x0 + x1) / 2, (SADDLE_Y + NUT_Y) / 2, FRONT + 0.0093);
+      o.rotation.set(0, 0, Math.atan2(x0 - x1, len));
+      o.scale.set(r, len, r);
+      o.updateMatrix();
+      mesh.setMatrixAt(i, o.matrix);
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.computeBoundingSphere();
+  }, []);
+  return (
+    <instancedMesh ref={ref} args={[STRING, undefined, 6]}>
+      <meshStandardMaterial color="#d8d2c4" roughness={0.3} metalness={1} />
+    </instancedMesh>
+  );
 }
 
 /** Guitarra acústica colgada de un soporte de pared: tapa de abeto, aros de caoba y diapasón de palosanto. */
 export function Guitar({ position, rotation }: Placed) {
   const spruce = useCanvasTexture(512, 640, drawSpruceTop);
   const board = useCanvasTexture(64, 512, drawFretboard);
-  const strings = useMemo(() => stringsGeometry(), []);
   const dot = useCanvasTexture(128, 128, drawSoftDot);
 
   return (
     <group position={position} rotation={rotation}>
       <mesh geometry={BODY} castShadow receiveShadow>
         <meshStandardMaterial color="#5c2e18" roughness={0.3} />
+      </mesh>
+      <mesh geometry={BINDING} position={[0, 0, DEPTH - 0.0015]}>
+        <meshStandardMaterial color="#e8dcc0" roughness={0.35} />
+      </mesh>
+      {/* Fondo de la caja visto por la boca */}
+      <mesh position={[0, HOLE_Y, 0.004]}>
+        <circleGeometry args={[HOLE_R * 1.1, 32]} />
+        <meshStandardMaterial color="#120a06" roughness={0.9} />
       </mesh>
       <mesh geometry={TOP} position={[0, 0, FRONT + 0.0004]} receiveShadow>
         <meshStandardMaterial map={spruce} roughness={0.26} />
@@ -105,9 +142,7 @@ export function Guitar({ position, rotation }: Placed) {
         <meshStandardMaterial color="#efe8d8" roughness={0.4} />
       </RoundedBox>
 
-      <lineSegments geometry={strings}>
-        <lineBasicMaterial color="#d9d6cf" transparent opacity={0.75} />
-      </lineSegments>
+      <Strings />
 
       {/* Pala inclinada hacia atrás con sus seis clavijas */}
       <group position={[0, NUT_Y + 0.002, FRONT - 0.004]} rotation={[-0.24, 0, 0]}>

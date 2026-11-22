@@ -15,7 +15,7 @@ export function Desk() {
   const wood = useCanvasTexture(1024, 512, drawWood, { tileX: 2 });
   const peg = useCanvasTexture(512, 512, drawPegboard, { tileX: 10, tileY: 5 });
   const fabric = useCanvasTexture(256, 256, drawFabric, { tileX: 14, tileY: 5.2 });
-  const edge = useCanvasTexture(1500, 560, drawMatEdge);
+  const edge = useCanvasTexture(750, 280, drawMatEdge);
 
   return (
     <group>
@@ -85,7 +85,7 @@ export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }
   const signMat = useRef<MeshBasicMaterial>(null);
   const stripMat = useRef<MeshBasicMaterial>(null);
   const lights = useRef<(PointLight | null)[]>([]);
-  const base = useMemo(() => [1.4, 1.2, 2.4], []);
+  const base = useMemo(() => [1.4, 1.2, 0.9], []);
   const signColor = useMemo<Color>(() => hdr("#ffffff", 1.7), []);
 
   useFrame(({ clock }, delta) => {
@@ -120,7 +120,7 @@ export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }
         <group key={x} position={[x, 0, -0.5]}>
           <mesh position={[0, 0.13, 0]}>
             <capsuleGeometry args={[0.011, 0.2, 4, 12]} />
-            <meshBasicMaterial color={hdr(c, 4)} toneMapped={false} />
+            <meshBasicMaterial color={hdr(c, 2.2)} toneMapped={false} />
           </mesh>
           <mesh position={[0, 0.01, 0]}>
             <cylinderGeometry args={[0.022, 0.026, 0.02, 20]} />
@@ -138,13 +138,13 @@ export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }
         <meshPhysicalMaterial color="#0c0d12" roughness={0.12} transparent opacity={0.35} />
       </RoundedBox>
 
-      <Wash map={dot} position={[-0.75, 0.3, WALL_Z + 0.004]} scale={[1.5, 1.1]} color={ICE} opacity={0.26} />
-      <Wash map={dot} position={[0.78, 0.3, WALL_Z + 0.004]} scale={[1.5, 1.1]} color={AMBER} opacity={0.24} />
-      <Wash map={dot} position={[0, 0.12, WALL_Z + 0.005]} scale={[1.9, 0.5]} color={MAGENTA} opacity={0.2} />
-      <Wash map={dot} position={[0, 0.66, WALL_Z + 0.003]} scale={[1.3, 0.5]} color={VIOLET} opacity={0.18} />
+      <Wash map={dot} position={[-0.75, 0.3, WALL_Z + 0.004]} scale={[1.5, 1.1]} color={ICE} opacity={0.16} />
+      <Wash map={dot} position={[0.78, 0.3, WALL_Z + 0.004]} scale={[1.5, 1.1]} color={AMBER} opacity={0.15} />
+      <Wash map={dot} position={[0, 0.12, WALL_Z + 0.005]} scale={[1.9, 0.5]} color={MAGENTA} opacity={0.12} />
+      <Wash map={dot} position={[0, 0.66, WALL_Z + 0.003]} scale={[1.3, 0.5]} color={VIOLET} opacity={0.11} />
       <Wash map={dot} position={[-1.045, 0.35, -0.25]} rotation={[0, Math.PI / 2, 0]} scale={[1.7, 1.3]} color={ICE} opacity={0.42} />
-      <Wash map={dot} position={[-1.045, 0.25, -0.45]} rotation={[0, Math.PI / 2, 0]} scale={[0.8, 0.7]} color={VIOLET} opacity={0.1} />
-      <Wash map={dot} position={[1.045, 0.4, -0.3]} rotation={[0, -Math.PI / 2, 0]} scale={[1.4, 1.1]} color={AMBER} opacity={0.2} />
+      <Wash map={dot} position={[-1.045, 0.25, -0.45]} rotation={[0, Math.PI / 2, 0]} scale={[0.8, 0.7]} color={VIOLET} opacity={0.06} />
+      <Wash map={dot} position={[1.045, 0.4, -0.3]} rotation={[0, -Math.PI / 2, 0]} scale={[1.4, 1.1]} color={AMBER} opacity={0.12} />
       <Wash map={dot} position={[1.046, 0.62, 0.12]} rotation={[0, -Math.PI / 2, 0]} scale={[1.1, 1.2]} color={AMBER} opacity={0.14} />
 
       <pointLight ref={(l) => void (lights.current[0] = l)} position={[-0.38, 0.16, -0.46]} color={ICE} intensity={base[0]} distance={1.6} decay={1.6} />

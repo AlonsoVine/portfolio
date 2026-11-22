@@ -15,7 +15,7 @@ export const BASE_FOV = 56;
 const MAX_FOV = 92;
 const MIN_HFOV = (68 * Math.PI) / 180;
 // Una cabeza pesa más que una mano: muelle blando y amortiguamiento crítico (2·√k)
-const STIFFNESS = 38;
+const STIFFNESS = 30;
 const DAMPING = 2 * Math.sqrt(STIFFNESS);
 
 /**
@@ -29,12 +29,14 @@ export function LookControls({ reduceMotion }: { reduceMotion: boolean }) {
 
   useEffect(() => {
     const clamp = (v: number) => Math.max(-1, Math.min(1, v));
+    // Zona muerta central y respuesta progresiva: leer el aviso no mueve la vista, los bordes sí
+    const shape = (v: number) => Math.sign(v) * Math.max(0, Math.abs(v) - 0.05) ** 1.35 / 0.95 ** 1.35;
     let drag: { id: number; x: number; y: number } | null = null;
 
     const onMove = (e: PointerEvent) => {
       if (e.pointerType === "mouse") {
-        target.current.x = clamp((e.clientX / window.innerWidth) * 2 - 1);
-        target.current.y = clamp((e.clientY / window.innerHeight) * 2 - 1);
+        target.current.x = shape(clamp((e.clientX / window.innerWidth) * 2 - 1));
+        target.current.y = shape(clamp((e.clientY / window.innerHeight) * 2 - 1));
       } else if (drag && drag.id === e.pointerId) {
         target.current.x = clamp(target.current.x - ((e.clientX - drag.x) / window.innerWidth) * 2.4);
         target.current.y = clamp(target.current.y - ((e.clientY - drag.y) / window.innerHeight) * 2.4);
@@ -101,9 +103,9 @@ export function LookControls({ reduceMotion }: { reduceMotion: boolean }) {
 
     camera.rotation.order = "YXZ";
     // Alabeo leve al girar, proporcional a la velocidad: la cabeza se inclina al moverse, no al estar quieta
-    camera.rotation.set(pitch + breath * 0.3, yaw, c.vx * YAW * 0.02);
+    camera.rotation.set(pitch + breath * 0.3, yaw, c.vx * YAW * 0.008);
     // Al girar, la cabeza se desplaza un poco hacia ese lado y hacia delante al mirar abajo
-    camera.position.set(EYE[0] + Math.sin(yaw) * -0.05, EYE[1] + breath, EYE[2] + Math.min(0, pitch - PITCH_REST) * 0.12);
+    camera.position.set(EYE[0] + Math.sin(yaw) * -0.05, EYE[1] + breath, EYE[2] + Math.min(0, pitch - PITCH_REST) * 0.12 + (1 - Math.cos(yaw)) * 0.06);
   });
 
   return null;

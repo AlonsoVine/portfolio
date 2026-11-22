@@ -1,13 +1,14 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { mergeGeometries, mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import {
   CatmullRomCurve3,
   Color,
   DoubleSide,
   Euler,
   Matrix4,
-  type BufferGeometry,
+  BufferGeometry,
   IcosahedronGeometry,
   type InstancedMesh,
   LatheGeometry,
@@ -17,6 +18,7 @@ import {
   Shape,
   ShapeGeometry,
   type Texture,
+  TubeGeometry,
   Vector2,
   Vector3,
 } from "three";
@@ -76,8 +78,32 @@ function heartGeometry() {
 
 const BLADE = bladeGeometry();
 const HEART = heartGeometry();
-const PAD = new IcosahedronGeometry(1, 0);
+function padGeometry() {
+  // Gota de follaje: icosaedro subdividido, abollado con ruido y con normales suaves (nada de gemas facetadas)
+  const g = mergeVertices(new IcosahedronGeometry(1, 2));
+  const pos = g.attributes.position;
+  for (let i = 0; i < pos.count; i += 1) {
+    const x = pos.getX(i);
+    const y = pos.getY(i);
+    const z = pos.getZ(i);
+    const k = 1 + 0.16 * Math.sin(x * 7.1 + y * 3.3) * Math.cos(z * 5.7 - y * 2.1);
+    pos.setXYZ(i, x * k, y * k, z * k);
+  }
+  g.computeVertexNormals();
+  return g;
+}
+const PAD = padGeometry();
 
+
+const leafKey = () => "leaf";
+// Translucidez barata: la cara en sombra recoge algo de la luz que atraviesa la hoja
+const translucent = (shader: { fragmentShader: string }) => {
+  shader.fragmentShader = shader.fragmentShader.replace(
+    "#include <lights_fragment_end>",
+    `#include <lights_fragment_end>
+    reflectedLight.indirectDiffuse += diffuseColor.rgb * 0.28 * max(dot(-normal, normalize(vec3(-0.3, 0.4, -1.0))), 0.0);`,
+  );
+};
 
 function Instances({
   geometry,
@@ -113,53 +139,48 @@ function Instances({
   }, [items]);
   return (
     <instancedMesh ref={ref} args={[geometry, undefined, items.length]} castShadow receiveShadow>
-      <meshStandardMaterial roughness={roughness} side={side} map={map} />
+      <meshStandardMaterial roughness={roughness} side={side} map={map} onBeforeCompile={translucent} customProgramCacheKey={leafKey} />
     </instancedMesh>
   );
 }
 
-const UP = new Vector3(0, 1, 0);
-type Segment = { p: Vec3; q: Quaternion; len: number; r0: number; r1: number };
+type Stem = { points: Vec3[]; r0: number; r1: number };
 
-/** Tramos cónicos que siguen una polilínea: tronco y ramas con grosor decreciente. */
-function segments(points: Vec3[], r0: number, r1: number): Segment[] {
-  return points.slice(1).map((b, i) => {
-    const a = new Vector3(...points[i]);
-    const d = new Vector3(...b).sub(a);
-    const len = d.length();
-    const mid = a.clone().addScaledVector(d, 0.5);
-    const k0 = i / (points.length - 1);
-    const k1 = (i + 1) / (points.length - 1);
-    return {
-      p: [mid.x, mid.y, mid.z],
-      q: new Quaternion().setFromUnitVectors(UP, d.normalize()),
-      len,
-      r0: r0 + (r1 - r0) * k0,
-      r1: r0 + (r1 - r0) * k1,
-    };
+/**
+ * Tallos de una planta en una sola malla: un tubo por tramo, que adelgaza hacia la punta,
+ * todos fusionados. Una llamada de dibujo por planta y sin codos visibles entre tramos.
+ */
+function stemsGeometry(stems: Stem[]) {
+  const c = new Vector3();
+  const parts = stems.map(({ points, r0, r1 }) => {
+    const curve = new CatmullRomCurve3(points.map((p) => new Vector3(...p)));
+    const seg = Math.max(6, points.length * 6);
+    const radial = 7;
+    const g = new TubeGeometry(curve, seg, 1, radial, false);
+    const pos = g.attributes.position;
+    for (let i = 0; i <= seg; i += 1) {
+      const t = i / seg;
+      curve.getPointAt(t, c);
+      const r = r0 + (r1 - r0) * t;
+      for (let j = 0; j <= radial; j += 1) {
+        const k = i * (radial + 1) + j;
+        pos.setXYZ(k, c.x + (pos.getX(k) - c.x) * r, c.y + (pos.getY(k) - c.y) * r, c.z + (pos.getZ(k) - c.z) * r);
+      }
+    }
+    return g;
   });
+  const merged = mergeGeometries(parts) ?? new BufferGeometry();
+  parts.forEach((g) => g.dispose());
+  return merged;
 }
 
-function Branch({ points, r0, r1, color, roughness = 0.85 }: { points: Vec3[]; r0: number; r1: number; color: string; roughness?: number }) {
-  const segs = useMemo(() => segments(points, r0, r1), [points, r0, r1]);
+function Stems({ stems, color, roughness = 0.85 }: { stems: Stem[]; color: string; roughness?: number }) {
+  const geometry = useMemo(() => stemsGeometry(stems), [stems]);
+  useEffect(() => () => geometry.dispose(), [geometry]);
   return (
-    <>
-      {segs.map((s, i) => (
-        <group key={i}>
-          <mesh position={s.p} quaternion={s.q} castShadow>
-            <cylinderGeometry args={[s.r1, s.r0, s.len, 9, 1]} />
-            <meshStandardMaterial color={color} roughness={roughness} />
-          </mesh>
-          {/* Codo redondeado entre tramos */}
-          {i > 0 && (
-            <mesh position={points[i]}>
-              <sphereGeometry args={[s.r0, 9, 6]} />
-              <meshStandardMaterial color={color} roughness={roughness} />
-            </mesh>
-          )}
-        </group>
-      ))}
-    </>
+    <mesh geometry={geometry} castShadow>
+      <meshStandardMaterial color={color} roughness={roughness} />
+    </mesh>
   );
 }
 
@@ -217,6 +238,20 @@ const MOSS: Instance[] = (() => {
   });
 })();
 
+const BONSAI_STEMS: Stem[] = [
+  ...[0, 1.6, 3.4, 4.8].map((a) => ({
+    points: [
+      [0.004, 0.034, 0],
+      [0.004 + Math.cos(a) * 0.008, 0.029, Math.sin(a) * 0.006],
+      [0.004 + Math.cos(a) * 0.015, 0.026, Math.sin(a) * 0.011],
+    ] as Vec3[],
+    r0: 0.0045,
+    r1: 0.0016,
+  })),
+  { points: BONSAI_TRUNK, r0: 0.0075, r1: 0.0026 },
+  ...BONSAI_BRANCHES.map((points) => ({ points, r0: 0.0028, r1: 0.0011 })),
+];
+
 function Bonsai({ position }: { position: Vec3 }) {
   return (
     <group position={position} rotation={[0, 0.25, 0]}>
@@ -236,24 +271,8 @@ function Bonsai({ position }: { position: Vec3 }) {
         <meshStandardMaterial color="#3a2a1e" roughness={1} />
       </mesh>
       <Instances geometry={PAD} items={MOSS} roughness={1} />
-      {/* Nebari: raíces que se abren en la base */}
-      {[0, 1.6, 3.4, 4.8].map((a) => (
-        <Branch
-          key={a}
-          points={[
-            [0.004, 0.034, 0],
-            [0.004 + Math.cos(a) * 0.014, 0.026, Math.sin(a) * 0.01],
-          ]}
-          r0={0.0045}
-          r1={0.0018}
-          color="#5a4434"
-          roughness={0.95}
-        />
-      ))}
-      <Branch points={BONSAI_TRUNK} r0={0.0075} r1={0.0028} color="#5a4434" roughness={0.95} />
-      {BONSAI_BRANCHES.map((b, i) => (
-        <Branch key={i} points={b} r0={0.0028} r1={0.0012} color="#5e4838" roughness={0.95} />
-      ))}
+      {/* Nebari (raíces abiertas), tronco y ramas en una sola malla */}
+      <Stems stems={BONSAI_STEMS} color="#5a4434" roughness={0.95} />
       <Instances geometry={PAD} items={BONSAI_FOLIAGE} roughness={0.85} />
     </group>
   );
@@ -296,8 +315,9 @@ const POTHOS: { vines: Vec3[][]; leaves: Instance[] } = (() => {
     const pts: Vec3[] = [
       [c * 0.012, 0.075, s * 0.012],
       [c * 0.038, 0.08, s * 0.038],
-      [c * 0.05, 0.055, s * 0.05],
-      [c * 0.062, 0.024, s * 0.062],
+      [c * 0.048, 0.06, s * 0.048],
+      [c * 0.05, 0.03, s * 0.05],
+      [c * 0.056, 0.006, s * 0.056],
       [c * reach, 0.006, s * reach],
       [c * (reach + 0.04) + s * 0.015, 0.004, s * (reach + 0.04) - c * 0.015],
     ];
@@ -310,7 +330,7 @@ const POTHOS: { vines: Vec3[][]; leaves: Instance[] } = (() => {
     }
   });
   // Tallos que trepan: dan altura y volumen a la mata
-  [0.4, 2.6, 4.6].forEach((phi, k) => {
+  [2.6].forEach((phi, k) => {
     const c = Math.cos(phi);
     const s = Math.sin(phi);
     const h = 0.15 + k * 0.03;
@@ -324,10 +344,10 @@ const POTHOS: { vines: Vec3[][]; leaves: Instance[] } = (() => {
     along(pts, 7, 0.034, 0.15);
   });
   // Corona: hojas grandes que salen del centro de la maceta
-  for (let i = 0; i < 16; i += 1) {
+  for (let i = 0; i < 36; i += 1) {
     const a = i * 2.39996;
-    const d = 0.006 + r() * 0.026;
-    leaf([Math.cos(a) * d, 0.07 + r() * 0.045, Math.sin(a) * d], [Math.cos(a), Math.sin(a)], -0.6 - r() * 0.6, 0.036 + r() * 0.014);
+    const d = 0.006 + Math.sqrt(i / 36) * 0.04;
+    leaf([Math.cos(a) * d, 0.072 + (1 - d / 0.046) * 0.05 + r() * 0.015, Math.sin(a) * d], [Math.cos(a), Math.sin(a)], -0.5 - (d / 0.046) * 0.7 - r() * 0.2, 0.045 + r() * 0.02);
   }
   return { vines, leaves };
 })();
@@ -347,6 +367,8 @@ const TERRACOTTA = new LatheGeometry(
   40,
 );
 
+const POTHOS_STEMS: Stem[] = POTHOS.vines.map((points) => ({ points, r0: 0.0018, r1: 0.0011 }));
+
 function Pothos({ position }: { position: Vec3 }) {
   return (
     <group position={position}>
@@ -357,9 +379,7 @@ function Pothos({ position }: { position: Vec3 }) {
         <circleGeometry args={[0.037, 28]} />
         <meshStandardMaterial color="#2c221a" roughness={1} />
       </mesh>
-      {POTHOS.vines.map((v, i) => (
-        <Branch key={i} points={v} r0={0.0016} r1={0.001} color="#6f8f3a" roughness={0.6} />
-      ))}
+      <Stems stems={POTHOS_STEMS} color="#6f8f3a" roughness={0.6} />
       <Instances geometry={HEART} items={POTHOS.leaves} roughness={0.38} side={DoubleSide} />
     </group>
   );
@@ -421,7 +441,7 @@ const ARECA: { canes: Vec3[][]; leaflets: Instance[] } = (() => {
   [-2.2, -2.9, 2.6, 1.9, 3.3, -1.6].forEach((phi, k) => {
     const c = Math.cos(phi);
     const s = Math.sin(phi);
-    const h = 0.42 + r() * 0.16 - (k > 3 ? 0.1 : 0);
+    const h = 0.55 + r() * 0.2 - (k > 3 ? 0.12 : 0);
     const spread = 0.12 + r() * 0.08;
     const pts: Vec3[] = [
       [c * 0.006, 0.09, s * 0.006],
@@ -432,7 +452,7 @@ const ARECA: { canes: Vec3[][]; leaflets: Instance[] } = (() => {
     ];
     canes.push(pts);
     const curve = new CatmullRomCurve3(pts.map((p) => new Vector3(...p)));
-    const n = 22;
+    const n = 30;
     for (let i = 0; i < n; i += 1) {
       const t = 0.42 + (i / n) * 0.56;
       const p = curve.getPoint(t);
@@ -447,12 +467,14 @@ const ARECA: { canes: Vec3[][]; leaflets: Instance[] } = (() => {
         q.setFromRotationMatrix(m);
         e.setFromQuaternion(q, "YXZ");
         const len = (0.05 + r() * 0.012) * Math.sin(Math.PI * (0.15 + (i / n) * 0.8));
-        leaflets.push({ p: [p.x, p.y, p.z], r: [e.x, e.y, e.z], s: [0.013, len * 1.25, 0.013], c: greens[Math.floor(r() * greens.length)] });
+        leaflets.push({ p: [p.x, p.y, p.z], r: [e.x, e.y, e.z], s: [0.018, len * 1.35, 0.018], c: greens[Math.floor(r() * greens.length)] });
       }
     }
   });
   return { canes, leaflets };
 })();
+
+const ARECA_STEMS: Stem[] = ARECA.canes.map((points) => ({ points, r0: 0.0034, r1: 0.0012 }));
 
 function Areca({ position }: { position: Vec3 }) {
   return (
@@ -466,9 +488,7 @@ function Areca({ position }: { position: Vec3 }) {
         <circleGeometry args={[0.047, 28]} />
         <meshStandardMaterial color="#2c221a" roughness={1} />
       </mesh>
-      {ARECA.canes.map((c, i) => (
-        <Branch key={i} points={c} r0={0.0032} r1={0.0012} color="#8a9a4a" roughness={0.6} />
-      ))}
+      <Stems stems={ARECA_STEMS} color="#8a9a4a" roughness={0.6} />
       <Instances geometry={BLADE} items={ARECA.leaflets} roughness={0.5} side={DoubleSide} />
     </group>
   );

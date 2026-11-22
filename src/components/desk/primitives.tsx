@@ -4,6 +4,7 @@ import { useFrame, useThree, type ThreeElements } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import {
   AdditiveBlending,
+  HalfFloatType,
   BufferAttribute,
   BufferGeometry,
   Mesh,
@@ -13,6 +14,7 @@ import {
   type Points,
   Scene,
   type Texture,
+  WebGLRenderTarget,
 } from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { AMBER, hdr, ICE, VIOLET } from "./palette";
@@ -139,9 +141,18 @@ export function Warmup({ onReady, onLow }: { onReady: () => void; onLow: () => v
 
   useEffect(() => {
     let alive = true;
-    gl.compileAsync(scene, camera)
+    // El composer pinta la escena en un render target lineal: se compila contra uno igual, o los
+    // programas calentados (salida sRGB al canvas) no sirven y se recompilan en el primer fotograma
+    const target = new WebGLRenderTarget(1, 1, { type: HalfFloatType });
+    const prev = gl.getRenderTarget();
+    gl.setRenderTarget(target);
+    const compiling = gl.compileAsync(scene, camera);
+    gl.setRenderTarget(prev);
+    compiling
       .catch(() => undefined)
+      .then(() => new Promise((done) => setTimeout(done, 600)))
       .then(() => {
+        target.dispose();
         if (!alive) return;
         scene.traverse((o) => {
           const material = (o as Mesh).material;
@@ -162,13 +173,13 @@ export function Warmup({ onReady, onLow }: { onReady: () => void; onLow: () => v
     if (p.phase !== "measure") return;
     p.n += 1;
     // Los primeros fotogramas tras compilar aún suben texturas: no son representativos
-    if (p.n <= 20) return;
+    if (p.n <= 10) return;
     p.samples.push(delta);
-    if (p.samples.length < 40) return;
+    if (p.samples.length < 60) return;
     p.phase = "done";
     // Mediana: un tirón aislado no debe condenar a la máquina al modo bajo
-    const median = [...p.samples].sort((a, b) => a - b)[20];
-    if (median > 1 / 45) {
+    const median = [...p.samples].sort((a, b) => a - b)[30];
+    if (median > 1 / 40) {
       setDpr(1);
       onLow();
     }

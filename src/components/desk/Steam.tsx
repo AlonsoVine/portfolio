@@ -19,7 +19,7 @@ const vertex = /* glsl */ `
     vec3 p = position;
     // La cinta se retuerce más cuanto más sube, y el viento la desplaza en lo alto
     float twist = texture2D(uNoise, vec2(0.5, uv.y * 0.2 - uTime * 0.005)).r;
-    p.xz = rotate2D(p.xz, twist * 10.0);
+    p.xz = rotate2D(p.xz, twist * 2.5);
     vec2 wind = vec2(
       texture2D(uNoise, vec2(0.25, uTime * 0.01)).r - 0.5,
       texture2D(uNoise, vec2(0.75, uTime * 0.01)).r - 0.5
@@ -47,7 +47,7 @@ const fragment = /* glsl */ `
     // Bordes difuminados: nada de cortes rectos en los lados, la base ni la punta
     smoke *= smoothstep(0.0, 0.15, vUv.x);
     smoke *= smoothstep(1.0, 0.85, vUv.x);
-    smoke *= smoothstep(0.0, 0.12, vUv.y);
+    smoke *= smoothstep(0.0, 0.25, vUv.y);
     smoke *= smoothstep(1.0, 0.35, vUv.y);
     gl_FragColor = vec4(uColor, smoke * uOpacity);
   }
@@ -78,8 +78,8 @@ export function Steam({
     () => ({
       uTime: { value: 0 },
       uNoise: { value: noise },
-      uColor: { value: new Color("#dfe7ff") },
-      uOpacity: { value: 0.55 },
+      uColor: { value: new Color("#ffe6c8") },
+      uOpacity: { value: 0.22 },
     }),
     [noise],
   );

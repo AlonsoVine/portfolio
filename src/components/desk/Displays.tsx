@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { AdditiveBlending, BackSide, ExtrudeGeometry, type Object3D, Shape } from "three";
-import { AMBER, hdr, MAGENTA } from "./palette";
+import { AMBER, hdr } from "./palette";
 import { drawCv, drawGames, drawLaptopDeck, drawProjects, type DeskCopy } from "./screens";
 import { RoundedBox } from "./primitives";
 import { useCanvasTexture } from "./useCanvasTexture";
@@ -94,7 +94,7 @@ export function Ultrawide({ t, position }: { t: DeskCopy } & Placed) {
   );
 }
 
-const ALU = { color: "#8e929b", roughness: 0.45, metalness: 0.7 } as const;
+const ALU = { color: "#5d6168", roughness: 0.3, metalness: 0.7, envMapIntensity: 0.6 } as const;
 const ZENBOOK = { color: "#1b2131", roughness: 0.38, metalness: 0.55 } as const;
 
 export function Laptop({ t, position, rotation }: { t: DeskCopy } & Placed) {
@@ -147,7 +147,6 @@ export function Laptop({ t, position, rotation }: { t: DeskCopy } & Placed) {
                 <meshBasicMaterial map={map} color={SCREEN} toneMapped={false} />
               </mesh>
               <Glass w={0.3} h={0.185} z={0.0042} />
-              <rectAreaLight position={[0, 0, 0.01]} rotation={[0, Math.PI, 0]} width={0.3} height={0.185} intensity={4} color={MAGENTA} />
             </group>
           </group>
         </group>

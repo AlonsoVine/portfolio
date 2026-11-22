@@ -108,7 +108,7 @@ export function Coffee({ position, reduceMotion }: Placed & { reduceMotion: bool
       {/* Posavasos de mandala */}
       <mesh position={[0, 0.003, 0]} receiveShadow castShadow>
         <cylinderGeometry args={[0.062, 0.062, 0.006, 48]} />
-        <meshStandardMaterial color="#9b3a55" roughness={0.7} />
+        <meshStandardMaterial color="#6e3a44" roughness={0.9} />
       </mesh>
       <mesh position={[0, 0.0062, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.03, 0.055, 48]} />
@@ -135,8 +135,8 @@ export function Coffee({ position, reduceMotion }: Placed & { reduceMotion: bool
       </group>
       {!reduceMotion && (
         <>
-          <Steam position={[0.004, 0.075, 0]} height={0.2} width={0.055} noise={noise} />
-          <Steam position={[-0.008, 0.075, 0.006]} height={0.15} width={0.045} seed={1} noise={noise} />
+          <Steam position={[0.004, 0.075, 0]} height={0.14} width={0.075} noise={noise} />
+          <Steam position={[-0.008, 0.075, 0.006]} height={0.11} width={0.06} seed={1} noise={noise} />
         </>
       )}
     </group>

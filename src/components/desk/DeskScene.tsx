@@ -58,7 +58,7 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
       />
 
       {/* Relleno cenital suave: la luz de la habitación, para que el primer plano no se pierda en negro */}
-      <spotLight position={[0.1, 1.5, 1.1]} angle={0.75} penumbra={1} intensity={1.2} decay={1.2} color="#8b9ad6" />
+      <spotLight position={[0.1, 1.5, 1.1]} angle={0.75} penumbra={1} intensity={0.9} decay={1.2} color="#e8e4dc" />
 
       <Desk />
       <Leds t={t} reduceMotion={reduceMotion} />
@@ -83,7 +83,7 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
       <EffectComposer multisampling={low ? 0 : 2} enableNormalPass={false}>
         {/* Oclusión ambiental: asienta los objetos sobre la mesa y oscurece los rincones */}
         <>{!low && <N8AO halfRes aoRadius={0.06} distanceFalloff={0.5} intensity={2.2} color="#05060a" quality="low" />}</>
-        <Bloom mipmapBlur intensity={0.4} luminanceThreshold={1.15} luminanceSmoothing={0.3} radius={0.65} />
+        <Bloom mipmapBlur intensity={0.28} luminanceThreshold={1.15} luminanceSmoothing={0.3} radius={0.65} />
         <ToneMapping mode={ToneMappingMode.NEUTRAL} />
         <Vignette offset={0.28} darkness={0.58} />
         {/* Sin MSAA en el modo bajo: SMAA evita los dientes de sierra a coste casi nulo */}
