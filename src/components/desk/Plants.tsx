@@ -1,5 +1,6 @@
 "use client";
 
+import { useFrame } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { mergeGeometries, mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import {
@@ -7,6 +8,9 @@ import {
   Color,
   DoubleSide,
   Float32BufferAttribute,
+  type Group,
+  type Mesh,
+  type MeshBasicMaterial,
   Euler,
   Matrix4,
   BufferGeometry,
@@ -22,8 +26,8 @@ import {
   Vector3,
 } from "three";
 import { RoundedBox } from "./primitives";
-import { hdr } from "./palette";
-import { drawPothosLeaf, drawSnakeLeaf } from "./screens";
+import { drawNoise, drawPothosLeaf, drawSnakeLeaf } from "./screens";
+import { Steam } from "./Steam";
 import { useCanvasTexture } from "./useCanvasTexture";
 
 type Vec3 = [number, number, number];
@@ -491,7 +495,7 @@ function Planter() {
  * Rincón verde a la izquierda (el «dragón verde» del feng shui, elemento madera): una jardinera triple
  * con las plantas de alta a baja hacia el usuario (areca, sansevieria, poto) y el bonsái delante.
  */
-export function Plants() {
+export function Plants({ reduceMotion }: { reduceMotion: boolean }) {
   return (
     <group>
       <Planter />
@@ -500,76 +504,79 @@ export function Plants() {
       <group position={[TROUGH.x, SOIL - 0.058 * 1.3, CELLS[2]]} scale={1.3}>
         <Pothos position={[0, 0, 0]} />
       </group>
-      <group position={[-0.8, 0, 0.2]} scale={1.15}>
+      {/* En la misma línea que la jardinera y con el lado largo paralelo a ella, junto al canto de la mesa */}
+      <group position={[TROUGH.x, 0, 0.25]} rotation={[0, Math.PI / 2, 0]} scale={1.15}>
         <Bonsai position={[0, 0, 0]} />
       </group>
-      {/* Clavada al fondo del cajón central, entre la sansevieria y el poto: el mástil se pierde entre las hojas */}
-      <Lantern position={[TROUGH.x - 0.04, SOIL, CELLS[1] + 0.06]} rotation={[0, -Math.PI / 4, 0]} />
+      <Incense position={[TROUGH.x, 0, 0.125]} reduceMotion={reduceMotion} />
     </group>
   );
 }
 
-// Mástil de farolillo: sube recto entre las plantas y se curva como un cayado hacia la mesa
-const POST = new TubeGeometry(
-  new CatmullRomCurve3([
-    new Vector3(0, 0, 0),
-    new Vector3(0, 0.3, 0),
-    new Vector3(0.006, 0.36, 0),
-    new Vector3(0.04, 0.385, 0),
-    new Vector3(0.075, 0.37, 0),
-    new Vector3(0.082, 0.345, 0),
-  ]),
-  48,
-  0.0032,
-  8,
-);
-const LANTERN_AT: Vec3 = [0.082, 0.3, 0];
+const STICK = 0.15;
+const BURN_SECONDS = 600;
 
-/** Farolillo de jardín de hierro negro con cristal esmerilado: luz cálida que cae sobre las plantas. */
-function Lantern({ position, rotation }: { position: Vec3; rotation?: Vec3 }) {
-  const iron = <meshStandardMaterial color="#17171a" roughness={0.45} metalness={0.7} />;
+/** Varilla de incienso en un platillo de piedra: se consume despacio, con la brasa viva y un hilo de humo. */
+function Incense({ position, reduceMotion }: { position: Vec3; reduceMotion: boolean }) {
+  const noise = useCanvasTexture(128, 128, drawNoise, { tileX: 1, color: false });
+  const stick = useRef<Mesh>(null);
+  const tip = useRef<Group>(null);
+  const ember = useRef<MeshBasicMaterial>(null);
+
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    // Empieza ya algo quemada y vuelve a empezar cuando se agota: el ciclo es tan lento que no se nota
+    const left = reduceMotion ? 0.7 : 0.85 - 0.5 * ((t / BURN_SECONDS) % 1);
+    const h = STICK * left;
+    if (stick.current) {
+      stick.current.scale.y = h;
+      stick.current.position.y = h / 2;
+    }
+    if (tip.current) tip.current.position.y = h;
+    if (ember.current) {
+      const flicker = reduceMotion ? 1 : 0.8 + 0.2 * Math.sin(t * 7.3) * Math.sin(t * 3.1 + 1);
+      ember.current.color.setRGB(3.2 * flicker, 0.9 * flicker, 0.25 * flicker);
+    }
+  });
+
   return (
-    <group position={position} rotation={rotation}>
-      <mesh geometry={POST} castShadow>
-        {iron}
+    <group position={position}>
+      {/* Platillo de piedra oscura con la base de latón que sujeta la varilla */}
+      <mesh position={[0, 0.004, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[0.026, 0.022, 0.008, 32]} />
+        <meshStandardMaterial color="#2b2a2c" roughness={0.85} />
       </mesh>
-      <group position={LANTERN_AT}>
-        <mesh position={[0, 0.033, 0]}>
-          <cylinderGeometry args={[0.0025, 0.0025, 0.014, 8]} />
-          {iron}
+      <mesh position={[0, 0.0082, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.021, 32]} />
+        <meshStandardMaterial color="#8d8a86" roughness={1} />
+      </mesh>
+      <mesh position={[0, 0.011, 0]}>
+        <cylinderGeometry args={[0.0035, 0.0045, 0.006, 16]} />
+        <meshStandardMaterial color="#b08a4a" roughness={0.3} metalness={0.9} />
+      </mesh>
+      <group position={[0, 0.012, 0]}>
+        {/* Mango de bambú sin perfume y, encima, la pasta de incienso que se va consumiendo */}
+        <mesh position={[0, -0.002, 0]}>
+          <cylinderGeometry args={[0.0008, 0.0008, 0.02, 6]} />
+          <meshStandardMaterial color="#c9a36a" roughness={0.8} />
         </mesh>
-        {/* Tejadillo a cuatro aguas y aro de remate */}
-        <mesh position={[0, 0.019, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
-          <coneGeometry args={[0.034, 0.022, 4]} />
-          {iron}
+        <mesh ref={stick}>
+          <cylinderGeometry args={[0.0013, 0.0014, 1, 8]} />
+          <meshStandardMaterial color="#5a2d1f" roughness={0.95} />
         </mesh>
-        <mesh position={[0, 0.006, 0]}>
-          <boxGeometry args={[0.042, 0.004, 0.042]} />
-          {iron}
-        </mesh>
-        {/* Cristal esmerilado iluminado desde dentro */}
-        <mesh position={[0, -0.022, 0]}>
-          <boxGeometry args={[0.032, 0.052, 0.032]} />
-          <meshStandardMaterial color="#f4e6cf" roughness={0.4} emissive="#ffc98f" emissiveIntensity={1.4} />
-        </mesh>
-        {/* Montantes de las esquinas */}
-        {[-1, 1].flatMap((a) =>
-          [-1, 1].map((b) => (
-            <mesh key={`${a}${b}`} position={[a * 0.0165, -0.022, b * 0.0165]}>
-              <boxGeometry args={[0.003, 0.054, 0.003]} />
-              {iron}
-            </mesh>
-          )),
-        )}
-        <mesh position={[0, -0.05, 0]}>
-          <boxGeometry args={[0.038, 0.005, 0.038]} />
-          {iron}
-        </mesh>
-        <mesh position={[0, -0.022, 0]}>
-          <sphereGeometry args={[0.009, 12, 8]} />
-          <meshBasicMaterial color={hdr("#ffd8a8", 2.2)} toneMapped={false} />
-        </mesh>
-        <pointLight position={[0, -0.03, 0]} color="#ffc98f" intensity={1.2} distance={0.7} decay={1.8} />
+        <group ref={tip}>
+          {/* Ceniza gris pegada sobre la brasa */}
+          <mesh position={[0, 0.003, 0]}>
+            <cylinderGeometry args={[0.0011, 0.0013, 0.004, 8]} />
+            <meshStandardMaterial color="#9a958e" roughness={1} />
+          </mesh>
+          <mesh position={[0, 0.0007, 0]}>
+            <sphereGeometry args={[0.0016, 10, 8]} />
+            <meshBasicMaterial ref={ember} toneMapped={false} />
+          </mesh>
+          <pointLight position={[0, 0.002, 0]} color="#ff8a3d" intensity={0.05} distance={0.12} decay={2} />
+          <Steam position={[0, 0.005, 0]} height={0.24} width={0.028} noise={noise} color="#d8dce6" opacity={0.34} />
+        </group>
       </group>
     </group>
   );

@@ -35,7 +35,7 @@ export function Desk() {
       </mesh>
       <mesh position={[0, 0.45, WALL_Z]} receiveShadow>
         <planeGeometry args={[4.2, 2.4]} />
-        <meshLambertMaterial map={peg} bumpMap={peg} bumpScale={1.5} color="#8a8496" />
+        <meshStandardMaterial map={peg} bumpMap={peg} bumpScale={0.4} color="#9a95a3" roughness={0.9} />
       </mesh>
       {/* Oclusión en las uniones: donde la mesa toca la pared y en las esquinas apenas llega luz */}
       <mesh position={[0, 0.0006, WALL_Z]} rotation={[-Math.PI / 2, 0, 0]} scale={[2.3, 0.2, 1]}>
@@ -168,14 +168,14 @@ export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }
         [0.22, "#ffcf9e"],
         [0.62, AMBER],
       ].map(([x, c]) => (
-        <Wash key={x as number} map={dot} position={[x as number, -0.748, 0.2]} rotation={[-Math.PI / 2, 0, 0]} scale={[0.75, 0.55]} color={c as string} opacity={0.26} />
+        <Wash key={x as number} map={dot} position={[x as number, -0.748, 0.2]} rotation={[-Math.PI / 2, 0, 0]} scale={[0.85, 0.6]} color={c as string} opacity={0.18} />
       ))}
       <Wash map={dot} position={[-0.75, 0.16, WALL_Z + 0.004]} scale={[1.4, 0.8]} color={ICE} opacity={0.2} />
       <Wash map={dot} position={[0.78, 0.16, WALL_Z + 0.004]} scale={[1.4, 0.8]} color={AMBER} opacity={0.18} />
       <Wash map={dot} position={[0, 0.12, WALL_Z + 0.005]} scale={[1.9, 0.5]} color={MAGENTA} opacity={0.035} />
-      <Wash map={dot} position={[0, 0.66, WALL_Z + 0.003]} scale={[1.3, 0.5]} color={VIOLET} opacity={0.11} />
+      <Wash map={dot} position={[0, 0.66, WALL_Z + 0.003]} scale={[1.3, 0.5]} color={VIOLET} opacity={0.15} />
       <Wash map={dot} position={[-1.045, 0.22, -0.42]} rotation={[0, Math.PI / 2, 0]} scale={[1.0, 0.9]} color={ICE} opacity={0.3} />
-      <Wash map={dot} position={[-1.045, 0.4, -0.15]} rotation={[0, Math.PI / 2, 0]} scale={[1.9, 1.5]} color={ICE} opacity={0.22} />
+      <Wash map={dot} position={[-1.045, 0.4, -0.15]} rotation={[0, Math.PI / 2, 0]} scale={[1.9, 1.5]} color={ICE} opacity={0.16} />
       <Wash map={dot} position={[-1.045, 0.25, -0.45]} rotation={[0, Math.PI / 2, 0]} scale={[0.8, 0.7]} color={VIOLET} opacity={0.06} />
       <Wash map={dot} position={[1.045, 0.4, -0.3]} rotation={[0, -Math.PI / 2, 0]} scale={[1.4, 1.1]} color={AMBER} opacity={0.12} />
       <Wash map={dot} position={[1.046, 0.62, 0.12]} rotation={[0, -Math.PI / 2, 0]} scale={[1.1, 1.2]} color={AMBER} opacity={0.1} />

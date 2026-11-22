@@ -2,7 +2,7 @@
 
 import { Canvas } from "@react-three/fiber";
 import { useState } from "react";
-import { Bloom, EffectComposer, N8AO, Noise, SMAA, ToneMapping, Vignette } from "@react-three/postprocessing";
+import { Bloom, EffectComposer, HueSaturation, N8AO, Noise, SMAA, ToneMapping, Vignette } from "@react-three/postprocessing";
 import { BlendFunction, ToneMappingMode } from "postprocessing";
 import { RectAreaLightUniformsLib } from "three/examples/jsm/lights/RectAreaLightUniformsLib.js";
 import type { Dictionary } from "@/i18n/dictionaries";
@@ -62,7 +62,7 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
         intensity={0.35}
         color="#a8b8ff"
         castShadow
-        shadow-mapSize={[2048, 2048]}
+        shadow-mapSize={[1024, 1024]}
         shadow-camera-left={-1.2}
         shadow-camera-right={1.2}
         shadow-camera-top={0.9}
@@ -72,7 +72,7 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
       />
 
       {/* Relleno cenital suave: la luz de la habitación, para que el primer plano no se pierda en negro */}
-      <spotLight position={[0.1, 1.5, 1.1]} angle={0.75} penumbra={1} intensity={0.9} decay={1.2} color="#e8e4dc" />
+      <spotLight position={[0.1, 1.5, 1.1]} angle={0.75} penumbra={1} intensity={0.7} decay={1.2} color="#fff1de" />
 
       <Desk />
       <ContactBlobs />
@@ -89,7 +89,7 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
         <Tablet t={t} lang={lang} position={[0.6, 0, 0.15]} rotation={[0, -0.42, 0]} />
       </group>
       <Mouse position={[0.27, 0, 0.13]} rotation={[0, -0.12, 0]} />
-      <Plants />
+      <Plants reduceMotion={reduceMotion} />
       <Guitar position={[1.02, 0.1, 0.11]} rotation={[0, -Math.PI / 2, 0]} />
 
       <LookControls reduceMotion={reduceMotion} />
@@ -97,13 +97,15 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
 
       <EffectComposer multisampling={0} enableNormalPass={false}>
         {/* Oclusión ambiental: asienta los objetos sobre la mesa y oscurece los rincones */}
-        <>{!low && <N8AO ref={opaqueAO} halfRes aoRadius={0.045} distanceFalloff={0.5} intensity={1.6} color="#05060a" quality="performance" />}</>
-        <Bloom mipmapBlur levels={5} intensity={0.28} luminanceThreshold={1.0} luminanceSmoothing={0.2} radius={0.65} />
+        <>{!low && <N8AO ref={opaqueAO} halfRes aoRadius={0.08} distanceFalloff={0.8} intensity={2} color="#000000" quality="performance" />}</>
+        <Bloom mipmapBlur levels={5} intensity={0.24} luminanceThreshold={0.95} luminanceSmoothing={0.2} radius={0.75} />
+        {/* El neón tal cual sale del render satura más que cualquier foto: se le quita un punto */}
+        <HueSaturation saturation={-0.1} />
         <ToneMapping mode={ToneMappingMode.NEUTRAL} />
         <Vignette offset={0.3} darkness={0.45} />
         {/* SMAA en vez de MSAA: sobre un buffer HalfFloat a resolución completa sale mucho más barato */}
         <SMAA />
-        <Noise premultiply blendFunction={BlendFunction.SOFT_LIGHT} opacity={0.02} />
+        <Noise premultiply blendFunction={BlendFunction.SOFT_LIGHT} opacity={0.03} />
       </EffectComposer>
     </Canvas>
   );

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { AdditiveBlending, BackSide, ExtrudeGeometry, type Object3D, Shape } from "three";
-import { hdr, ICE } from "./palette";
+import { AMBER, hdr } from "./palette";
 import { drawCv, drawGames, drawLaptopDeck, drawProjects, drawSoftDot, type DeskCopy } from "./screens";
 import { RoundedBox } from "./primitives";
 import { useCanvasTexture } from "./useCanvasTexture";
@@ -114,7 +114,7 @@ export function Laptop({ t, position, rotation }: { t: DeskCopy } & Placed) {
       {/* Resplandor de la tira LED de la bandeja sobre la base y la mesa */}
       <mesh position={[0, 0.0075, 0.02]} rotation={[-Math.PI / 2, 0, 0]} scale={[0.42, 0.36, 1]}>
         <planeGeometry />
-        <meshBasicMaterial map={dot} color={ICE} transparent opacity={0.4} blending={AdditiveBlending} depthWrite={false} toneMapped={false} />
+        <meshBasicMaterial map={dot} color={AMBER} transparent opacity={0.24} blending={AdditiveBlending} depthWrite={false} toneMapped={false} />
       </mesh>
       <group position={[0, 0.1, 0]} rotation={[0.28, 0, 0]}>
         <RoundedBox args={[0.24, 0.006, 0.22]} radius={0.003} castShadow>
@@ -130,7 +130,7 @@ export function Laptop({ t, position, rotation }: { t: DeskCopy } & Placed) {
         ).map(([x, z, len, r]) => (
           <mesh key={x} position={[x, -0.0038, z]} rotation={[0, r, 0]}>
             <boxGeometry args={[len, 0.0016, 0.003]} />
-            <meshBasicMaterial color={hdr(ICE, 2.4)} toneMapped={false} />
+            <meshBasicMaterial color={hdr(AMBER, 2.4)} toneMapped={false} />
           </mesh>
         ))}
         {[-1, 1].map((s) => (

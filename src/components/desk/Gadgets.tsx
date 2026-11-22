@@ -149,7 +149,7 @@ export function Coffee({ position, reduceMotion }: Placed & { reduceMotion: bool
       {/* Posavasos de corcho */}
       <mesh position={[0, 0.003, 0]} receiveShadow castShadow>
         <cylinderGeometry args={[0.055, 0.055, 0.006, 64]} />
-        <meshStandardMaterial color="#8c6a4a" roughness={1} bumpMap={cork} bumpScale={1.2} />
+        <meshStandardMaterial color="#6b5240" roughness={1} bumpMap={cork} bumpScale={1.2} />
       </mesh>
       <group position={[0, 0.006, 0]} rotation={[0, -0.75, 0]}>
         <mesh geometry={MUG} castShadow receiveShadow>

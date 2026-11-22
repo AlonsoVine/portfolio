@@ -60,12 +60,16 @@ export function Steam({
   width = 0.06,
   seed = 0,
   noise,
+  color = "#ffe6c8",
+  opacity = 0.22,
 }: {
   position: [number, number, number];
   height?: number;
   width?: number;
   seed?: number;
   noise: Texture;
+  color?: string;
+  opacity?: number;
 }) {
   const material = useRef<ShaderMaterial>(null);
   const geometry = useMemo(() => {
@@ -78,10 +82,10 @@ export function Steam({
     () => ({
       uTime: { value: 0 },
       uNoise: { value: noise },
-      uColor: { value: new Color("#ffe6c8") },
-      uOpacity: { value: 0.22 },
+      uColor: { value: new Color(color) },
+      uOpacity: { value: opacity },
     }),
-    [noise],
+    [noise, color, opacity],
   );
 
   useFrame(({ clock }) => {
