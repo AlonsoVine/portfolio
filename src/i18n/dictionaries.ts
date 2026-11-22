@@ -41,6 +41,7 @@ export const es = {
       musicOn: "Poner música",
       musicOff: "Quitar música",
       plant: "Acariciar",
+      calendar: "Pasar hojas",
     },
     loading: "Encendiendo el escritorio",
     screens: {
@@ -106,6 +107,7 @@ export const en: Dictionary = {
       musicOn: "Play music",
       musicOff: "Stop music",
       plant: "Brush the leaves",
+      calendar: "Flip the pages",
     },
     loading: "Powering up the desk",
     screens: {

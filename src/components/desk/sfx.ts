@@ -114,6 +114,22 @@ export function click() {
   play(buf, 0.5, f);
 }
 
+/** Hoja de papel que pasa: un soplo de ruido brillante que sube y se corta seco. */
+export function flip() {
+  const { ac } = audio();
+  const f = ac.createBiquadFilter();
+  f.type = "bandpass";
+  f.frequency.value = 3200;
+  f.Q.value = 0.6;
+  const buf = noiseBuffer(ac, 0.16);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i += 1) {
+    const p = i / d.length;
+    d[i] *= p < 0.7 ? p / 0.7 : (1 - p) / 0.3;
+  }
+  play(buf, 0.22, f);
+}
+
 /** Taza de gres que se posa en el corcho: golpe sordo con un poco de timbre cerámico. */
 export function clink() {
   const { ac, out } = audio();

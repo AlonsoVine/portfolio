@@ -345,13 +345,13 @@ function clock(lang: string) {
   };
 }
 
-/** Franjas verticales (fracción de alto, desde arriba) de los botones del móvil: el dibujo y el clic las comparten. */
-export const PHONE_BUTTONS = { linkedin: [0.53, 0.645], github: [0.675, 0.79] } as const;
+/** Rectángulos [x0, y0, x1, y1] (fracción de la pantalla, desde arriba a la izquierda) de los chips del móvil: el dibujo y el clic los comparten. */
+export const PHONE_BUTTONS = { linkedin: [0.07, 0.48, 0.485, 0.86], github: [0.515, 0.48, 0.93, 0.86] } as const;
 
 const GITHUB_MARK_D =
   "M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z";
 
-/** Móvil en su soporte: hora, estado y dos botones grandes a LinkedIn y GitHub. */
+/** Móvil en su soporte: hora, estado y dos chips grandes a LinkedIn y GitHub. */
 export const drawPhone =
   (t: DeskCopy, lang: string): Draw =>
   (ctx, w, h, f) => {
@@ -374,29 +374,42 @@ export const drawPhone =
     ctx.fill();
     ctx.shadowBlur = 0;
     text(ctx, status, w / 2 + 6, h * 0.37, mono(f, 17), "#c9d8ff", { align: "center" });
-    text(ctx, t.screens.phoneLinks.toUpperCase(), w / 2, h * 0.49, mono(f, 15, 500), "rgba(201,216,255,0.7)", { align: "center", spacing: 4 });
+    text(ctx, t.screens.phoneLinks.toUpperCase(), w / 2, h * 0.445, mono(f, 15, 500), "rgba(201,216,255,0.7)", { align: "center", spacing: 4 });
 
-    const button = ([y0, y1]: readonly [number, number], bg: string, label: string, sub: string, icon: (x: number, y: number, s: number) => void) => {
+    // Dos chips grandes, uno al lado del otro: icono enorme y el nombre debajo
+    const chip = ([x0, y0, x1, y1]: readonly [number, number, number, number], bg: string, edge: string, label: string, sub: string, icon: (x: number, y: number, s: number) => void) => {
+      const x = w * x0;
       const y = h * y0;
-      const bh = h * (y1 - y0);
+      const cw = w * (x1 - x0);
+      const ch = h * (y1 - y0);
+      ctx.save();
+      ctx.shadowColor = edge;
+      ctx.shadowBlur = 28;
       ctx.fillStyle = bg;
-      rrect(ctx, w * 0.08, y, w * 0.84, bh, 26);
+      rrect(ctx, x, y, cw, ch, 30);
       ctx.fill();
-      ctx.strokeStyle = "rgba(255,255,255,0.18)";
+      ctx.restore();
+      const sheen = ctx.createLinearGradient(0, y, 0, y + ch);
+      sheen.addColorStop(0, "rgba(255,255,255,0.16)");
+      sheen.addColorStop(0.5, "rgba(255,255,255,0)");
+      ctx.fillStyle = sheen;
+      rrect(ctx, x, y, cw, ch, 30);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,0.22)";
       ctx.lineWidth = 2;
       ctx.stroke();
-      const s = bh * 0.5;
-      icon(w * 0.14, y + (bh - s) / 2, s);
-      text(ctx, label, w * 0.14 + s + 18, y + bh * 0.47, mono(f, 26, 600), "#ffffff");
-      text(ctx, sub, w * 0.14 + s + 18, y + bh * 0.75, mono(f, 15), "rgba(255,255,255,0.75)");
+      const s = cw * 0.56;
+      icon(x + (cw - s) / 2, y + ch * 0.14, s);
+      text(ctx, label, x + cw / 2, y + ch * 0.76, display(f, 30, 700), "#ffffff", { align: "center" });
+      text(ctx, sub, x + cw / 2, y + ch * 0.88, mono(f, 13), "rgba(255,255,255,0.72)", { align: "center" });
     };
-    button(PHONE_BUTTONS.linkedin, "#0a66c2", "LinkedIn", "/in/alonso-viñé", (x, y, s) => {
+    chip(PHONE_BUTTONS.linkedin, "#0a66c2", "#2d8cff", "LinkedIn", "alonso-viñé", (x, y, s) => {
       ctx.fillStyle = "#ffffff";
-      rrect(ctx, x, y, s, s, s * 0.18);
+      rrect(ctx, x, y, s, s, s * 0.2);
       ctx.fill();
-      text(ctx, "in", x + s / 2, y + s * 0.8, `700 ${s * 0.72}px Arial, sans-serif`, "#0a66c2", { align: "center" });
+      text(ctx, "in", x + s * 0.53, y + s * 0.8, `700 ${s * 0.74}px Arial, sans-serif`, "#0a66c2", { align: "center" });
     });
-    button(PHONE_BUTTONS.github, "#24292f", "GitHub", "@AlonsoVine", (x, y, s) => {
+    chip(PHONE_BUTTONS.github, "#24292f", "#8b949e", "GitHub", "@AlonsoVine", (x, y, s) => {
       ctx.save();
       ctx.translate(x, y);
       ctx.scale(s / 16, s / 16);
@@ -1214,36 +1227,164 @@ export function drawClockFace(ctx: CanvasRenderingContext2D, w: number) {
   }
 }
 
-/** Calendario de pared del mes en curso: ilustración cálida arriba y la cuadrícula con el día de hoy marcado. */
+type CalScene = { sky: [string, string]; sun: string; ridges: [string, string, string]; accent: string; kind: "sunset" | "sea" | "night" | "snow" | "dunes" };
+
+// Cada hoja del calendario trae su propia lámina: la del mes en curso es la puesta de sol y las siguientes cambian
+const CAL_SCENES: CalScene[] = [
+  { kind: "sunset", sky: ["#f2b27a", "#f7dcb8"], sun: "#fff3dc", ridges: ["#c47a55", "#8e4f3a", "#5b3328"], accent: "#b4623a" },
+  { kind: "sea", sky: ["#8ccbe0", "#e6f4f0"], sun: "#fffbea", ridges: ["#4f9bb5", "#2f7590", "#1d5068"], accent: "#2f7590" },
+  { kind: "night", sky: ["#141b3a", "#3a4a82"], sun: "#f4efd8", ridges: ["#2b3866", "#1c2549", "#10162e"], accent: "#5a62b8" },
+  { kind: "snow", sky: ["#b9d3ea", "#eef4fa"], sun: "#ffffff", ridges: ["#8aa4c2", "#5f7a9c", "#3b5271"], accent: "#4d6e96" },
+  { kind: "dunes", sky: ["#f6b860", "#fde9bf"], sun: "#fff6de", ridges: ["#e8a85c", "#c9803f", "#97562b"], accent: "#c26a2a" },
+];
+export const CAL_PAGES = CAL_SCENES.length;
+
+/**
+ * Hoja del calendario de pared `ahead` meses por delante: lámina ilustrada arriba y la cuadrícula del mes.
+ * Solo la del mes en curso rodea el día de hoy y tacha los que ya pasaron.
+ */
 export const drawCalendar =
-  (lang: string): Draw =>
+  (lang: string, ahead = 0): Draw =>
   (ctx, w, h, f) => {
-    const now = new Date();
+    const today = new Date();
+    const now = ahead ? new Date(today.getFullYear(), today.getMonth() + ahead, 1) : today;
+    const scene = CAL_SCENES[ahead % CAL_SCENES.length];
     const locale = lang === "en" ? "en-GB" : "es-ES";
     ctx.fillStyle = "#f4efe6";
     ctx.fillRect(0, 0, w, h);
-    // Ilustración: puesta de sol sobre montañas, en papel
     const ph = h * 0.4;
+    const r = rng(11 + ahead);
     const sky = ctx.createLinearGradient(0, 0, 0, ph);
-    sky.addColorStop(0, "#f2b27a");
-    sky.addColorStop(1, "#f7dcb8");
+    sky.addColorStop(0, scene.sky[0]);
+    sky.addColorStop(1, scene.sky[1]);
     ctx.fillStyle = sky;
     ctx.fillRect(0, 0, w, ph);
-    ctx.fillStyle = "#fff3dc";
+    if (scene.kind === "night")
+      for (let i = 0; i < 70; i += 1) {
+        ctx.fillStyle = `rgba(255, 250, 230, ${0.3 + r() * 0.7})`;
+        ctx.beginPath();
+        ctx.arc(r() * w, r() * ph * 0.7, 0.6 + r() * 1.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    // Astro: sol, luna creciente en la noche o un sol enorme y bajo sobre las dunas
+    const big = scene.kind === "dunes" ? 1.5 : 1;
+    const sx = w * (scene.kind === "night" ? 0.74 : 0.66);
+    const sy = ph * (scene.kind === "dunes" ? 0.6 : scene.kind === "night" ? 0.3 : 0.52);
+    ctx.fillStyle = scene.sun;
     ctx.beginPath();
-    ctx.arc(w * 0.66, ph * 0.52, w * 0.09, 0, Math.PI * 2);
+    ctx.arc(sx, sy, w * 0.09 * big, 0, Math.PI * 2);
     ctx.fill();
-    const ridge = (base: number, amp: number, color: string, seed: number) => {
+    if (scene.kind === "night") {
+      ctx.fillStyle = scene.sky[0];
+      ctx.beginPath();
+      ctx.arc(sx + w * 0.04, sy - w * 0.025, w * 0.08, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    const ridge = (base: number, amp: number, color: string, seed: number, sharp = false) => {
       ctx.fillStyle = color;
       ctx.beginPath();
       ctx.moveTo(0, ph);
-      for (let x = 0; x <= w; x += 8) ctx.lineTo(x, base - amp * (0.5 + 0.5 * Math.sin(x * 0.018 + seed) * Math.cos(x * 0.007 + seed * 2)));
+      for (let x = 0; x <= w; x += 6) {
+        const n = sharp ? 1 - Math.abs(Math.sin(x * 0.012 + seed)) * (0.7 + 0.3 * Math.cos(x * 0.031 + seed)) : 0.5 + 0.5 * Math.sin(x * 0.018 + seed) * Math.cos(x * 0.007 + seed * 2);
+        ctx.lineTo(x, base - amp * n);
+      }
       ctx.lineTo(w, ph);
       ctx.fill();
     };
-    ridge(ph * 0.78, ph * 0.3, "#c47a55", 1);
-    ridge(ph * 0.9, ph * 0.22, "#8e4f3a", 4);
-    ridge(ph * 1.0, ph * 0.12, "#5b3328", 7);
+    if (scene.kind === "sea") {
+      // Isla lejana, mar en franjas y un velero
+      ridge(ph * 0.66, ph * 0.16, scene.ridges[0], 2);
+      const sea = ctx.createLinearGradient(0, ph * 0.62, 0, ph);
+      sea.addColorStop(0, scene.ridges[1]);
+      sea.addColorStop(1, scene.ridges[2]);
+      ctx.fillStyle = sea;
+      ctx.fillRect(0, ph * 0.64, w, ph * 0.36);
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.45)";
+      ctx.lineWidth = w * 0.004;
+      for (let i = 0; i < 16; i += 1) {
+        const y = ph * (0.68 + r() * 0.3);
+        const x = r() * w;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.quadraticCurveTo(x + w * 0.03, y - w * 0.008, x + w * 0.06, y);
+        ctx.stroke();
+      }
+      const bx = w * 0.28;
+      const by = ph * 0.74;
+      ctx.fillStyle = "#f8f3e6";
+      ctx.beginPath();
+      ctx.moveTo(bx, by - w * 0.11);
+      ctx.lineTo(bx + w * 0.05, by - w * 0.012);
+      ctx.lineTo(bx, by - w * 0.012);
+      ctx.fill();
+      ctx.fillStyle = "#3a2a24";
+      ctx.beginPath();
+      ctx.moveTo(bx - w * 0.04, by - w * 0.01);
+      ctx.lineTo(bx + w * 0.06, by - w * 0.01);
+      ctx.lineTo(bx + w * 0.045, by + w * 0.006);
+      ctx.lineTo(bx - w * 0.028, by + w * 0.006);
+      ctx.fill();
+    } else if (scene.kind === "night") {
+      ridge(ph * 0.8, ph * 0.28, scene.ridges[0], 3);
+      ridge(ph * 0.92, ph * 0.16, scene.ridges[1], 6);
+      // Bosque de abetos en silueta
+      ctx.fillStyle = scene.ridges[2];
+      ctx.fillRect(0, ph * 0.94, w, ph * 0.06);
+      for (let x = -10; x < w + 10; x += w * 0.035) {
+        const th = ph * (0.12 + r() * 0.14);
+        const tx = x + r() * w * 0.02;
+        ctx.beginPath();
+        ctx.moveTo(tx, ph * 0.96 - th);
+        ctx.lineTo(tx + th * 0.28, ph * 0.97);
+        ctx.lineTo(tx - th * 0.28, ph * 0.97);
+        ctx.fill();
+      }
+    } else if (scene.kind === "snow") {
+      ridge(ph * 0.82, ph * 0.5, scene.ridges[0], 1.3, true);
+      // Neveros: la misma cordillera en blanco recortada a su parte alta
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, w, ph * 0.55);
+      ctx.clip();
+      ridge(ph * 0.82, ph * 0.5, "#f7fbff", 1.3, true);
+      ctx.restore();
+      ridge(ph * 0.95, ph * 0.22, scene.ridges[1], 4.2, true);
+      ridge(ph * 1.0, ph * 0.08, "#eef3f8", 7);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+      for (let i = 0; i < 60; i += 1) {
+        ctx.beginPath();
+        ctx.arc(r() * w, r() * ph, 0.8 + r() * 1.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (scene.kind === "dunes") {
+      const dune = (base: number, amp: number, color: string, seed: number) => {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(0, ph);
+        for (let x = 0; x <= w; x += 6) ctx.lineTo(x, base - amp * (0.5 + 0.5 * Math.sin(x * 0.011 + seed)));
+        ctx.lineTo(w, ph);
+        ctx.fill();
+      };
+      dune(ph * 0.8, ph * 0.2, scene.ridges[0], 0.5);
+      dune(ph * 0.9, ph * 0.18, scene.ridges[1], 2.6);
+      dune(ph * 1.0, ph * 0.14, scene.ridges[2], 5.1);
+      // Caravana diminuta en la cresta
+      ctx.fillStyle = "#4a2a17";
+      for (let i = 0; i < 3; i += 1) {
+        const cx = w * (0.18 + i * 0.05);
+        const cy = ph * 0.71 + i * 1.5;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, w * 0.014, w * 0.007, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(cx + w * 0.01, cy - w * 0.012, w * 0.004, w * 0.012);
+        ctx.fillRect(cx - w * 0.01, cy, w * 0.003, w * 0.012);
+        ctx.fillRect(cx + w * 0.007, cy, w * 0.003, w * 0.012);
+      }
+    } else {
+      ridge(ph * 0.78, ph * 0.3, scene.ridges[0], 1);
+      ridge(ph * 0.9, ph * 0.22, scene.ridges[1], 4);
+      ridge(ph * 1.0, ph * 0.12, scene.ridges[2], 7);
+    }
 
     const month = new Intl.DateTimeFormat(locale, { month: "long" }).format(now);
     ctx.fillStyle = "#2a2522";
@@ -1251,7 +1392,7 @@ export const drawCalendar =
     ctx.font = display(f, w * 0.085, 800);
     ctx.fillText(month.toUpperCase(), w * 0.08, ph + h * 0.085);
     ctx.font = mono(f, w * 0.045, 500);
-    ctx.fillStyle = "#b4623a";
+    ctx.fillStyle = scene.accent;
     ctx.textAlign = "right";
     ctx.fillText(String(now.getFullYear()), w * 0.92, ph + h * 0.085);
 
@@ -1266,7 +1407,7 @@ export const drawCalendar =
     ctx.textAlign = "center";
     ctx.font = mono(f, w * 0.048, 700);
     for (let i = 0; i < 7; i += 1) {
-      ctx.fillStyle = i >= 5 ? "#b4623a" : "#6d6660";
+      ctx.fillStyle = i >= 5 ? scene.accent : "#6d6660";
       ctx.fillText(wd.format(new Date(2024, 0, 1 + i)), gx + cw * (i + 0.5), top + ch * 0.6);
     }
     ctx.font = mono(f, w * 0.056, 700);
@@ -1274,15 +1415,15 @@ export const drawCalendar =
       const i = offset + d - 1;
       const x = gx + cw * ((i % 7) + 0.5);
       const y = top + ch * (Math.floor(i / 7) + 1.6);
-      if (d === now.getDate()) {
+      if (!ahead && d === now.getDate()) {
         ctx.strokeStyle = "#d9822b";
         ctx.lineWidth = w * 0.008;
         ctx.beginPath();
         ctx.arc(x, y - w * 0.014, cw * 0.36, 0, Math.PI * 2);
         ctx.stroke();
       }
-      const past = d < now.getDate();
-      ctx.fillStyle = i % 7 >= 5 ? "#b4623a" : "#2a2522";
+      const past = !ahead && d < now.getDate();
+      ctx.fillStyle = i % 7 >= 5 ? scene.accent : "#2a2522";
       ctx.globalAlpha = past ? 0.55 : 1;
       ctx.fillText(String(d), x, y);
       ctx.globalAlpha = 1;

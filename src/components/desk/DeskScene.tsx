@@ -87,17 +87,17 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
         <Controller t={t} position={[-0.47, 0, 0.2]} rotation={[0, 0.38, 0]} />
         <Phone t={t} lang={lang} position={[0.25, 0, -0.025]} rotation={[0, -0.22, 0]} />
         <Coffee t={t} position={[0.425, 0, -0.06]} reduceMotion={reduceMotion} />
-        <Tablet t={t} lang={lang} position={[0.6, 0, 0.15]} rotation={[0, -0.42, 0]} />
+        <Tablet t={t} lang={lang} position={[0.58, 0, 0.185]} rotation={[0, -0.42, 0]} />
+        {/* Cascos apoyados de lado junto a la tablet, con la diadema hacia la pared */}
+        <Headphones t={t} position={[0.84, 0, 0.13]} rotation={[0, -0.35, 0]} />
       </group>
       <Mouse t={t} position={[0.27, 0, 0.13]} rotation={[0, -0.12, 0]} />
       <Plants t={t} reduceMotion={reduceMotion} />
       <Rug />
-      {/* Cascos colgados de un gancho bajo el canto, en el extremo derecho */}
-      <Headphones t={t} position={[0.74, -0.045, 0.3]} />
       {/* Pared del fondo: la balda equilibra el portátil; reloj y calendario, el monitor lateral */}
       <Shelf t={t} position={[-0.6, 0.76, WALL_Z]} />
       <WallClock t={t} position={[0.6, 0.8, WALL_Z]} />
-      <WallCalendar position={[0.86, 0.71, WALL_Z]} lang={lang} />
+      <WallCalendar t={t} position={[0.86, 0.71, WALL_Z]} lang={lang} />
       {/* Pared izquierda: un mapa enmarcado, al mismo alto que la guitarra de enfrente */}
       <MapFrame position={[-1.049, 0.47, 0.22]} rotation={[0, Math.PI / 2, 0]} />
       <Guitar t={t} position={[1.02, 0.1, 0.11]} rotation={[0, -Math.PI / 2, 0]} />

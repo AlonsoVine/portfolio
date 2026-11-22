@@ -2,15 +2,15 @@
 
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BufferGeometry, Color, DoubleSide, SRGBColorSpace, TextureLoader, Euler, Float32BufferAttribute, type Group, Matrix4, PlaneGeometry, Quaternion, Vector3 } from "three";
+import { BufferGeometry, type CanvasTexture, Color, type MeshStandardMaterial, DoubleSide, SRGBColorSpace, TextureLoader, Euler, Float32BufferAttribute, type Group, Matrix4, PlaneGeometry, Quaternion, Vector3 } from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { HangingPothos, Sway } from "./Plants";
 import { showHover, useHoverable } from "./interact";
-import { startAmbient, ticks } from "./sfx";
+import { flip, startAmbient, ticks } from "./sfx";
 import { ICE } from "./palette";
 import { RoundedBox } from "./primitives";
-import { drawCalendar, drawClockFace, drawRug, drawSoftDot, type DeskCopy } from "./screens";
+import { CAL_PAGES, canvasTexture, drawCalendar, drawClockFace, drawRug, drawSoftDot, type DeskCopy } from "./screens";
 import { useCanvasTexture } from "./useCanvasTexture";
 
 type Vec3 = [number, number, number];
@@ -177,29 +177,101 @@ export function WallClock({ t, position, radius = 0.093 }: { t: DeskCopy; positi
   );
 }
 
-/** Calendario de pared colgado de un clavo, con el mes en curso y el día de hoy rodeado. */
-export function WallCalendar({ position, lang }: { position: Vec3; lang: string }) {
+const FLIP_S = 0.42;
+const HOLD_LAST_S = 0.7;
+
+/**
+ * Calendario de pared colgado de un clavo, con el mes en curso y el día de hoy rodeado. Al pulsarlo pasa
+ * las hojas de los meses siguientes, cada una con su lámina, y vuelve a la del mes actual.
+ */
+export function WallCalendar({ t, position, lang }: { t: DeskCopy; position: Vec3; lang: string }) {
   const draw = useMemo(() => drawCalendar(lang), [lang]);
   // Se repinta cada hora: el día marcado cambia solo a medianoche
   const map = useCanvasTexture(360, 500, draw, { refreshMs: 3_600_000 });
   const dot = useCanvasTexture(128, 128, drawSoftDot);
   const W = 0.218;
   const H = W * (500 / 360);
+  const base = useRef<MeshStandardMaterial>(null);
+  const leaf = useRef<Group>(null);
+  const leafMat = useRef<MeshStandardMaterial>(null);
+  // Las hojas siguientes solo se pintan la primera vez que alguien pasa páginas
+  const pages = useRef<CanvasTexture[]>([]);
+  const run = useRef(-1);
+  useEffect(() => {
+    const made = pages.current;
+    return () => {
+      for (const tex of made) tex.dispose();
+      made.length = 0;
+    };
+  }, [lang]);
+  useFrame((_, delta) => {
+    const g = leaf.current;
+    if (run.current < 0 || !g || !base.current || !leafMat.current) return;
+    const prev = run.current;
+    run.current += Math.min(delta, 0.05);
+    const forward = (CAL_PAGES - 1) * FLIP_S;
+    const s = run.current;
+    const all = [map, ...pages.current];
+    if (s < forward) {
+      // Hoja k se levanta por el borde de arriba y deja ver la k + 1
+      const k = Math.floor(s / FLIP_S);
+      const p = (s - k * FLIP_S) / FLIP_S;
+      if (Math.floor(prev / FLIP_S) !== k || prev === 0) flip();
+      leafMat.current.map = all[k];
+      base.current.map = all[k + 1];
+      g.visible = true;
+      g.rotation.x = -Math.PI * 0.94 * smoother(p);
+    } else if (s < forward + HOLD_LAST_S) {
+      g.visible = false;
+      base.current.map = all[CAL_PAGES - 1];
+    } else {
+      // Y la hoja de este mes baja de nuevo hasta su sitio
+      const p = Math.min(1, (s - forward - HOLD_LAST_S) / (FLIP_S * 1.3));
+      if (prev < forward + HOLD_LAST_S) flip();
+      leafMat.current.map = map;
+      g.visible = true;
+      g.rotation.x = -Math.PI * 0.94 * (1 - smoother(p));
+      if (p >= 1) {
+        g.visible = false;
+        base.current.map = map;
+        run.current = -1;
+      }
+    }
+  });
+  const hover = useHoverable(t.interact.calendar, () => {
+    if (run.current >= 0) return;
+    if (!pages.current.length)
+      for (let i = 1; i < CAL_PAGES; i += 1) pages.current.push(canvasTexture(360, 500, drawCalendar(lang, i)).tex);
+    run.current = 0;
+  });
   return (
     <group position={position}>
       <mesh position={[0.008, -0.012, 0.001]} scale={[W * 1.5, H * 1.25, 1]}>
         <planeGeometry />
         <meshBasicMaterial map={dot} color="#000000" transparent opacity={0.45} depthWrite={false} />
       </mesh>
-      {/* Cartón trasero y hojas apiladas */}
-      <mesh position={[0, 0, 0.004]}>
-        <boxGeometry args={[W, H, 0.004]} />
-        <meshStandardMaterial color="#d8cfbf" roughness={0.9} />
-      </mesh>
-      <mesh position={[0, 0, 0.0065]}>
-        <planeGeometry args={[W * 0.985, H * 0.985]} />
-        <meshStandardMaterial map={map} roughness={0.85} />
-      </mesh>
+      <group {...hover}>
+        {/* Cartón trasero y hojas apiladas */}
+        <mesh position={[0, 0, 0.004]}>
+          <boxGeometry args={[W, H, 0.004]} />
+          <meshStandardMaterial color="#d8cfbf" roughness={0.9} />
+        </mesh>
+        <mesh position={[0, 0, 0.0065]}>
+          <planeGeometry args={[W * 0.985, H * 0.985]} />
+          <meshStandardMaterial ref={base} map={map} roughness={0.85} />
+        </mesh>
+        {/* Hoja que se pasa: gira sobre la espiral; por detrás es papel liso */}
+        <group ref={leaf} position={[0, H * 0.4925, 0.0075]} visible={false}>
+          <mesh position={[0, -H * 0.4925, 0]}>
+            <planeGeometry args={[W * 0.985, H * 0.985]} />
+            <meshStandardMaterial ref={leafMat} map={map} roughness={0.85} />
+          </mesh>
+          <mesh position={[0, -H * 0.4925, -0.0002]} rotation={[0, Math.PI, 0]}>
+            <planeGeometry args={[W * 0.985, H * 0.985]} />
+            <meshStandardMaterial color="#ece5d8" roughness={0.9} />
+          </mesh>
+        </group>
+      </group>
       {/* Espiral de alambre arriba y el clavo del que cuelga */}
       <mesh position={[0, H / 2 - 0.004, 0.008]} rotation={[0, 0, Math.PI / 2]}>
         <cylinderGeometry args={[0.0028, 0.0028, W * 0.9, 12]} />
@@ -270,23 +342,26 @@ export function MapFrame({ position, rotation }: { position: Vec3; rotation?: Ve
   );
 }
 
-/** Gancho atornillado bajo el canto con unos cascos cerrados colgando de la diadema. */
-export function Headphones({ t, position }: { t: DeskCopy; position: Vec3 }) {
+/**
+ * Cascos cerrados de diadema rígida, de pie sobre la mesa. Al pulsarlos dan un saltito y ponen o quitan la música.
+ */
+export function Headphones({ t, position, rotation }: { t: DeskCopy; position: Vec3; rotation?: Vec3 }) {
   const R = 0.085;
-  const hookY = -0.06;
-  const cy = hookY - 0.006 - R;
-  const swing = useRef<Group>(null);
+  const CUP_R = 0.042;
+  const hop = useRef<Group>(null);
   const pushed = useRef(-10);
   const stop = useRef<(() => void) | null>(null);
   const [playing, setPlaying] = useState(false);
   useEffect(() => () => stop.current?.(), []);
   useFrame(({ gl }) => {
-    const g = swing.current;
+    const g = hop.current;
     const s = performance.now() / 1000 - pushed.current;
-    if (!g || s > 4) return;
-    // Péndulo amortiguado colgado del gancho
-    const a = s > 3.9 ? 0 : Math.exp(-s * 1.3) * Math.sin(s * 6.5);
-    g.rotation.set(a * 0.22, 0, a * 0.05);
+    if (!g || s > 0.9) return;
+    // Saltito con rebote: sube, cae y se asienta con un leve giro
+    const p = Math.min(1, s / 0.8);
+    const y = p < 0.55 ? Math.sin((Math.PI * p) / 0.55) * 0.014 : Math.sin((Math.PI * (p - 0.55)) / 0.45) * 0.003;
+    g.position.y = s > 0.85 ? 0 : y;
+    g.rotation.y = s > 0.85 ? 0 : Math.sin(p * Math.PI) * 0.08;
     gl.shadowMap.needsUpdate = true;
   });
   const hover = useHoverable(playing ? t.interact.musicOff : t.interact.musicOn, () => {
@@ -302,65 +377,51 @@ export function Headphones({ t, position }: { t: DeskCopy; position: Vec3 }) {
       showHover(t.interact.musicOff);
     }
   });
+  // Cascos rígidos de pie sobre sus copas, con la diadema en arco: la silueta de siempre, que se reconoce al instante
+  const DROP = 0.068;
   return (
-    <group position={position} {...hover}>
-      {/* Gancho: pletina bajo el tablero, bajante y brazo hacia delante con la punta levantada */}
-      <mesh position={[0, -0.003, 0]} castShadow>
-        <boxGeometry args={[0.03, 0.005, 0.045]} />
-        <meshStandardMaterial color="#1b1c20" roughness={0.45} metalness={0.7} />
-      </mesh>
-      <mesh position={[0, hookY / 2, -0.01]}>
-        <boxGeometry args={[0.012, Math.abs(hookY), 0.008]} />
-        <meshStandardMaterial color="#1b1c20" roughness={0.45} metalness={0.7} />
-      </mesh>
-      <mesh position={[0, hookY, 0.03]} rotation={[Math.PI / 2, 0, 0]} castShadow>
-        <cylinderGeometry args={[0.005, 0.005, 0.08, 12]} />
-        <meshStandardMaterial color="#1b1c20" roughness={0.45} metalness={0.7} />
-      </mesh>
-      <mesh position={[0, hookY + 0.008, 0.069]}>
-        <cylinderGeometry args={[0.005, 0.005, 0.018, 12]} />
-        <meshStandardMaterial color="#1b1c20" roughness={0.45} metalness={0.7} />
-      </mesh>
-
-      {/* Cuelgan del gancho: el pivote del balanceo está en él */}
-      <group ref={swing} position={[0, hookY, 0.045]}>
-      <group position={[0, cy - hookY, 0]}>
-        {/* Diadema: arco de acero con almohadilla de piel encima, apoyada en el gancho */}
-        <mesh castShadow>
-          <torusGeometry args={[R, 0.004, 8, 48, Math.PI]} />
-          <meshStandardMaterial color="#b9b8b4" roughness={0.3} metalness={0.9} />
-        </mesh>
-        <mesh rotation={[0, 0, Math.PI * 0.15]} scale={[1, 1, 2.2]} castShadow>
-          <torusGeometry args={[R + 0.004, 0.007, 10, 40, Math.PI * 0.7]} />
-          <meshStandardMaterial color="#202024" roughness={0.6} />
-        </mesh>
-        {[-1, 1].map((s) => (
-          <group key={s} position={[s * (R + 0.002), -0.045, 0]}>
-            {/* Horquilla y deslizador que bajan hasta la copa */}
-            <mesh position={[0, 0.03, 0]}>
-              <boxGeometry args={[0.006, 0.05, 0.012]} />
-              <meshStandardMaterial color="#b9b8b4" roughness={0.3} metalness={0.9} />
-            </mesh>
-            <group position={[-s * 0.006, -0.02, 0]} rotation={[0, 0, Math.PI / 2]}>
-              <mesh castShadow>
-                <cylinderGeometry args={[0.042, 0.04, 0.026, 40]} />
-                <meshStandardMaterial color="#1d1d21" roughness={0.45} metalness={0.2} />
+    <group position={position} rotation={rotation} {...hover}>
+      <group ref={hop}>
+        <group position={[0, CUP_R + DROP, 0]}>
+          {/* Diadema: arco de acero con almohadilla de piel por dentro */}
+          <mesh castShadow>
+            <torusGeometry args={[R, 0.0045, 10, 56, Math.PI]} />
+            <meshStandardMaterial color="#b9b8b4" roughness={0.3} metalness={0.9} />
+          </mesh>
+          <mesh rotation={[0, 0, Math.PI * 0.18]} scale={[1, 1, 2.4]} castShadow>
+            <torusGeometry args={[R - 0.007, 0.0075, 12, 40, Math.PI * 0.64]} />
+            <meshStandardMaterial color="#202024" roughness={0.6} />
+          </mesh>
+          {[-1, 1].map((s) => (
+            <group key={s} position={[s * R, 0, 0]}>
+              {/* Deslizador y horquilla que abraza la copa */}
+              <mesh position={[0, -0.022, 0]} castShadow>
+                <boxGeometry args={[0.006, 0.044, 0.012]} />
+                <meshStandardMaterial color="#b9b8b4" roughness={0.3} metalness={0.9} />
               </mesh>
-              {/* Aro de acento en la tapa exterior */}
-              <mesh position={[0, -s * 0.0135, 0]} rotation={[Math.PI / 2, 0, 0]}>
-                <torusGeometry args={[0.03, 0.0016, 8, 40]} />
-                {/* Con la música puesta el aro se enciende, como el piloto de unos cascos inalámbricos */}
-                <meshStandardMaterial color="#c9a24a" roughness={0.3} metalness={1} emissive={playing ? ICE : "#000000"} emissiveIntensity={playing ? 2.5 : 0} />
+              <mesh position={[0, -DROP, 0]} rotation={[0, Math.PI / 2, 0]} castShadow>
+                <torusGeometry args={[CUP_R + 0.004, 0.0028, 8, 40, Math.PI]} />
+                <meshStandardMaterial color="#b9b8b4" roughness={0.3} metalness={0.9} />
               </mesh>
-              {/* Almohadilla de polipiel hacia dentro */}
-              <mesh position={[0, s * 0.016, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[1, 1, 1.4]}>
-                <torusGeometry args={[0.032, 0.009, 12, 40]} />
-                <meshStandardMaterial color="#141416" roughness={0.7} />
-              </mesh>
+              <group position={[-s * 0.004, -DROP, 0]} rotation={[0, 0, Math.PI / 2]}>
+                <mesh castShadow receiveShadow>
+                  <cylinderGeometry args={[CUP_R, 0.04, 0.026, 40]} />
+                  <meshStandardMaterial color="#1d1d21" roughness={0.45} metalness={0.2} />
+                </mesh>
+                {/* Aro de acento en la tapa exterior: con la música puesta se enciende como un piloto */}
+                <mesh position={[0, -s * 0.0135, 0]} rotation={[Math.PI / 2, 0, 0]}>
+                  <torusGeometry args={[0.03, 0.0016, 8, 40]} />
+                  <meshStandardMaterial color="#c9a24a" roughness={0.3} metalness={1} emissive={playing ? ICE : "#000000"} emissiveIntensity={playing ? 2.5 : 0} />
+                </mesh>
+                {/* Almohadilla de polipiel hacia dentro */}
+                <mesh position={[0, s * 0.016, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[1, 1, 1.4]} castShadow>
+                  <torusGeometry args={[0.032, 0.009, 12, 40]} />
+                  <meshStandardMaterial color="#141416" roughness={0.7} />
+                </mesh>
+              </group>
             </group>
-          </group>
-        ))}
-      </group>
+          ))}
+        </group>
       </group>
     </group>
   );

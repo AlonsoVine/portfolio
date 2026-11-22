@@ -36,9 +36,13 @@ type LinkId = keyof typeof LINKS;
 const PHONE_W = 0.07;
 const PHONE_H = 0.155;
 const linkAt = (e: ThreeEvent<PointerEvent | MouseEvent>): LinkId | null => {
-  if (!e.uv || e.uv.x < 0.08 || e.uv.x > 0.92) return null;
+  if (!e.uv) return null;
+  const x = e.uv.x;
   const y = 1 - e.uv.y;
-  return (Object.keys(PHONE_BUTTONS) as LinkId[]).find((k) => y >= PHONE_BUTTONS[k][0] && y <= PHONE_BUTTONS[k][1]) ?? null;
+  return (Object.keys(PHONE_BUTTONS) as LinkId[]).find((k) => {
+    const [x0, y0, x1, y1] = PHONE_BUTTONS[k];
+    return x >= x0 && x <= x1 && y >= y0 && y <= y1;
+  }) ?? null;
 };
 
 /** Móvil en su soporte, girado hacia la silla: la pantalla lleva a LinkedIn y GitHub. */
@@ -95,8 +99,10 @@ export function Phone({ t, lang, position, rotation }: { t: DeskCopy; lang: stri
         </mesh>
         {/* Brillo del botón bajo el puntero */}
         {hot && (
-          <mesh position={[0, (0.5 - (PHONE_BUTTONS[hot][0] + PHONE_BUTTONS[hot][1]) / 2) * PHONE_H, 0.0046]}>
-            <planeGeometry args={[PHONE_W * 0.84, (PHONE_BUTTONS[hot][1] - PHONE_BUTTONS[hot][0]) * PHONE_H]} />
+          <mesh
+            position={[((PHONE_BUTTONS[hot][0] + PHONE_BUTTONS[hot][2]) / 2 - 0.5) * PHONE_W, (0.5 - (PHONE_BUTTONS[hot][1] + PHONE_BUTTONS[hot][3]) / 2) * PHONE_H, 0.0046]}
+          >
+            <planeGeometry args={[(PHONE_BUTTONS[hot][2] - PHONE_BUTTONS[hot][0]) * PHONE_W, (PHONE_BUTTONS[hot][3] - PHONE_BUTTONS[hot][1]) * PHONE_H]} />
             <meshBasicMaterial color="#ffffff" transparent opacity={0.16} depthWrite={false} toneMapped={false} />
           </mesh>
         )}

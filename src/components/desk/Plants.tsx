@@ -5,7 +5,15 @@ import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef } from "rea
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { mergeGeometries, mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import {
+  AdditiveBlending,
   BoxGeometry,
+  CapsuleGeometry,
+  LatheGeometry,
+  type MeshPhysicalMaterial,
+  type ShaderMaterial,
+  type SpriteMaterial,
+  TorusGeometry,
+  Vector2,
   CatmullRomCurve3,
   ConeGeometry,
   CylinderGeometry,
@@ -33,7 +41,7 @@ import {
 } from "three";
 import { hdr } from "./palette";
 import { RoundedBox } from "./primitives";
-import { drawNoise, drawPothosLeaf, drawSnakeLeaf } from "./screens";
+import { drawNoise, drawPothosLeaf, drawSnakeLeaf, drawSoftDot, type Draw } from "./screens";
 import { Steam, type SteamDrive } from "./Steam";
 import { useHoverable } from "./interact";
 import { blow } from "./sfx";
@@ -612,13 +620,150 @@ const LOTUS = (() => {
 
 /** Vela de cera junto al incienso: llama viva con su punto de luz cálida sobre la mesa. */
 const OUT_S = 5;
+const WAX_R = 0.0175;
+const WAX_H = 0.05;
+const DIP = 0.005;
+
+// Cuerpo de cera con el borde fundido: el canto sube un poco y el centro se hunde alrededor de la mecha
+const WAX = (() => {
+  const pts = [
+    [0, 0],
+    [WAX_R, 0],
+    [WAX_R, WAX_H - 0.006],
+    [WAX_R * 1.012, WAX_H - 0.0015],
+    [WAX_R * 0.96, WAX_H],
+    [WAX_R * 0.8, WAX_H - 0.0022],
+    [WAX_R * 0.4, WAX_H - DIP * 0.9],
+    [0, WAX_H - DIP],
+  ].map(([x, y]) => new Vector2(x, y));
+  const g = new LatheGeometry(pts, 48);
+  g.computeVertexNormals();
+  return g;
+})();
+
+// Goterones de cera que bajan por el costado desde el borde
+const DRIPS = (() => {
+  const parts = [
+    [0.4, 0.014],
+    [1.9, 0.008],
+    [3.3, 0.019],
+    [4.6, 0.006],
+  ].map(([a, len]) => {
+    const d = new CapsuleGeometry(0.0017, len, 4, 10);
+    d.scale(1, 1, 0.6);
+    d.translate(0, WAX_H - 0.002 - len / 2, WAX_R * 0.985);
+    d.rotateY(a);
+    return d;
+  });
+  const m = mergeGeometries(parts, false);
+  parts.forEach((g) => g.dispose());
+  return m;
+})();
+
+// Palmatoria de latón: plato con reborde, cazoleta para la vela y asa de anilla para llevarla
+const HOLDER = (() => {
+  const dish = new LatheGeometry(
+    [
+      [0, 0],
+      [0.03, 0],
+      [0.0325, 0.0015],
+      [0.0322, 0.0048],
+      [0.0302, 0.0044],
+      [0.028, 0.003],
+      [0, 0.0028],
+    ].map(([x, y]) => new Vector2(x, y)),
+    56,
+  );
+  const cup = new LatheGeometry(
+    [
+      [0.0105, 0.0028],
+      [0.0205, 0.004],
+      [0.0215, 0.012],
+      [0.0198, 0.0126],
+      [0.0188, 0.0105],
+    ].map(([x, y]) => new Vector2(x, y)),
+    48,
+  );
+  const ring = new TorusGeometry(0.0085, 0.0018, 10, 32);
+  ring.translate(0.039, 0.007, 0);
+  const thumb = new CylinderGeometry(0.006, 0.006, 0.0014, 20);
+  thumb.translate(0.041, 0.0162, 0);
+  const parts = [dish, cup, ring, thumb];
+  const m = mergeGeometries(parts.map((g) => g.toNonIndexed()), false);
+  parts.forEach((g) => g.dispose());
+  m.computeVertexNormals();
+  return m;
+})();
+
+// Brillo de la cera a lo largo del perfil del torno: nada abajo, cálido en el borde y la cara superior
+const drawWaxGlow: Draw = (ctx, w, h) => {
+  const g = ctx.createLinearGradient(0, h, 0, 0);
+  g.addColorStop(0, "#000000");
+  g.addColorStop(0.2, "#000000");
+  g.addColorStop(0.4, "#ffffff");
+  g.addColorStop(1, "#ffffff");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+};
+
+// Llama: lágrima con la base azulada, el núcleo cálido y los bordes que se desvanecen; nada de esfera cegadora
+const FLAME = (() => {
+  const pts: Vector2[] = [];
+  for (let i = 0; i <= 16; i += 1) {
+    const y = i / 16;
+    pts.push(new Vector2(Math.sqrt(y) * (1 - y) ** 1.35 * 1.25, y));
+  }
+  return new LatheGeometry(pts, 24);
+})();
+
+const flameVert = /* glsl */ `
+  uniform float uTime;
+  varying vec3 vN;
+  varying vec3 vV;
+  varying float vY;
+  void main() {
+    vY = position.y;
+    vec3 p = position;
+    // La punta se mece más que la base
+    float sway = sin(uTime * 7.3 + p.y * 2.0) * 0.08 + sin(uTime * 13.1) * 0.04;
+    p.x += sway * p.y * p.y;
+    vec4 mv = modelViewMatrix * vec4(p, 1.0);
+    vN = normalize(normalMatrix * normal);
+    vV = normalize(-mv.xyz);
+    gl_Position = projectionMatrix * mv;
+  }
+`;
+
+const flameFrag = /* glsl */ `
+  uniform float uGain;
+  varying vec3 vN;
+  varying vec3 vV;
+  varying float vY;
+  void main() {
+    float face = abs(dot(normalize(vN), normalize(vV)));
+    float body = pow(face, 1.6) * (1.0 - smoothstep(0.45, 1.0, vY)) * smoothstep(0.0, 0.12, vY);
+    vec3 outer = vec3(1.0, 0.36, 0.05);
+    vec3 core = vec3(1.0, 0.78, 0.4);
+    vec3 col = mix(outer, core, pow(face, 4.0) * (1.0 - vY * 0.7));
+    // Base azul y algo oscura junto a la mecha, como en una vela de verdad
+    float blue = (1.0 - smoothstep(0.04, 0.3, vY)) * (1.0 - face * 0.6);
+    col = mix(col, vec3(0.25, 0.4, 1.0), blue * 0.85);
+    gl_FragColor = vec4(col * uGain, clamp(body * 1.6, 0.0, 1.0));
+  }
+`;
 
 function Candle({ t, position, reduceMotion }: { t: DeskCopy; position: Vec3; reduceMotion: boolean }) {
   const noise = useCanvasTexture(128, 128, drawNoise, { tileX: 1, color: false });
+  const glow = useCanvasTexture(128, 128, drawSoftDot);
+  const waxGlow = useCanvasTexture(8, 128, drawWaxGlow);
   const flame = useRef<Group>(null);
   const light = useRef<PointLight>(null);
+  const wax = useRef<MeshPhysicalMaterial>(null);
+  const halo = useRef<SpriteMaterial>(null);
+  const flameMat = useRef<ShaderMaterial>(null);
   const blownAt = useRef(-100);
   const smoke = useRef<SteamDrive>({ gain: 0, stir: 0.3 });
+  const uniforms = useMemo(() => ({ uTime: { value: 0 }, uGain: { value: 1.05 } }), []);
   const hover = useHoverable(t.interact.blow, () => {
     const now = performance.now() / 1000;
     if (now - blownAt.current < OUT_S + 0.6) return;
@@ -634,47 +779,51 @@ function Candle({ t, position, reduceMotion }: { t: DeskCopy; position: Vec3; re
     // Titileo de llama: varias ondas sin relación entre sí más algún bajón breve, para que no se note el ciclo
     const wave = reduceMotion ? 0 : Math.sin(tt * 9.1) * 0.5 + Math.sin(tt * 13.7 + 1.3) * 0.3 + Math.sin(tt * 4.3 + 0.7) * 0.2;
     const dip = reduceMotion ? 0 : Math.max(0, Math.sin(tt * 1.7) * Math.sin(tt * 0.63 + 2)) ** 6 * 0.35;
-    const f = 0.82 + wave * 0.14 - dip;
+    const f = 0.82 + wave * 0.12 - dip;
+    if (flameMat.current) flameMat.current.uniforms.uTime.value = reduceMotion ? 0 : tt;
     if (flame.current) {
       flame.current.visible = lit > 0.01;
-      flame.current.scale.set((1 - wave * 0.05) * lit, f * lit, (1 - wave * 0.05) * lit);
-      flame.current.rotation.z = reduceMotion ? 0 : Math.sin(tt * 2.1) * 0.06 + Math.sin(tt * 7.9) * 0.025;
+      flame.current.scale.set(0.012 * (1 - wave * 0.04) * lit, 0.03 * f * lit, 0.012 * (1 - wave * 0.04) * lit);
     }
-    if (light.current) light.current.intensity = 0.55 * f * lit;
+    // La cera de arriba se transluce con la llama, como cuando el pabilo calienta el borde
+    if (wax.current) wax.current.emissiveIntensity = 0.18 * f * lit;
+    if (halo.current) halo.current.opacity = 0.09 * f * lit;
+    if (light.current) light.current.intensity = 0.5 * f * lit;
   });
-  const H = 0.045;
+  const base = 0.0105;
+  const top = base + WAX_H;
+  const wick = top - DIP;
   return (
     <group position={position} {...hover}>
-      {/* Platillo de latón a juego con el loto */}
-      <mesh position={[0, 0.002, 0]} castShadow receiveShadow>
-        <cylinderGeometry args={[0.026, 0.024, 0.004, 40]} />
+      <mesh geometry={HOLDER} castShadow receiveShadow>
         <meshStandardMaterial color="#c9a24a" roughness={0.3} metalness={1} />
       </mesh>
-      <mesh position={[0, 0.004 + H / 2, 0]} castShadow receiveShadow>
-        <cylinderGeometry args={[0.017, 0.017, H, 32]} />
-        <meshPhysicalMaterial color="#efe4cf" roughness={0.55} transmission={0} sheen={0.4} sheenColor="#fff3dc" />
-      </mesh>
-      {/* Cera fundida en la cara superior, algo más oscura y brillante */}
-      <mesh position={[0, 0.0042 + H, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[0.0145, 32]} />
-        <meshStandardMaterial color="#e6cfa6" roughness={0.2} />
-      </mesh>
-      <mesh position={[0, 0.006 + H, 0]}>
-        <cylinderGeometry args={[0.0005, 0.0005, 0.006, 6]} />
-        <meshStandardMaterial color="#1a1412" roughness={1} />
-      </mesh>
-      <group ref={flame} position={[0, 0.008 + H, 0]}>
-        <mesh position={[0, 0.006, 0]} scale={[0.0036, 0.0095, 0.0036]}>
-          <sphereGeometry args={[1, 14, 10]} />
-          <meshBasicMaterial color={hdr("#ffb347", 2.6)} toneMapped={false} />
+      <group position={[0, base, 0]}>
+        <mesh geometry={WAX} castShadow receiveShadow>
+          <meshPhysicalMaterial ref={wax} color="#f1e6d2" roughness={0.5} sheen={0.5} sheenColor="#fff3dc" emissive="#ff9b4a" emissiveMap={waxGlow} emissiveIntensity={0.15} />
         </mesh>
-        <mesh position={[0, 0.0045, 0]} scale={[0.0019, 0.005, 0.0019]}>
-          <sphereGeometry args={[1, 10, 8]} />
-          <meshBasicMaterial color={hdr("#fff4dc", 4)} toneMapped={false} />
+        <mesh geometry={DRIPS} castShadow>
+          <meshPhysicalMaterial color="#f3e9d6" roughness={0.35} sheen={0.5} sheenColor="#fff3dc" />
         </mesh>
       </group>
-      <pointLight ref={light} position={[0, H + 0.03, 0]} color="#ff9a4d" intensity={0.55} distance={0.45} decay={2} />
-      {!reduceMotion && <Steam position={[0, 0.012 + H, 0]} height={0.16} width={0.02} noise={noise} color="#c9ccd4" opacity={0.5} drive={smoke} />}
+      {/* Pabilo algo doblado y con la punta quemada */}
+      <mesh position={[0.0004, wick + 0.0028, 0]} rotation={[0, 0, -0.18]}>
+        <cylinderGeometry args={[0.00045, 0.0005, 0.0058, 6]} />
+        <meshStandardMaterial color="#1a1412" roughness={1} />
+      </mesh>
+      <group position={[0, wick + 0.0035, 0]}>
+        <group ref={flame} scale={[0.012, 0.03, 0.012]}>
+          <mesh geometry={FLAME}>
+            <shaderMaterial ref={flameMat} vertexShader={flameVert} fragmentShader={flameFrag} uniforms={uniforms} transparent depthWrite={false} side={DoubleSide} toneMapped={false} />
+          </mesh>
+        </group>
+        {/* Halo tenue alrededor de la llama, en vez de deslumbrar */}
+        <sprite position={[0, 0.012, 0]} scale={[0.045, 0.045, 1]}>
+          <spriteMaterial ref={halo} map={glow} color="#ff9a4d" transparent opacity={0.16} blending={AdditiveBlending} depthWrite={false} toneMapped={false} />
+        </sprite>
+      </group>
+      <pointLight ref={light} position={[0, top + 0.05, 0]} color="#ff9a4d" intensity={0.5} distance={0.45} decay={2} />
+      {!reduceMotion && <Steam position={[0, wick + 0.006, 0]} height={0.16} width={0.02} noise={noise} color="#c9ccd4" opacity={0.5} drive={smoke} />}
     </group>
   );
 }
