@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { Vector2 } from "three";
 import { hdr, ICE } from "./palette";
-import { drawPhone, drawTablet, type DeskCopy } from "./screens";
+import { drawNoise, drawPhone, drawTablet, type DeskCopy } from "./screens";
 import { RoundedBox } from "./primitives";
 import { Steam } from "./Steam";
 import { useCanvasTexture } from "./useCanvasTexture";
@@ -102,6 +102,7 @@ const MUG = (() => {
 })();
 
 export function Coffee({ position, reduceMotion }: Placed & { reduceMotion: boolean }) {
+  const noise = useCanvasTexture(128, 128, drawNoise, { tileX: 1, color: false });
   return (
     <group position={position}>
       {/* Posavasos de mandala */}
@@ -130,8 +131,8 @@ export function Coffee({ position, reduceMotion }: Placed & { reduceMotion: bool
       </group>
       {!reduceMotion && (
         <>
-          <Steam position={[0.004, 0.075, 0]} height={0.2} width={0.055} />
-          <Steam position={[-0.008, 0.075, 0.006]} height={0.15} width={0.045} seed={1} />
+          <Steam position={[0.004, 0.075, 0]} height={0.2} width={0.055} noise={noise} />
+          <Steam position={[-0.008, 0.075, 0.006]} height={0.15} width={0.045} seed={1} noise={noise} />
         </>
       )}
     </group>

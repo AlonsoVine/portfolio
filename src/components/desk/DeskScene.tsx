@@ -11,7 +11,8 @@ import { Coffee, Phone, Tablet } from "./Gadgets";
 import { EYE, LookControls } from "./LookControls";
 import { Controller } from "./Controller";
 import { Keyboard, Mouse } from "./Peripherals";
-import { Performance, Reflections, Warmup } from "./primitives";
+import { Plants } from "./Plants";
+import { Reflections, Warmup } from "./primitives";
 import { Desk, Leds } from "./Room";
 
 // Las pantallas iluminan la mesa con luces de área; sus tablas se cargan una sola vez
@@ -40,7 +41,7 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
 
       <Reflections />
 
-      <hemisphereLight args={["#6f86c9", "#1a0f0a", 0.18]} />
+      <hemisphereLight args={["#6f86c9", "#1a0f0a", 0.08]} />
       <directionalLight
         position={[-0.6, 1.8, 1.1]}
         intensity={0.35}
@@ -68,11 +69,11 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
       <Phone t={t} lang={lang} position={[0.27, 0, -0.1]} rotation={[0, -0.15, 0]} />
       <Coffee position={[0.425, 0, -0.06]} reduceMotion={reduceMotion} />
       <Controller position={[-0.47, 0, 0.2]} rotation={[0, 0.38, 0]} />
+      <Plants />
       <Tablet t={t} lang={lang} position={[0.6, 0, 0.15]} rotation={[0, -0.42, 0]} />
 
       <LookControls reduceMotion={reduceMotion} />
-      <Performance onLow={() => setLow(true)} />
-      <Warmup onReady={onReady} />
+      <Warmup onReady={onReady} onLow={() => setLow(true)} />
 
       <EffectComposer multisampling={low ? 0 : 4} enableNormalPass={false}>
         {/* Oclusión ambiental: asienta los objetos sobre la mesa y oscurece los rincones */}

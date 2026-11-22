@@ -57,12 +57,13 @@ function bodyGeometry() {
   return g;
 }
 
-const WHITE = { color: "#eceef1", roughness: 0.48, metalness: 0, clearcoat: 0.2, clearcoatRoughness: 0.6 } as const;
+// Plástico mate texturizado, blanco ligeramente cálido: el brillo es lo que lo hacía parecer un juguete
+const WHITE = { color: "#e3e1dc", roughness: 0.72, metalness: 0, clearcoat: 0, clearcoatRoughness: 1 } as const;
 const BLACK = { color: "#16171b", roughness: 0.7 } as const;
 
 function Stick({ x, z }: { x: number; z: number }) {
   return (
-    <group position={[x, TOP, z]}>
+    <group position={[x, TOP, z]} scale={0.86}>
       <mesh rotation={[Math.PI / 2, 0, 0]}>
         <torusGeometry args={[0.0125, 0.0022, 10, 36]} />
         <meshStandardMaterial {...BLACK} />

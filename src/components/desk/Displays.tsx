@@ -94,7 +94,7 @@ export function Ultrawide({ t, position }: { t: DeskCopy } & Placed) {
   );
 }
 
-const ALU = { color: "#b8bcc6", roughness: 0.32, metalness: 0.85 } as const;
+const ALU = { color: "#8e929b", roughness: 0.45, metalness: 0.7 } as const;
 const ZENBOOK = { color: "#1b2131", roughness: 0.38, metalness: 0.55 } as const;
 
 export function Laptop({ t, position, rotation }: { t: DeskCopy } & Placed) {

@@ -2,9 +2,7 @@
 
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
-import { Color, DoubleSide, PlaneGeometry, type ShaderMaterial } from "three";
-import { drawNoise } from "./screens";
-import { useCanvasTexture } from "./useCanvasTexture";
+import { Color, DoubleSide, PlaneGeometry, type ShaderMaterial, type Texture } from "three";
 
 const vertex = /* glsl */ `
   uniform float uTime;
@@ -61,14 +59,15 @@ export function Steam({
   height = 0.2,
   width = 0.06,
   seed = 0,
+  noise,
 }: {
   position: [number, number, number];
   height?: number;
   width?: number;
   seed?: number;
+  noise: Texture;
 }) {
   const material = useRef<ShaderMaterial>(null);
-  const noise = useCanvasTexture(128, 128, drawNoise, { tileX: 1, color: false });
   const geometry = useMemo(() => {
     const g = new PlaneGeometry(1, 1, 16, 64);
     g.translate(0, 0.5, 0);

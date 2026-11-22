@@ -40,7 +40,8 @@ export function canvasTexture(w: number, h: number, draw: Draw, opts: { tile?: [
     tex.needsUpdate = true;
   };
   paint();
-  document.fonts.ready.then(paint);
+  // Solo se repinta lo que lleva texto; madera, tela o ruido no dependen de las fuentes
+  if (!FONT_FREE.has(draw)) document.fonts.ready.then(paint);
   return { tex, paint };
 }
 
@@ -667,10 +668,12 @@ export const drawFabric: Draw = (ctx, w, h) => {
 /** Borde cosido del tapete: canal de luminancia para el relieve y el color de la costura. */
 export const drawMatEdge: Draw = (ctx, w, h) => {
   const inset = 10;
-  ctx.strokeStyle = "#5a5c64";
-  ctx.lineWidth = 6;
-  ctx.setLineDash([10, 6]);
+  ctx.strokeStyle = "rgba(120,122,130,0.4)";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([8, 6]);
   ctx.strokeRect(inset, inset, w - inset * 2, h - inset * 2);
   ctx.setLineDash([]);
 };
 
+
+const FONT_FREE = new Set<Draw>([drawWood, drawPegboard, drawFabric, drawMatEdge, drawStrip, drawSoftDot, drawNoise, drawXboxLogo]);
