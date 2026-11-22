@@ -16,7 +16,8 @@ import { Plants } from "./Plants";
 import { ContactShadows, Reflections, Warmup } from "./primitives";
 import { drawSoftDot } from "./screens";
 import { useCanvasTexture } from "./useCanvasTexture";
-import { Desk, Leds } from "./Room";
+import { Rug, Shelf, WallCalendar, WallClock } from "./Decor";
+import { Desk, Leds, WALL_Z } from "./Room";
 
 // Las pantallas iluminan la mesa con luces de área; sus tablas se cargan una sola vez
 RectAreaLightUniformsLib.init();
@@ -90,6 +91,11 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
       </group>
       <Mouse position={[0.27, 0, 0.13]} rotation={[0, -0.12, 0]} />
       <Plants reduceMotion={reduceMotion} />
+      <Rug />
+      {/* Pared del fondo: la balda equilibra el portátil; reloj y calendario, el monitor lateral */}
+      <Shelf position={[-0.6, 0.76, WALL_Z]} />
+      <WallClock position={[0.6, 0.8, WALL_Z]} />
+      <WallCalendar position={[0.86, 0.71, WALL_Z]} lang={lang} />
       <Guitar position={[1.02, 0.1, 0.11]} rotation={[0, -Math.PI / 2, 0]} />
 
       <LookControls reduceMotion={reduceMotion} />

@@ -719,7 +719,7 @@ export const drawMatEdge: Draw = (ctx, w, h) => {
 };
 
 
-const FONT_FREE = new Set<Draw>([drawUnderglow, drawMugGlaze, drawMugRough, drawLatte, drawPothosLeaf, drawWoodRough, drawSnakeLeaf, drawSpruceTop, drawFretboard, drawWood, drawPegboard, drawFabric, drawMatEdge, drawStrip, drawSoftDot, drawNoise, drawXboxLogo]);
+const FONT_FREE = new Set<Draw>([drawRug, drawClockFace, drawUnderglow, drawMugGlaze, drawMugRough, drawLatte, drawPothosLeaf, drawWoodRough, drawSnakeLeaf, drawSpruceTop, drawFretboard, drawWood, drawPegboard, drawFabric, drawMatEdge, drawStrip, drawSoftDot, drawNoise, drawXboxLogo]);
 /** Hoja de sansevieria: verde oscuro con bandas onduladas claras y borde amarillo. */
 export function drawSnakeLeaf(ctx: CanvasRenderingContext2D, w: number, h: number) {
   ctx.fillStyle = "#24442a";
@@ -979,3 +979,163 @@ export function drawUnderglow(ctx: CanvasRenderingContext2D, w: number, h: numbe
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
 }
+
+/** Alfombra bereber de lana: fondo crema con rombos teja y ocre, cenefas y flecos en los extremos cortos. */
+export function drawRug(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const fringe = 28;
+  const x0 = fringe;
+  const x1 = w - fringe;
+  ctx.clearRect(0, 0, w, h);
+  // Flecos de algodón: hebras sueltas que se recortan con alphaTest
+  ctx.strokeStyle = "#e8dcc4";
+  ctx.lineWidth = 2;
+  for (let y = 6; y < h - 6; y += 5) {
+    const jitter = Math.sin(y * 12.9898) * 4;
+    ctx.beginPath();
+    ctx.moveTo(x0, y);
+    ctx.lineTo(4 + Math.abs(jitter), y + jitter * 0.4);
+    ctx.moveTo(x1, y);
+    ctx.lineTo(w - 4 - Math.abs(jitter), y - jitter * 0.4);
+    ctx.stroke();
+  }
+  ctx.fillStyle = "#e6d6bb";
+  ctx.fillRect(x0, 0, x1 - x0, h);
+  // Lana: motas cálidas que rompen el color plano
+  for (let i = 0; i < 9000; i += 1) {
+    const x = x0 + Math.random() * (x1 - x0);
+    const y = Math.random() * h;
+    ctx.fillStyle = Math.random() > 0.5 ? "rgba(255,248,235,0.18)" : "rgba(120,80,50,0.08)";
+    ctx.fillRect(x, y, 2, 2);
+  }
+  // Cenefas
+  const band = (inset: number, width: number, color: string) => {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.strokeRect(x0 + inset, inset, x1 - x0 - inset * 2, h - inset * 2);
+  };
+  band(18, 10, "#b4623a");
+  band(34, 3, "#c99a52");
+  // Rombos dibujados a mano, con trazo irregular, en dos tonos
+  const cx = (x0 + x1) / 2;
+  const cell = 96;
+  ctx.lineJoin = "round";
+  for (let gx = -4; gx <= 4; gx += 1)
+    for (let gy = -2; gy <= 2; gy += 1) {
+      const x = cx + gx * cell;
+      const y = h / 2 + gy * cell * 0.9 + (gx % 2 ? cell * 0.45 : 0);
+      if (x < x0 + 70 || x > x1 - 70 || y < 70 || y > h - 70) continue;
+      const s = cell * 0.42;
+      ctx.strokeStyle = (gx + gy) % 2 ? "rgba(180,98,58,0.85)" : "rgba(122,62,40,0.75)";
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(x, y - s);
+      ctx.lineTo(x + s * 0.8, y);
+      ctx.lineTo(x, y + s);
+      ctx.lineTo(x - s * 0.8, y);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.fillStyle = "rgba(201,154,82,0.55)";
+      ctx.beginPath();
+      ctx.arc(x, y, 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+}
+
+/** Esfera de reloj de pared: blanco roto, sesenta marcas y doce índices gruesos, sin números. */
+export function drawClockFace(ctx: CanvasRenderingContext2D, w: number) {
+  const r = w / 2;
+  ctx.fillStyle = "#f1ebe0";
+  ctx.beginPath();
+  ctx.arc(r, r, r, 0, Math.PI * 2);
+  ctx.fill();
+  const g = ctx.createRadialGradient(r, r, r * 0.6, r, r, r);
+  g.addColorStop(0, "rgba(0,0,0,0)");
+  g.addColorStop(1, "rgba(60,40,20,0.12)");
+  ctx.fillStyle = g;
+  ctx.fill();
+  ctx.strokeStyle = "#1d1c1f";
+  ctx.lineCap = "butt";
+  for (let i = 0; i < 60; i += 1) {
+    const a = (i / 60) * Math.PI * 2;
+    const big = i % 5 === 0;
+    const len = big ? r * 0.14 : r * 0.05;
+    ctx.lineWidth = big ? r * 0.035 : r * 0.012;
+    ctx.beginPath();
+    ctx.moveTo(r + Math.sin(a) * (r * 0.9 - len), r - Math.cos(a) * (r * 0.9 - len));
+    ctx.lineTo(r + Math.sin(a) * r * 0.9, r - Math.cos(a) * r * 0.9);
+    ctx.stroke();
+  }
+}
+
+/** Calendario de pared del mes en curso: ilustración cálida arriba y la cuadrícula con el día de hoy marcado. */
+export const drawCalendar =
+  (lang: string): Draw =>
+  (ctx, w, h, f) => {
+    const now = new Date();
+    const locale = lang === "en" ? "en-GB" : "es-ES";
+    ctx.fillStyle = "#f4efe6";
+    ctx.fillRect(0, 0, w, h);
+    // Ilustración: puesta de sol sobre montañas, en papel
+    const ph = h * 0.4;
+    const sky = ctx.createLinearGradient(0, 0, 0, ph);
+    sky.addColorStop(0, "#f2b27a");
+    sky.addColorStop(1, "#f7dcb8");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, w, ph);
+    ctx.fillStyle = "#fff3dc";
+    ctx.beginPath();
+    ctx.arc(w * 0.66, ph * 0.52, w * 0.09, 0, Math.PI * 2);
+    ctx.fill();
+    const ridge = (base: number, amp: number, color: string, seed: number) => {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(0, ph);
+      for (let x = 0; x <= w; x += 8) ctx.lineTo(x, base - amp * (0.5 + 0.5 * Math.sin(x * 0.018 + seed) * Math.cos(x * 0.007 + seed * 2)));
+      ctx.lineTo(w, ph);
+      ctx.fill();
+    };
+    ridge(ph * 0.78, ph * 0.3, "#c47a55", 1);
+    ridge(ph * 0.9, ph * 0.22, "#8e4f3a", 4);
+    ridge(ph * 1.0, ph * 0.12, "#5b3328", 7);
+
+    const month = new Intl.DateTimeFormat(locale, { month: "long" }).format(now);
+    ctx.fillStyle = "#2a2522";
+    ctx.textBaseline = "alphabetic";
+    ctx.font = display(f, w * 0.085, 800);
+    ctx.fillText(month.toUpperCase(), w * 0.08, ph + h * 0.085);
+    ctx.font = mono(f, w * 0.045, 500);
+    ctx.fillStyle = "#b4623a";
+    ctx.textAlign = "right";
+    ctx.fillText(String(now.getFullYear()), w * 0.92, ph + h * 0.085);
+
+    const first = new Date(now.getFullYear(), now.getMonth(), 1);
+    const offset = (first.getDay() + 6) % 7;
+    const days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const gx = w * 0.08;
+    const cw = (w * 0.84) / 7;
+    const top = ph + h * 0.14;
+    const ch = (h - top - h * 0.04) / 7;
+    const wd = new Intl.DateTimeFormat(locale, { weekday: "narrow" });
+    ctx.textAlign = "center";
+    ctx.font = mono(f, w * 0.048, 700);
+    for (let i = 0; i < 7; i += 1) {
+      ctx.fillStyle = i >= 5 ? "#b4623a" : "#6d6660";
+      ctx.fillText(wd.format(new Date(2024, 0, 1 + i)), gx + cw * (i + 0.5), top + ch * 0.6);
+    }
+    ctx.font = mono(f, w * 0.056, 700);
+    for (let d = 1; d <= days; d += 1) {
+      const i = offset + d - 1;
+      const x = gx + cw * ((i % 7) + 0.5);
+      const y = top + ch * (Math.floor(i / 7) + 1.6);
+      if (d === now.getDate()) {
+        ctx.strokeStyle = "#d9822b";
+        ctx.lineWidth = w * 0.008;
+        ctx.beginPath();
+        ctx.arc(x, y - w * 0.014, cw * 0.36, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.fillStyle = i % 7 >= 5 ? "#b4623a" : "#2a2522";
+      ctx.fillText(String(d), x, y);
+    }
+    ctx.textAlign = "left";
+  };
