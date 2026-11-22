@@ -13,7 +13,9 @@ import { Controller } from "./Controller";
 import { Guitar } from "./Guitar";
 import { Keyboard, Mouse } from "./Peripherals";
 import { Plants } from "./Plants";
-import { Reflections, Warmup } from "./primitives";
+import { ContactShadows, Reflections, Warmup } from "./primitives";
+import { drawSoftDot } from "./screens";
+import { useCanvasTexture } from "./useCanvasTexture";
 import { Desk, Leds } from "./Room";
 
 // Las pantallas iluminan la mesa con luces de área; sus tablas se cargan una sola vez
@@ -26,6 +28,11 @@ const opaqueAO = (pass: { autoDetectTransparency: boolean; configuration: { tran
   pass.autoDetectTransparency = false;
   pass.configuration.transparencyAware = false;
 };
+
+function ContactBlobs() {
+  const dot = useCanvasTexture(128, 128, drawSoftDot);
+  return <ContactShadows map={dot} />;
+}
 
 type Props = { t: Dictionary["desk"]; lang: string; reduceMotion: boolean; onReady: () => void };
 
@@ -68,6 +75,7 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
       <spotLight position={[0.1, 1.5, 1.1]} angle={0.75} penumbra={1} intensity={0.9} decay={1.2} color="#e8e4dc" />
 
       <Desk />
+      <ContactBlobs />
       <Leds t={t} reduceMotion={reduceMotion} />
       <Ultrawide t={t} position={[0, 0, -0.3]} />
       <Laptop t={t} position={[-0.615, 0, -0.22]} rotation={[0, 0.46, 0]} />

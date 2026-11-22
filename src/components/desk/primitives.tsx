@@ -186,3 +186,27 @@ export function Warmup({ onReady, onLow }: { onReady: () => void; onLow: () => v
   });
   return null;
 }
+// Sombras de contacto bajo lo que reposa en el tapete: la direccional es muy suave y el AO a media
+// resolución no llega a estos contactos tan finos. Sin ellas los objetos parecen flotar.
+const CONTACTS: { p: [number, number]; s: [number, number]; r?: number; o?: number }[] = [
+  { p: [-0.04, 0.1], s: [0.42, 0.18], o: 0.45 },
+  { p: [-0.47, 0.2], s: [0.17, 0.11], r: 0.38 },
+  { p: [0.27, -0.1], s: [0.11, 0.1], r: -0.15 },
+  { p: [0.425, -0.06], s: [0.13, 0.13], o: 0.6 },
+  { p: [0.6, 0.15], s: [0.22, 0.31], r: -0.42 },
+  { p: [0.27, 0.13], s: [0.07, 0.13], r: -0.12, o: 0.6 },
+  { p: [-0.615, -0.22], s: [0.3, 0.28], r: 0.46, o: 0.4 },
+];
+
+export function ContactShadows({ map }: { map: Texture }) {
+  return (
+    <group position={[0, 0.0046, 0]}>
+      {CONTACTS.map(({ p, s, r = 0, o = 0.55 }) => (
+        <mesh key={`${p[0]}${p[1]}`} position={[p[0], 0, p[1]]} rotation={[-Math.PI / 2, 0, r]} scale={[s[0], s[1], 1]} renderOrder={-1}>
+          <planeGeometry />
+          <meshBasicMaterial map={map} color="#000000" transparent opacity={o} depthWrite={false} />
+        </mesh>
+      ))}
+    </group>
+  );
+}

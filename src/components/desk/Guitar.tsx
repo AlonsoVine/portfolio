@@ -174,13 +174,13 @@ export function Guitar({ position, rotation }: Placed) {
       </group>
 
       {/* Sombra de contacto en la pared: la guitarra cuelga pegada a ella, no flota delante */}
-      <mesh position={[0.004, 0.24, -0.029]} scale={[0.5, 0.58, 1]}>
+      <mesh position={[0.012, 0.22, -0.029]} scale={[0.56, 0.64, 1]}>
         <planeGeometry />
         <meshBasicMaterial map={dot} color="#000000" transparent opacity={0.55} depthWrite={false} />
       </mesh>
       <mesh position={[0.004, 0.68, -0.029]} scale={[0.1, 0.5, 1]}>
         <planeGeometry />
-        <meshBasicMaterial map={dot} color="#000000" transparent opacity={0.45} depthWrite={false} />
+        <meshBasicMaterial map={dot} color="#000000" transparent opacity={0.35} depthWrite={false} />
       </mesh>
 
       {/* Soporte de pared: placa de madera y horquilla que recoge el mástil bajo la pala */}

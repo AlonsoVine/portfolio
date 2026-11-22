@@ -123,7 +123,7 @@ export function Keyboard({ position, rotation, reduceMotion }: Placed & { reduce
       {/* Reflejo del RGB sobre el tapete alrededor del teclado */}
       <mesh position={[0, 0.0045, 0.01]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[width * 1.7, depth * 2.6]} />
-        <meshBasicMaterial map={spill} color={VIOLET} transparent opacity={0.2} blending={AdditiveBlending} depthWrite={false} />
+        <meshBasicMaterial map={spill} color={VIOLET} transparent opacity={0.09} blending={AdditiveBlending} depthWrite={false} />
       </mesh>
     </group>
   );
