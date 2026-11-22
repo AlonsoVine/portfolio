@@ -15,6 +15,7 @@ import {
   type Group,
   type Mesh,
   type MeshBasicMaterial,
+  type PointLight,
   Euler,
   Matrix4,
   BufferGeometry,
@@ -25,6 +26,7 @@ import {
   Quaternion,
   Shape,
   ShapeGeometry,
+  SphereGeometry,
   type Texture,
   TubeGeometry,
   Vector3,
@@ -292,7 +294,7 @@ function Bonsai({ position }: { position: Vec3 }) {
 
 // ——— Poto dorado: la «planta del dinero», con guías de hojas acorazonadas que caen por la maceta ———
 
-const POTHOS_GREENS = ["#3f7a2e", "#4d8a34", "#5c9a3a", "#7da844", "#3a6e2a"];
+const POTHOS_GREENS = ["#2f5f24", "#3a6e2a", "#467d30", "#558a36", "#2a5420"];
 
 const POTHOS: { vines: Vec3[][]; leaves: Instance[] } = (() => {
   const r = rng(31);
@@ -335,25 +337,12 @@ const POTHOS: { vines: Vec3[][]; leaves: Instance[] } = (() => {
     vines.push(pts);
     along(pts, 8, 0.024);
   });
-  // Tallos que trepan: dan altura y volumen a la mata
-  [2.6].forEach((phi, k) => {
-    const c = Math.cos(phi);
-    const s = Math.sin(phi);
-    const h = 0.15 + k * 0.03;
-    const pts: Vec3[] = [
-      [c * 0.008, 0.06, s * 0.008],
-      [c * 0.02, 0.06 + h * 0.4, s * 0.02],
-      [c * 0.03 - s * 0.01, 0.06 + h * 0.75, s * 0.03 + c * 0.01],
-      [c * 0.045, 0.06 + h, s * 0.045],
-    ];
-    vines.push(pts);
-    along(pts, 7, 0.034, 0.15);
-  });
   // Corona: hojas grandes que salen del centro de la maceta
-  for (let i = 0; i < 36; i += 1) {
-    const a = i * 2.39996;
-    const d = 0.006 + Math.sqrt(i / 36) * 0.04;
-    leaf([Math.cos(a) * d, 0.072 + (1 - d / 0.046) * 0.05 + r() * 0.015, Math.sin(a) * d], [Math.cos(a), Math.sin(a)], -0.5 - (d / 0.046) * 0.7 - r() * 0.2, 0.045 + r() * 0.02);
+  // Hojas más pequeñas y a alturas desiguales: una mata, no una lechuga
+  for (let i = 0; i < 30; i += 1) {
+    const a = i * 2.39996 + r() * 0.3;
+    const d = 0.006 + Math.sqrt(i / 30) * 0.042;
+    leaf([Math.cos(a) * d, 0.07 + (1 - d / 0.048) * 0.04 + r() * 0.025, Math.sin(a) * d], [Math.cos(a), Math.sin(a)], -0.35 - (d / 0.048) * 0.8 - r() * 0.3, 0.03 + r() * 0.016);
   }
   return { vines, leaves };
 })();
@@ -374,19 +363,39 @@ function Pothos({ position }: { position: Vec3 }) {
 
 const BLADES: Instance[] = (() => {
   const r = rng(53);
-  return Array.from({ length: 16 }, (_, i) => {
-    const a = i * 2.39996 + r() * 0.4;
-    const d = 0.004 + r() * 0.018;
-    const h = 0.3 + r() * 0.16 - d * 2;
-    const w = 0.026 + r() * 0.012;
-    return {
-      p: [Math.cos(a) * d, 0.07, Math.sin(a) * d] as Vec3,
-      // Las de fuera se abren más; todas giran sobre sí mismas para no parecer clonadas
-      r: [-(0.04 + d * 6 + r() * 0.08), Math.atan2(-Math.cos(a), -Math.sin(a)) + Math.PI, (r() - 0.5) * 0.2] as Vec3,
-      s: [w, h, w] as Vec3,
-      c: r() > 0.5 ? "#ffffff" : "#e6ecd8",
-    };
+  const items: Instance[] = [];
+  // Crece de rizomas: varias rosetas repartidas por la tierra, cada una un abanico de 3-5 hojas abrazadas en la base
+  const clumps: { a: number; d: number; tall: number; n: number }[] = [
+    { a: 0.4, d: 0.012, tall: 0.46, n: 5 },
+    { a: 2.3, d: 0.036, tall: 0.36, n: 4 },
+    { a: 3.9, d: 0.04, tall: 0.31, n: 4 },
+    { a: 5.3, d: 0.034, tall: 0.27, n: 3 },
+    { a: 1.3, d: 0.044, tall: 0.2, n: 3 },
+  ];
+  clumps.forEach(({ a, d, tall, n }) => {
+    const cx = Math.cos(a) * d;
+    const cz = Math.sin(a) * d;
+    const fan = a + Math.PI / 2 + (r() - 0.5) * 0.8;
+    for (let j = 0; j < n; j += 1) {
+      const rel = j - (n - 1) / 2;
+      const o = rel * 0.0055;
+      const px = cx + Math.cos(fan) * o;
+      const pz = cz + Math.sin(fan) * o;
+      // Las hojas del borde del abanico se abren hacia su lado; la roseta entera se inclina hacia fuera de la maceta
+      const lx = Math.cos(fan) * Math.sign(rel) * Math.abs(rel) * 0.1 + Math.cos(a) * d * 2.2;
+      const lz = Math.sin(fan) * Math.sign(rel) * Math.abs(rel) * 0.1 + Math.sin(a) * d * 2.2;
+      const lean = Math.hypot(lx, lz) + 0.03 + r() * 0.05;
+      const dir = Math.atan2(lz, lx);
+      const w = 0.022 + r() * 0.012 - Math.abs(rel) * 0.003;
+      items.push({
+        p: [px, 0.07, pz],
+        r: [-lean, Math.atan2(-Math.cos(dir), -Math.sin(dir)) + Math.PI, (r() - 0.5) * 0.25],
+        s: [w, tall * (1 - Math.abs(rel) * 0.16) * (0.92 + r() * 0.16), w],
+        c: r() > 0.5 ? "#ffffff" : "#e6ecd8",
+      });
+    }
   });
+  return items;
 })();
 
 function SnakePlant({ position }: { position: Vec3 }) {
@@ -519,12 +528,92 @@ export function Plants({ reduceMotion }: { reduceMotion: boolean }) {
       {/* Clavado al fondo del cajón central, entre la sansevieria y el poto: el mástil se pierde entre las hojas */}
       <Lantern position={[TROUGH.x - 0.04, SOIL, CELLS[1] + 0.06]} rotation={[0, -Math.PI / 4, 0]} />
       <Incense position={[TROUGH.x, 0, 0.125]} reduceMotion={reduceMotion} />
+      <Candle position={[TROUGH.x + 0.07, 0, 0.05]} reduceMotion={reduceMotion} />
     </group>
   );
 }
 
 const STICK = 0.15;
 const BURN_SECONDS = 600;
+
+/** Recogeceniza de latón en forma de flor de loto: dos coronas de pétalos abiertos y el cáliz central. */
+const LOTUS = (() => {
+  const m = new Matrix4();
+  const q = new Quaternion();
+  const parts: BufferGeometry[] = [];
+  const ring = (count: number, r: number, tilt: number, len: number, y: number, turn: number) => {
+    for (let i = 0; i < count; i += 1) {
+      const a = (i / count) * Math.PI * 2 + turn;
+      const g = new SphereGeometry(1, 16, 8);
+      // Pétalo: elipsoide plano y alargado, inclinado hacia arriba desde el centro
+      g.scale(len, 0.0018, len * 0.45);
+      g.translate(len * 0.85, 0, 0);
+      g.applyMatrix4(m.compose(new Vector3(Math.cos(a) * r, y, -Math.sin(a) * r), q.setFromEuler(new Euler(0, a, tilt, "YXZ")), new Vector3(1, 1, 1)));
+      parts.push(g);
+    }
+  };
+  ring(8, 0.004, 0.22, 0.016, 0.003, 0);
+  ring(8, 0.003, 0.62, 0.012, 0.005, Math.PI / 8);
+  const cup = new CylinderGeometry(0.009, 0.006, 0.008, 24);
+  cup.translate(0, 0.006, 0);
+  parts.push(cup);
+  const base = new CylinderGeometry(0.012, 0.014, 0.003, 32);
+  base.translate(0, 0.0015, 0);
+  parts.push(base);
+  const merged = mergeGeometries(parts, false);
+  parts.forEach((g) => g.dispose());
+  return merged;
+})();
+
+/** Vela de cera junto al incienso: llama viva con su punto de luz cálida sobre la mesa. */
+function Candle({ position, reduceMotion }: { position: Vec3; reduceMotion: boolean }) {
+  const flame = useRef<Group>(null);
+  const light = useRef<PointLight>(null);
+  useFrame(({ clock }) => {
+    if (reduceMotion) return;
+    const t = clock.elapsedTime;
+    const f = 0.9 + 0.1 * Math.sin(t * 9.1) * Math.sin(t * 4.3 + 0.7);
+    if (flame.current) {
+      flame.current.scale.set(1, f, 1);
+      flame.current.rotation.z = Math.sin(t * 2.1) * 0.06;
+    }
+    if (light.current) light.current.intensity = 0.35 * f;
+  });
+  const H = 0.045;
+  return (
+    <group position={position}>
+      {/* Platillo de latón a juego con el loto */}
+      <mesh position={[0, 0.002, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[0.026, 0.024, 0.004, 40]} />
+        <meshStandardMaterial color="#c9a24a" roughness={0.3} metalness={1} />
+      </mesh>
+      <mesh position={[0, 0.004 + H / 2, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[0.017, 0.017, H, 32]} />
+        <meshPhysicalMaterial color="#efe4cf" roughness={0.55} transmission={0} sheen={0.4} sheenColor="#fff3dc" />
+      </mesh>
+      {/* Cera fundida en la cara superior, algo más oscura y brillante */}
+      <mesh position={[0, 0.0042 + H, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.0145, 32]} />
+        <meshStandardMaterial color="#e6cfa6" roughness={0.2} />
+      </mesh>
+      <mesh position={[0, 0.006 + H, 0]}>
+        <cylinderGeometry args={[0.0005, 0.0005, 0.006, 6]} />
+        <meshStandardMaterial color="#1a1412" roughness={1} />
+      </mesh>
+      <group ref={flame} position={[0, 0.008 + H, 0]}>
+        <mesh position={[0, 0.006, 0]} scale={[0.0036, 0.0095, 0.0036]}>
+          <sphereGeometry args={[1, 14, 10]} />
+          <meshBasicMaterial color={hdr("#ffb347", 2.6)} toneMapped={false} />
+        </mesh>
+        <mesh position={[0, 0.0045, 0]} scale={[0.0019, 0.005, 0.0019]}>
+          <sphereGeometry args={[1, 10, 8]} />
+          <meshBasicMaterial color={hdr("#fff4dc", 4)} toneMapped={false} />
+        </mesh>
+      </group>
+      <pointLight ref={light} position={[0, H + 0.03, 0]} color="#ffb366" intensity={0.35} distance={0.4} decay={2} />
+    </group>
+  );
+}
 
 /** Varilla de incienso en un platillo de piedra: se consume despacio, con la brasa viva y un hilo de humo. */
 function Incense({ position, reduceMotion }: { position: Vec3; reduceMotion: boolean }) {
@@ -551,18 +640,13 @@ function Incense({ position, reduceMotion }: { position: Vec3; reduceMotion: boo
 
   return (
     <group position={position}>
-      {/* Platillo de piedra oscura con la base de latón que sujeta la varilla */}
-      <mesh position={[0, 0.004, 0]} castShadow receiveShadow>
-        <cylinderGeometry args={[0.026, 0.022, 0.008, 32]} />
-        <meshStandardMaterial color="#2b2a2c" roughness={0.85} />
+      {/* Loto de latón: los pétalos recogen la ceniza y el cáliz sujeta la varilla */}
+      <mesh geometry={LOTUS} castShadow receiveShadow>
+        <meshStandardMaterial color="#d4ad55" roughness={0.28} metalness={1} side={DoubleSide} />
       </mesh>
-      <mesh position={[0, 0.0082, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[0.021, 32]} />
+      <mesh position={[0, 0.0101, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.0085, 24]} />
         <meshStandardMaterial color="#8d8a86" roughness={1} />
-      </mesh>
-      <mesh position={[0, 0.011, 0]}>
-        <cylinderGeometry args={[0.0035, 0.0045, 0.006, 16]} />
-        <meshStandardMaterial color="#b08a4a" roughness={0.3} metalness={0.9} />
       </mesh>
       <group position={[0, 0.012, 0]}>
         {/* Mango de bambú sin perfume y, encima, la pasta de incienso que se va consumiendo */}

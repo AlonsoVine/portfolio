@@ -165,11 +165,6 @@ export function Coffee({ position, reduceMotion }: Placed & { reduceMotion: bool
           <meshStandardMaterial map={latte} roughness={0.85} />
         </mesh>
       </group>
-      {/* Galleta caramelizada apoyada en el posavasos */}
-      <mesh position={[-0.03, 0.0085, 0.05]} rotation={[0.06, 0.5, -0.12]} scale={[1.3, 1, 0.85]} castShadow>
-        <cylinderGeometry args={[0.019, 0.019, 0.005, 28]} />
-        <meshStandardMaterial color="#b0682e" roughness={0.75} bumpMap={noise} bumpScale={2} />
-      </mesh>
       {!reduceMotion && (
         <>
           <Steam position={[0.004, COFFEE_Y + 0.006, 0]} height={0.14} width={0.075} noise={noise} />

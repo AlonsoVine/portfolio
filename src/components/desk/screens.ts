@@ -725,7 +725,7 @@ export const drawMatEdge: Draw = (ctx, w, h) => {
 };
 
 
-const FONT_FREE = new Set<Draw>([drawRug, drawFloorFalloff, drawFantasyMap, drawClockFace, drawUnderglow, drawMugGlaze, drawMugRough, drawLatte, drawPothosLeaf, drawWoodRough, drawSnakeLeaf, drawSpruceTop, drawFretboard, drawWood, drawPegboard, drawFabric, drawMatEdge, drawStrip, drawSoftDot, drawNoise, drawXboxLogo]);
+const FONT_FREE = new Set<Draw>([drawRug, drawEdgeFalloff, drawFloorFalloff, drawFantasyMap, drawClockFace, drawUnderglow, drawMugGlaze, drawMugRough, drawLatte, drawPothosLeaf, drawWoodRough, drawSnakeLeaf, drawSpruceTop, drawFretboard, drawWood, drawPegboard, drawFabric, drawMatEdge, drawStrip, drawSoftDot, drawNoise, drawXboxLogo]);
 /** Hoja de sansevieria: verde oscuro con bandas onduladas claras y borde amarillo. */
 export function drawSnakeLeaf(ctx: CanvasRenderingContext2D, w: number, h: number) {
   ctx.fillStyle = "#24442a";
@@ -988,6 +988,21 @@ export function drawUnderglow(ctx: CanvasRenderingContext2D, w: number, h: numbe
   ctx.fillRect(0, 0, w, h);
 }
 
+/** Máscara en grises del brillo en el faldón: intensa junto a la tira (abajo) y desvanecida hacia arriba y los extremos. */
+export function drawEdgeFalloff(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const img = ctx.createImageData(w, h);
+  for (let y = 0; y < h; y += 1)
+    for (let x = 0; x < w; x += 1) {
+      const dx = (x / (w - 1)) * 2 - 1;
+      const up = 1 - y / (h - 1);
+      const v = Math.round(255 * (1 - dx ** 8) * (1 - up) ** 2);
+      const i = (y * w + x) * 4;
+      img.data[i] = img.data[i + 1] = img.data[i + 2] = v;
+      img.data[i + 3] = 255;
+    }
+  ctx.putImageData(img, 0, 0);
+}
+
 /** Máscara en grises del reflejo de la tira en el suelo: intensa bajo el canto, se apaga hacia los bordes. */
 export function drawFloorFalloff(ctx: CanvasRenderingContext2D, w: number, h: number) {
   const img = ctx.createImageData(w, h);
@@ -1004,13 +1019,16 @@ export function drawFloorFalloff(ctx: CanvasRenderingContext2D, w: number, h: nu
   ctx.putImageData(img, 0, 0);
 }
 
-/** Alfombra bereber de lana: fondo crema con rombos teja y ocre, cenefas y flecos en los extremos cortos. */
+/**
+ * Alfombra de lana tejida a mano: campo rojo con abrash (franjas de tinte desigual), medallón central,
+ * motivos azules que cambian de una fila a otra y cenefa azul; flecos en los extremos cortos.
+ */
 export function drawRug(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const r = rng(73);
   const fringe = 28;
   const x0 = fringe;
   const x1 = w - fringe;
   ctx.clearRect(0, 0, w, h);
-  // Flecos de algodón: hebras sueltas que se recortan con alphaTest
   ctx.strokeStyle = "#e8dcc4";
   ctx.lineWidth = 2;
   for (let y = 6; y < h - 6; y += 5) {
@@ -1022,47 +1040,132 @@ export function drawRug(ctx: CanvasRenderingContext2D, w: number, h: number) {
     ctx.lineTo(w - 4 - Math.abs(jitter), y - jitter * 0.4);
     ctx.stroke();
   }
-  ctx.fillStyle = "#d9a894";
+  // Campo rojo con abrash: franjas verticales de rojo algo distinto, como lotes de lana teñidos aparte
+  ctx.fillStyle = "#9c2420";
   ctx.fillRect(x0, 0, x1 - x0, h);
-  // Lana: motas cálidas que rompen el color plano
-  for (let i = 0; i < 9000; i += 1) {
-    const x = x0 + Math.random() * (x1 - x0);
-    const y = Math.random() * h;
-    ctx.fillStyle = Math.random() > 0.5 ? "rgba(255,248,235,0.18)" : "rgba(120,80,50,0.08)";
-    ctx.fillRect(x, y, 2, 2);
+  for (let x = x0; x < x1; ) {
+    const bw = 20 + r() * 90;
+    ctx.fillStyle = r() > 0.5 ? `rgba(120,16,14,${0.15 + r() * 0.25})` : `rgba(190,60,44,${0.1 + r() * 0.2})`;
+    ctx.fillRect(x, 0, bw, h);
+    x += bw;
   }
-  // Cenefas
-  const band = (inset: number, width: number, color: string) => {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = width;
-    ctx.strokeRect(x0 + inset, inset, x1 - x0 - inset * 2, h - inset * 2);
-  };
-  band(18, 10, "#8e2a22");
-  band(34, 3, "#d0a060");
-  // Rombos dibujados a mano, con trazo irregular, en dos tonos
-  const cx = (x0 + x1) / 2;
-  const cell = 96;
-  ctx.lineJoin = "round";
-  for (let gx = -4; gx <= 4; gx += 1)
-    for (let gy = -2; gy <= 2; gy += 1) {
-      const x = cx + gx * cell;
-      const y = h / 2 + gy * cell * 0.9 + (gx % 2 ? cell * 0.45 : 0);
-      if (x < x0 + 70 || x > x1 - 70 || y < 70 || y > h - 70) continue;
-      const s = cell * 0.42;
-      ctx.strokeStyle = (gx + gy) % 2 ? "rgba(160,44,36,0.85)" : "rgba(110,30,28,0.75)";
-      ctx.lineWidth = 6;
-      ctx.beginPath();
-      ctx.moveTo(x, y - s);
-      ctx.lineTo(x + s * 0.8, y);
-      ctx.lineTo(x, y + s);
-      ctx.lineTo(x - s * 0.8, y);
-      ctx.closePath();
-      ctx.stroke();
-      ctx.fillStyle = "rgba(201,154,82,0.55)";
-      ctx.beginPath();
-      ctx.arc(x, y, 5, 0, Math.PI * 2);
+  for (let i = 0; i < 9000; i += 1) {
+    ctx.fillStyle = r() > 0.5 ? "rgba(255,220,200,0.07)" : "rgba(40,0,0,0.12)";
+    ctx.fillRect(x0 + r() * (x1 - x0), r() * h, 2, 2);
+  }
+
+  const navy = "#1d3566";
+  const blue = "#2f5c9e";
+  const pale = "#d9cfb8";
+  const wobble = () => (r() - 0.5) * 2.5;
+  const diamond = (x: number, y: number, rx: number, ry: number, stroke: string, lw: number, fill?: string) => {
+    ctx.beginPath();
+    ctx.moveTo(x + wobble(), y - ry);
+    ctx.lineTo(x + rx, y + wobble());
+    ctx.lineTo(x + wobble(), y + ry);
+    ctx.lineTo(x - rx, y + wobble());
+    ctx.closePath();
+    if (fill) {
+      ctx.fillStyle = fill;
       ctx.fill();
     }
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = lw;
+    ctx.stroke();
+  };
+  ctx.lineJoin = "round";
+
+  // Cenefa: banda azul marino con una greca en zigzag y filetes claros
+  const inset = 16;
+  const bandW = 44;
+  ctx.strokeStyle = navy;
+  ctx.lineWidth = bandW;
+  ctx.strokeRect(x0 + inset + bandW / 2, inset + bandW / 2, x1 - x0 - inset * 2 - bandW, h - inset * 2 - bandW);
+  ctx.strokeStyle = pale;
+  ctx.lineWidth = 2.5;
+  ctx.strokeRect(x0 + inset, inset, x1 - x0 - inset * 2, h - inset * 2);
+  ctx.strokeRect(x0 + inset + bandW, inset + bandW, x1 - x0 - (inset + bandW) * 2, h - (inset + bandW) * 2);
+  const zig = (ax: number, ay: number, bx: number, by: number) => {
+    const len = Math.hypot(bx - ax, by - ay);
+    const n = Math.round(len / 22);
+    const nx = -(by - ay) / len;
+    const ny = (bx - ax) / len;
+    ctx.beginPath();
+    for (let i = 0; i <= n; i += 1) {
+      const t = i / n;
+      const o = (i % 2 ? 1 : -1) * 9;
+      const px = ax + (bx - ax) * t + nx * o;
+      const py = ay + (by - ay) * t + ny * o;
+      if (i) ctx.lineTo(px, py);
+      else ctx.moveTo(px, py);
+    }
+    ctx.strokeStyle = blue;
+    ctx.lineWidth = 4;
+    ctx.stroke();
+  };
+  const m = inset + bandW / 2;
+  zig(x0 + m, m, x1 - m, m);
+  zig(x0 + m, h - m, x1 - m, h - m);
+  zig(x0 + m, m, x0 + m, h - m);
+  zig(x1 - m, m, x1 - m, h - m);
+
+  // Medallón central con capas
+  const cx = (x0 + x1) / 2;
+  const cy = h / 2;
+  diamond(cx, cy, 150, 120, navy, 7, "rgba(29,53,102,0.35)");
+  diamond(cx, cy, 112, 90, pale, 3);
+  diamond(cx, cy, 78, 62, blue, 6, "rgba(156,36,32,0.6)");
+  diamond(cx, cy, 34, 27, navy, 5, blue);
+  for (const [dx, dy] of [
+    [0, -150],
+    [0, 150],
+    [-185, 0],
+    [185, 0],
+  ])
+    diamond(cx + dx, cy + dy * 0.82, 16, 13, blue, 4, navy);
+
+  // Motivos del campo: cada uno elegido al azar y con tamaño propio, para que no se lea como una rejilla
+  const fieldX0 = x0 + inset + bandW + 30;
+  const fieldX1 = x1 - inset - bandW - 30;
+  const fieldY0 = inset + bandW + 30;
+  const fieldY1 = h - inset - bandW - 30;
+  const motifs = [
+    (x: number, y: number, s: number) => diamond(x, y, s * 0.7, s, blue, 4),
+    (x: number, y: number, s: number) => {
+      diamond(x, y, s * 0.6, s * 0.8, navy, 4);
+      diamond(x, y, s * 0.25, s * 0.32, blue, 3, blue);
+    },
+    (x: number, y: number, s: number) => {
+      ctx.strokeStyle = blue;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(x - s * 0.7, y);
+      ctx.lineTo(x + s * 0.7, y);
+      ctx.moveTo(x, y - s * 0.7);
+      ctx.lineTo(x, y + s * 0.7);
+      ctx.stroke();
+      diamond(x, y, s * 0.2, s * 0.2, pale, 2, navy);
+    },
+    (x: number, y: number, s: number) => {
+      ctx.strokeStyle = navy;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      for (let k = -2; k <= 2; k += 1) {
+        const px = x + k * s * 0.3;
+        const py = y + (k % 2 ? s * 0.3 : -s * 0.3);
+        if (k === -2) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    },
+  ];
+  for (let gy = fieldY0; gy <= fieldY1; gy += 64 + r() * 22) {
+    for (let gx = fieldX0 + r() * 40; gx <= fieldX1; gx += 70 + r() * 50) {
+      if (Math.abs(gx - cx) / 210 + Math.abs(gy - cy) / 165 < 1) continue;
+      if (r() < 0.18) continue;
+      motifs[Math.floor(r() * motifs.length)](gx, gy, 14 + r() * 12);
+    }
+  }
 }
 
 /**

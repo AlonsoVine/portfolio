@@ -5,7 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import { AdditiveBlending, type Color, type MeshBasicMaterial, type PointLight } from "three";
 import { AMBER, hdr, ICE, MAGENTA, VIOLET } from "./palette";
-import { drawFabric, drawFloorFalloff, drawMatEdge, drawNeonSign, drawPegboard, drawSoftDot, drawStrip, drawUnderglow, drawWood, drawWoodRough, type DeskCopy } from "./screens";
+import { drawEdgeFalloff, drawFabric, drawFloorFalloff, drawMatEdge, drawNeonSign, drawPegboard, drawSoftDot, drawStrip, drawUnderglow, drawWood, drawWoodRough, type DeskCopy } from "./screens";
 import { Dust, RoundedBox, SoftPlanes, type SoftPlane } from "./primitives";
 import { useCanvasTexture } from "./useCanvasTexture";
 
@@ -112,6 +112,7 @@ export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }
   // Dos ciclos hielo/ámbar a lo largo de la mesa que fluyen como la retroiluminación del teclado
   const under = useCanvasTexture(256, 4, drawUnderglow, { tileX: 2 });
   const falloff = useCanvasTexture(128, 64, drawFloorFalloff, { color: false });
+  const edgeFade = useCanvasTexture(128, 32, drawEdgeFalloff, { color: false });
   const signDraw = useMemo(() => drawNeonSign(t.firstName, t.lastName), [t]);
   const sign = useCanvasTexture(1024, 320, signDraw);
   const signMat = useRef<MeshBasicMaterial>(null);
@@ -159,14 +160,18 @@ export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }
         )),
       )}
 
-      {/* Luz bajo la mesa: tira oculta tras el canto delantero; se ve su reflejo en el suelo, que fluye igual que ella */}
-      <mesh position={[0, -0.047, 0.25]} rotation={[Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[1.96, 0.008]} />
+      {/* Luz bajo la mesa: tira pegada al borde inferior del faldón, visible bajo el canto, que tiñe el faldón y el suelo */}
+      <mesh position={[0, -0.1035, 0.2815]} rotation={[-0.5, 0, 0]}>
+        <planeGeometry args={[1.98, 0.005]} />
         <meshBasicMaterial ref={underMat} map={under} color={hdr("#ffffff", 4)} toneMapped={false} />
+      </mesh>
+      <mesh position={[0, -0.077, 0.2808]}>
+        <planeGeometry args={[2.0, 0.056]} />
+        <meshBasicMaterial map={under} alphaMap={edgeFade} transparent opacity={0.6} blending={AdditiveBlending} depthWrite={false} />
       </mesh>
       <mesh position={[0, -0.7475, 0.18]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[2.1, 0.95]} />
-        <meshBasicMaterial map={under} alphaMap={falloff} transparent opacity={0.3} blending={AdditiveBlending} depthWrite={false} />
+        <meshBasicMaterial map={under} alphaMap={falloff} transparent opacity={0.17} blending={AdditiveBlending} depthWrite={false} />
       </mesh>
       <SoftPlanes map={dot} items={WASHES} additive />
 

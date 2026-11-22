@@ -18,7 +18,7 @@ export function Rug() {
   return (
     <mesh position={[0.05, -0.7495, 0.12]} rotation={[-Math.PI / 2, 0, 0.03]} receiveShadow>
       <planeGeometry args={[1.85, 1.12]} />
-      <meshStandardMaterial map={map} bumpMap={map} bumpScale={0.6} color="#94493a" roughness={1} alphaTest={0.4} />
+      <meshStandardMaterial map={map} bumpMap={map} bumpScale={0.6} color="#b3a6a2" roughness={1} alphaTest={0.4} />
     </mesh>
   );
 }
@@ -232,13 +232,79 @@ export function MapFrame({ position, rotation }: { position: Vec3; rotation?: Ve
       </mesh>
       <mesh position={[0, 0, 0.005]}>
         <planeGeometry args={[W, H]} />
-        <meshStandardMaterial map={map} roughness={0.9} />
+        {/* Algo apagado: el farolillo y la vela están muy cerca y el pergamino se quemaba */}
+        <meshStandardMaterial map={map} color="#b9b1a6" roughness={0.9} />
       </mesh>
       {/* Cristal: solo un reflejo leve del entorno */}
       <mesh position={[0, 0, 0.018]}>
         <planeGeometry args={[OW - F * 2, OH - F * 2]} />
         <meshStandardMaterial color="#000000" roughness={0.05} metalness={1} transparent opacity={0.1} depthWrite={false} />
       </mesh>
+    </group>
+  );
+}
+
+/** Gancho atornillado bajo el canto con unos cascos cerrados colgando de la diadema. */
+export function Headphones({ position }: { position: Vec3 }) {
+  const R = 0.085;
+  const hookY = -0.06;
+  const cy = hookY - 0.006 - R;
+  return (
+    <group position={position}>
+      {/* Gancho: pletina bajo el tablero, bajante y brazo hacia delante con la punta levantada */}
+      <mesh position={[0, -0.003, 0]} castShadow>
+        <boxGeometry args={[0.03, 0.005, 0.045]} />
+        <meshStandardMaterial color="#1b1c20" roughness={0.45} metalness={0.7} />
+      </mesh>
+      <mesh position={[0, hookY / 2, -0.01]}>
+        <boxGeometry args={[0.012, Math.abs(hookY), 0.008]} />
+        <meshStandardMaterial color="#1b1c20" roughness={0.45} metalness={0.7} />
+      </mesh>
+      <mesh position={[0, hookY, 0.03]} rotation={[Math.PI / 2, 0, 0]} castShadow>
+        <cylinderGeometry args={[0.005, 0.005, 0.08, 12]} />
+        <meshStandardMaterial color="#1b1c20" roughness={0.45} metalness={0.7} />
+      </mesh>
+      <mesh position={[0, hookY + 0.008, 0.069]}>
+        <cylinderGeometry args={[0.005, 0.005, 0.018, 12]} />
+        <meshStandardMaterial color="#1b1c20" roughness={0.45} metalness={0.7} />
+      </mesh>
+
+      <group position={[0, cy, 0.045]}>
+        {/* Diadema: arco de acero con almohadilla de piel encima, apoyada en el gancho */}
+        <mesh castShadow>
+          <torusGeometry args={[R, 0.004, 8, 48, Math.PI]} />
+          <meshStandardMaterial color="#b9b8b4" roughness={0.3} metalness={0.9} />
+        </mesh>
+        <mesh rotation={[0, 0, Math.PI * 0.15]} scale={[1, 1, 2.2]} castShadow>
+          <torusGeometry args={[R + 0.004, 0.007, 10, 40, Math.PI * 0.7]} />
+          <meshStandardMaterial color="#202024" roughness={0.6} />
+        </mesh>
+        {[-1, 1].map((s) => (
+          <group key={s} position={[s * (R + 0.002), -0.045, 0]}>
+            {/* Horquilla y deslizador que bajan hasta la copa */}
+            <mesh position={[0, 0.03, 0]}>
+              <boxGeometry args={[0.006, 0.05, 0.012]} />
+              <meshStandardMaterial color="#b9b8b4" roughness={0.3} metalness={0.9} />
+            </mesh>
+            <group position={[-s * 0.006, -0.02, 0]} rotation={[0, 0, Math.PI / 2]}>
+              <mesh castShadow>
+                <cylinderGeometry args={[0.042, 0.04, 0.026, 40]} />
+                <meshStandardMaterial color="#1d1d21" roughness={0.45} metalness={0.2} />
+              </mesh>
+              {/* Aro de acento en la tapa exterior */}
+              <mesh position={[0, -s * 0.0135, 0]} rotation={[Math.PI / 2, 0, 0]}>
+                <torusGeometry args={[0.03, 0.0016, 8, 40]} />
+                <meshStandardMaterial color="#c9a24a" roughness={0.3} metalness={1} />
+              </mesh>
+              {/* Almohadilla de polipiel hacia dentro */}
+              <mesh position={[0, s * 0.016, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[1, 1, 1.4]}>
+                <torusGeometry args={[0.032, 0.009, 12, 40]} />
+                <meshStandardMaterial color="#141416" roughness={0.7} />
+              </mesh>
+            </group>
+          </group>
+        ))}
+      </group>
     </group>
   );
 }
