@@ -140,7 +140,7 @@ const MOUSE_LIFT = 0.0088;
 
 /** Esfera unitaria esculpida: base plana, frontal estrecho, joroba trasera y cintura para el pulgar. */
 function mouseShell() {
-  const g = new SphereGeometry(1, 96, 64);
+  const g = new SphereGeometry(1, 64, 44);
   const pos = g.attributes.position;
   for (let i = 0; i < pos.count; i += 1) {
     let x = pos.getX(i);

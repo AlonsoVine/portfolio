@@ -198,14 +198,14 @@ export function SideMonitor({ t, position, rotation }: { t: DeskCopy } & Placed)
           <RoundedBox args={[0.03, 0.02, 0.05]} radius={0.006} position={[0, -0.002, -0.03]}>
             <meshStandardMaterial color="#1c1d22" roughness={0.35} metalness={0.6} />
           </RoundedBox>
-          <object3D ref={setLampTarget} position={[-0.05, -0.5, 0.45]} />
+          <object3D ref={setLampTarget} position={[-0.05, -0.5, 0.3]} />
           <spotLight
             target={lampTarget ?? undefined}
             position={[0, -0.01, 0.02]}
-            angle={0.95}
-            penumbra={0.9}
+            angle={0.6}
+            penumbra={1}
             intensity={3.2}
-            distance={1.4}
+            distance={1.1}
             decay={1.4}
             color="#ffd9a0"
             castShadow

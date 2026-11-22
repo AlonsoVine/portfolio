@@ -119,7 +119,7 @@ export function Dust({ count = 70, map }: { count?: number; map: Texture }) {
 
   return (
     <points ref={points} geometry={geometry}>
-      <pointsMaterial map={map} color={hdr(ICE, 1.4)} size={0.006} transparent opacity={0.55} depthWrite={false} blending={AdditiveBlending} />
+      <pointsMaterial map={map} color={hdr(ICE, 1.2)} size={0.005} transparent opacity={0.3} depthWrite={false} blending={AdditiveBlending} />
     </points>
   );
 }
@@ -174,10 +174,10 @@ export function Warmup({ onReady, onLow }: { onReady: () => void; onLow: () => v
     // Los primeros fotogramas tras compilar aún suben texturas: no son representativos
     if (p.n <= 10) return;
     p.samples.push(delta);
-    if (p.samples.length < 60) return;
+    if (p.samples.length < 30) return;
     p.phase = "done";
     // Mediana: un tirón aislado no debe condenar a la máquina al modo bajo
-    const median = [...p.samples].sort((a, b) => a - b)[30];
+    const median = [...p.samples].sort((a, b) => a - b)[15];
     if (median > 1 / 40) {
       setDpr(1);
       onLow();

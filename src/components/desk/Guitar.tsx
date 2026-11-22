@@ -105,7 +105,7 @@ export function Guitar({ position, rotation }: Placed) {
   return (
     <group position={position} rotation={rotation}>
       <mesh geometry={BODY} castShadow receiveShadow>
-        <meshStandardMaterial color="#5c2e18" roughness={0.3} />
+        <meshPhysicalMaterial color="#5c2e18" roughness={0.5} clearcoat={0.7} clearcoatRoughness={0.35} />
       </mesh>
       <mesh geometry={BINDING} position={[0, 0, DEPTH - 0.0015]}>
         <meshStandardMaterial color="#e8dcc0" roughness={0.35} />
@@ -121,7 +121,7 @@ export function Guitar({ position, rotation }: Placed) {
         <meshBasicMaterial color="#070403" side={BackSide} />
       </mesh>
       <mesh geometry={TOP} position={[0, 0, FRONT + 0.0004]} receiveShadow>
-        <meshStandardMaterial map={spruce} roughness={0.26} />
+        <meshPhysicalMaterial map={spruce} roughness={0.45} clearcoat={0.5} clearcoatRoughness={0.4} />
       </mesh>
 
       {/* Puente con selleta de hueso */}

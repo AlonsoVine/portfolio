@@ -51,11 +51,16 @@ export function LookControls({ reduceMotion }: { reduceMotion: boolean }) {
     const onUp = () => {
       drag = null;
     };
-    // Si el ratón sale de la ventana, la cabeza vuelve a mirar al frente
+    // Si el ratón sale de la ventana, la cabeza vuelve al frente, pero sin latigazo: tras una pausa
+    let leave = 0;
     const onLeave = () => {
-      target.current.x = 0;
-      target.current.y = 0;
+      leave = window.setTimeout(() => {
+        target.current.x = 0;
+        target.current.y = 0;
+      }, 700);
     };
+    const onEnter = () => window.clearTimeout(leave);
+    document.documentElement.addEventListener("pointerenter", onEnter);
     document.documentElement.addEventListener("pointerleave", onLeave);
 
     window.addEventListener("pointermove", onMove);
@@ -68,6 +73,8 @@ export function LookControls({ reduceMotion }: { reduceMotion: boolean }) {
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
       document.documentElement.removeEventListener("pointerleave", onLeave);
+      document.documentElement.removeEventListener("pointerenter", onEnter);
+      window.clearTimeout(leave);
     };
   }, []);
 
@@ -94,7 +101,7 @@ export function LookControls({ reduceMotion }: { reduceMotion: boolean }) {
     const yaw = -c.x * YAW;
     const pitch = c.y > 0 ? PITCH_REST + c.y * (PITCH_DOWN - PITCH_REST) : PITCH_REST - c.y * (PITCH_UP - PITCH_REST);
     // Respiración: un vaivén mínimo para que la vista no parezca una cámara en trípode
-    const breath = reduceMotion ? 0 : Math.sin(clock.elapsedTime * 1.1) * 0.004;
+    const breath = reduceMotion ? 0 : Math.sin(clock.elapsedTime * 1.1) * 0.0025;
 
     // En vertical se mantiene un campo horizontal mínimo para que quepan las tres pantallas
     const cam = camera as PerspectiveCamera;

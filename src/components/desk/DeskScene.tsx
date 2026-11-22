@@ -19,6 +19,14 @@ import { Desk, Leds } from "./Room";
 // Las pantallas iluminan la mesa con luces de área; sus tablas se cargan una sola vez
 RectAreaLightUniformsLib.init();
 
+// Hay transparencias (cristales, manchas de luz, vapor) y N8AO las detecta solo: entonces vuelve a pintar
+// la escena dos veces por fotograma. Las transparentes no deben ocluir nada, así que se desactiva.
+const opaqueAO = (pass: { autoDetectTransparency: boolean; configuration: { transparencyAware: boolean } } | null) => {
+  if (!pass) return;
+  pass.autoDetectTransparency = false;
+  pass.configuration.transparencyAware = false;
+};
+
 type Props = { t: Dictionary["desk"]; lang: string; reduceMotion: boolean; onReady: () => void };
 
 export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
@@ -38,7 +46,7 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
       }}
     >
       <color attach="background" args={["#05060a"]} />
-      <fog attach="fog" args={["#05060a", 1.8, 4]} />
+      <fog attach="fog" args={["#05060a", 2.4, 5]} />
 
       <Reflections />
 
@@ -80,15 +88,15 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
       <LookControls reduceMotion={reduceMotion} />
       <Warmup onReady={onReady} onLow={() => setLow(true)} />
 
-      <EffectComposer multisampling={low ? 0 : 2} enableNormalPass={false}>
+      <EffectComposer multisampling={0} enableNormalPass={false}>
         {/* Oclusión ambiental: asienta los objetos sobre la mesa y oscurece los rincones */}
-        <>{!low && <N8AO halfRes aoRadius={0.045} distanceFalloff={0.5} intensity={1.6} color="#05060a" quality="low" />}</>
+        <>{!low && <N8AO ref={opaqueAO} halfRes aoRadius={0.045} distanceFalloff={0.5} intensity={1.6} color="#05060a" quality="low" />}</>
         <Bloom mipmapBlur intensity={0.28} luminanceThreshold={1.0} luminanceSmoothing={0.2} radius={0.65} />
         <ToneMapping mode={ToneMappingMode.NEUTRAL} />
         <Vignette offset={0.3} darkness={0.45} />
-        {/* Sin MSAA en el modo bajo: SMAA evita los dientes de sierra a coste casi nulo */}
-        <>{low && <SMAA />}</>
-        <Noise premultiply blendFunction={BlendFunction.SOFT_LIGHT} opacity={0.04} />
+        {/* SMAA en vez de MSAA: sobre un buffer HalfFloat a resolución completa sale mucho más barato */}
+        <SMAA />
+        <Noise premultiply blendFunction={BlendFunction.SOFT_LIGHT} opacity={0.02} />
       </EffectComposer>
     </Canvas>
   );

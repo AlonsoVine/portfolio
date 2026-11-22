@@ -15,7 +15,7 @@ export function Desk() {
   const wood = useCanvasTexture(1024, 512, drawWood, { tileX: 2 });
   const woodRough = useCanvasTexture(1024, 512, drawWoodRough, { tileX: 2, color: false });
   const peg = useCanvasTexture(512, 512, drawPegboard, { tileX: 10, tileY: 5 });
-  const fabric = useCanvasTexture(256, 256, drawFabric, { tileX: 14, tileY: 5.2 });
+  const fabric = useCanvasTexture(512, 512, drawFabric, { tileX: 7, tileY: 2.6 });
   const edge = useCanvasTexture(750, 280, drawMatEdge);
   const dot = useCanvasTexture(128, 128, drawSoftDot);
   const shade = (o: number) => <meshBasicMaterial map={dot} color="#000000" transparent opacity={o} depthWrite={false} />;
@@ -25,12 +25,12 @@ export function Desk() {
       <RoundedBox args={[2.1, 0.045, 0.92]} radius={0.012} position={[0, -0.0225, -0.14]} receiveShadow>
         <meshStandardMaterial map={wood} roughnessMap={woodRough} roughness={0.85} bumpMap={woodRough} bumpScale={-0.06} color="#d6b293" metalness={0} />
       </RoundedBox>
-      <RoundedBox args={[1.5, 0.004, 0.56]} radius={0.002} smoothness={2} position={[-0.02, 0.002, 0.06]} receiveShadow>
-        <meshStandardMaterial map={fabric} bumpMap={fabric} bumpScale={0.35} color="#5c5e66" roughness={0.95} />
+      <RoundedBox args={[1.5, 0.004, 0.53]} radius={0.0018} smoothness={3} position={[-0.02, 0.002, 0.045]} receiveShadow>
+        <meshStandardMaterial map={fabric} bumpMap={fabric} bumpScale={0.35} color="#6e7078" roughness={0.95} />
       </RoundedBox>
       {/* Costura del borde */}
-      <mesh position={[-0.02, 0.0041, 0.06]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[1.5, 0.56]} />
+      <mesh position={[-0.02, 0.0041, 0.045]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[1.5, 0.53]} />
         <meshStandardMaterial map={edge} transparent roughness={0.8} depthWrite={false} />
       </mesh>
       <mesh position={[0, 0.7, WALL_Z]} receiveShadow>
@@ -74,7 +74,7 @@ export function Desk() {
       {/* Suelo: al mirar hacia abajo se intuye, en vez de un vacío negro */}
       <mesh position={[0, -0.75, 0.3]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[2.2, 2]} />
-        <meshLambertMaterial color="#1a1716" />
+        <meshLambertMaterial color="#2a2522" />
       </mesh>
       {/* Paredes laterales: el escritorio está en un hueco, no flotando en el vacío */}
       {[-1, 1].map((s) => (
@@ -123,7 +123,7 @@ export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }
   const stripMat = useRef<MeshBasicMaterial>(null);
   const lights = useRef<(PointLight | null)[]>([]);
   const base = useMemo(() => [1.4, 1.2, 0.5], []);
-  const signColor = useMemo<Color>(() => hdr("#ffffff", 1.7), []);
+  const signColor = useMemo<Color>(() => hdr("#ffffff", 1.35), []);
 
   useFrame(({ clock }, delta) => {
     if (reduceMotion) return;
@@ -188,7 +188,7 @@ export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }
       <pointLight ref={(l) => void (lights.current[1] = l)} position={[0.38, 0.16, -0.46]} color={AMBER} intensity={base[1]} distance={1.6} decay={1.6} />
       <pointLight ref={(l) => void (lights.current[2] = l)} position={[0, 0.1, -0.5]} color={MAGENTA} intensity={base[2]} distance={0.6} decay={1.6} />
 
-      {!reduceMotion && <Dust map={dot} />}
+      {!reduceMotion && <Dust map={dot} count={30} />}
     </group>
   );
 }

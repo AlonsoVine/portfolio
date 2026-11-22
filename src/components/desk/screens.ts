@@ -464,7 +464,12 @@ function woodPass(ctx: CanvasRenderingContext2D, w: number, h: number, rough: bo
     ctx.beginPath();
     const ph = r() * 10;
     ctx.moveTo(0, y);
-    for (let x = 0; x <= w; x += 24) ctx.lineTo(x, y + Math.sin(x * 0.003 + ph) * 9 + Math.sin(x * 0.017 + ph * 3) * 2);
+    // Frecuencias enteras sobre el ancho: la textura se repite sin costura; la deriva hace que las vetas converjan
+    const drift = (r() - 0.5) * 40;
+    for (let x = 0; x <= w; x += 16) {
+      const u = (x / w) * Math.PI * 2;
+      ctx.lineTo(x, y + Math.sin(u + ph) * 9 + Math.sin(u * 6 + ph * 3) * 2 + Math.sin(u * 0.5) ** 2 * drift);
+    }
     ctx.stroke();
   }
   // Nudos: pocos, alargados y deformados, con la veta envolviéndolos (nada de dianas)
@@ -670,7 +675,15 @@ export const drawNoise: Draw = (ctx, w, h) => {
 export const drawFabric: Draw = (ctx, w, h) => {
   ctx.fillStyle = "#7a7c84";
   ctx.fillRect(0, 0, w, h);
+  // Manchas muy suaves de uso: la tela real no es un gris perfectamente uniforme
   const r = rng(41);
+  for (let i = 0; i < 6; i += 1) {
+    const g = ctx.createRadialGradient(r() * w, r() * h, 0, r() * w, r() * h, w * 0.4);
+    g.addColorStop(0, `rgba(${r() > 0.5 ? "255,255,255" : "0,0,0"},0.05)`);
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+  }
   const img = ctx.getImageData(0, 0, w, h);
   for (let y = 0; y < h; y += 1) {
     for (let x = 0; x < w; x += 1) {

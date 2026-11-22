@@ -86,7 +86,7 @@ export function Tablet({ t, lang, position, rotation }: { t: DeskCopy; lang: str
 // Taza de gres hecha a torno: barriga suave, marcas de los dedos al subir el barro y pie de anillo
 const MUG_H = 0.092;
 const WALL = 0.0045;
-const radius = (y: number) => 0.037 + 0.0075 * Math.sin(Math.PI * Math.min(1, (y / MUG_H) ** 0.85) * 0.9) + 0.00045 * Math.sin(y * 880);
+const radius = (y: number) => 0.037 + 0.0075 * Math.sin(Math.PI * Math.min(1, (y / MUG_H) ** 0.85) * 0.9) + 0.0003 * Math.sin(y * 880 + 2.5 * Math.sin(y * 97)) * (0.6 + 0.4 * Math.sin(y * 53));
 const COFFEE_Y = 0.074;
 
 function mugGeometry() {
@@ -149,7 +149,7 @@ export function Coffee({ position, reduceMotion }: Placed & { reduceMotion: bool
       {/* Posavasos de corcho */}
       <mesh position={[0, 0.003, 0]} receiveShadow castShadow>
         <cylinderGeometry args={[0.055, 0.055, 0.006, 64]} />
-        <meshStandardMaterial color="#a77b52" roughness={0.95} bumpMap={cork} bumpScale={1.2} />
+        <meshStandardMaterial color="#8c6a4a" roughness={1} bumpMap={cork} bumpScale={1.2} />
       </mesh>
       <group position={[0, 0.006, 0]} rotation={[0, -0.75, 0]}>
         <mesh geometry={MUG} castShadow receiveShadow>
@@ -157,18 +157,19 @@ export function Coffee({ position, reduceMotion }: Placed & { reduceMotion: bool
         </mesh>
         {/* El asa va esmaltada del mismo azul; ovalada, no un tubo redondo */}
         <mesh geometry={HANDLE} scale={[1, 1, 0.62]} castShadow>
-          <meshStandardMaterial color="#1f5268" roughness={0.18} />
+          <meshPhysicalMaterial color="#1f5268" roughness={0.3} clearcoat={1} clearcoatRoughness={0.1} />
         </mesh>
         {/* Cappuccino: espuma con roseta y un menisco oscuro donde toca la pared */}
         <mesh position={[0, COFFEE_Y, 0]} rotation={[-Math.PI / 2, 0, 0.9]}>
           <circleGeometry args={[inner, 48]} />
-          <meshStandardMaterial map={latte} roughness={0.45} />
+          <meshStandardMaterial map={latte} roughness={0.85} />
         </mesh>
       </group>
       {/* Galleta caramelizada apoyada en el posavasos */}
-      <RoundedBox args={[0.046, 0.005, 0.03]} radius={0.002} position={[-0.03, 0.009, 0.05]} rotation={[0.06, 0.5, -0.12]} castShadow>
+      <mesh position={[-0.03, 0.0085, 0.05]} rotation={[0.06, 0.5, -0.12]} scale={[1.3, 1, 0.85]} castShadow>
+        <cylinderGeometry args={[0.019, 0.019, 0.005, 28]} />
         <meshStandardMaterial color="#b0682e" roughness={0.75} bumpMap={noise} bumpScale={2} />
-      </RoundedBox>
+      </mesh>
       {!reduceMotion && (
         <>
           <Steam position={[0.004, COFFEE_Y + 0.006, 0]} height={0.14} width={0.075} noise={noise} />
