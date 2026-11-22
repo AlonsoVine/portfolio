@@ -4,7 +4,14 @@ import { useFrame, useThree, type ThreeElements } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import {
   AdditiveBlending,
+  Color,
+  Euler,
+  Float32BufferAttribute,
   HalfFloatType,
+  Matrix4,
+  NormalBlending,
+  Quaternion,
+  Vector3,
   BufferAttribute,
   BufferGeometry,
   Mesh,
@@ -17,6 +24,7 @@ import {
   WebGLRenderTarget,
 } from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { AMBER, hdr, ICE, VIOLET } from "./palette";
 
 // Las cajas redondeadas se repiten mucho con las mismas medidas: una geometría por medida
@@ -186,27 +194,50 @@ export function Warmup({ onReady, onLow }: { onReady: () => void; onLow: () => v
   });
   return null;
 }
+export type SoftPlane = { p: [number, number, number]; r?: [number, number, number]; s: [number, number]; c: string; o: number };
+
+/**
+ * Muchos planos con la misma mancha suave (halos de luz o sombras de contacto) en una sola malla y una
+ * sola llamada de dibujo. El color y la opacidad de cada uno van en el color RGBA de sus vértices.
+ */
+export function SoftPlanes({ map, items, additive = false, renderOrder }: { map: Texture; items: SoftPlane[]; additive?: boolean; renderOrder?: number }) {
+  const geometry = useMemo(() => {
+    const m = new Matrix4();
+    const q = new Quaternion();
+    const c = new Color();
+    const parts = items.map(({ p, r = [0, 0, 0], s, c: hex, o }) => {
+      const g = new PlaneGeometry(1, 1);
+      g.applyMatrix4(m.compose(new Vector3(...p), q.setFromEuler(new Euler(...r)), new Vector3(s[0], s[1], 1)));
+      c.set(hex);
+      g.setAttribute("color", new Float32BufferAttribute(Array.from({ length: 4 }, () => [c.r, c.g, c.b, o]).flat(), 4));
+      return g;
+    });
+    const merged = mergeGeometries(parts, false);
+    parts.forEach((g) => g.dispose());
+    return merged;
+  }, [items]);
+  useEffect(() => () => geometry.dispose(), [geometry]);
+  return (
+    <mesh geometry={geometry} renderOrder={renderOrder}>
+      <meshBasicMaterial map={map} vertexColors transparent depthWrite={false} blending={additive ? AdditiveBlending : NormalBlending} toneMapped={false} />
+    </mesh>
+  );
+}
+
 // Sombras de contacto bajo lo que reposa en el tapete: la direccional es muy suave y el AO a media
 // resolución no llega a estos contactos tan finos. Sin ellas los objetos parecen flotar.
-const CONTACTS: { p: [number, number]; s: [number, number]; r?: number; o?: number }[] = [
-  { p: [-0.04, 0.1], s: [0.42, 0.18], o: 0.45 },
-  { p: [-0.47, 0.2], s: [0.17, 0.11], r: 0.38 },
-  { p: [0.27, -0.1], s: [0.11, 0.1], r: -0.15 },
-  { p: [0.425, -0.06], s: [0.13, 0.13], o: 0.6 },
-  { p: [0.6, 0.15], s: [0.22, 0.31], r: -0.42 },
-  { p: [0.27, 0.13], s: [0.07, 0.13], r: -0.12, o: 0.6 },
-  { p: [-0.615, -0.22], s: [0.3, 0.28], r: 0.46, o: 0.4 },
-];
+const CONTACTS: SoftPlane[] = (
+  [
+    [[-0.04, 0.1], [0.42, 0.18], 0, 0.45],
+    [[-0.47, 0.2], [0.17, 0.11], 0.38, 0.55],
+    [[0.27, -0.1], [0.11, 0.1], -0.15, 0.55],
+    [[0.425, -0.06], [0.13, 0.13], 0, 0.6],
+    [[0.6, 0.15], [0.22, 0.31], -0.42, 0.55],
+    [[0.27, 0.13], [0.07, 0.13], -0.12, 0.6],
+    [[-0.615, -0.22], [0.3, 0.28], 0.46, 0.4],
+  ] as const
+).map(([[x, z], [w, d], r, o]) => ({ p: [x, 0.0046, z], r: [-Math.PI / 2, 0, r], s: [w, d], c: "#000000", o }));
 
 export function ContactShadows({ map }: { map: Texture }) {
-  return (
-    <group position={[0, 0.0046, 0]}>
-      {CONTACTS.map(({ p, s, r = 0, o = 0.55 }) => (
-        <mesh key={`${p[0]}${p[1]}`} position={[p[0], 0, p[1]]} rotation={[-Math.PI / 2, 0, r]} scale={[s[0], s[1], 1]} renderOrder={-1}>
-          <planeGeometry />
-          <meshBasicMaterial map={map} color="#000000" transparent opacity={o} depthWrite={false} />
-        </mesh>
-      ))}
-    </group>
-  );
+  return <SoftPlanes map={map} items={CONTACTS} renderOrder={-1} />;
 }

@@ -3,10 +3,10 @@
 
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
-import { AdditiveBlending, type Color, type MeshBasicMaterial, type PointLight, type Texture } from "three";
+import { type Color, type MeshBasicMaterial, type PointLight } from "three";
 import { AMBER, hdr, ICE, MAGENTA, VIOLET } from "./palette";
 import { drawFabric, drawMatEdge, drawNeonSign, drawPegboard, drawSoftDot, drawStrip, drawUnderglow, drawWood, drawWoodRough, type DeskCopy } from "./screens";
-import { Dust, RoundedBox } from "./primitives";
+import { Dust, RoundedBox, SoftPlanes, type SoftPlane } from "./primitives";
 import { useCanvasTexture } from "./useCanvasTexture";
 
 export const WALL_Z = -0.6;
@@ -87,28 +87,29 @@ export function Desk() {
   );
 }
 
-function Wash({
-  position,
-  rotation,
-  scale,
-  color,
-  map,
-  opacity,
-}: {
-  position: [number, number, number];
-  rotation?: [number, number, number];
-  scale: [number, number];
-  color: string;
-  map: Texture;
-  opacity: number;
-}) {
-  return (
-    <mesh position={position} rotation={rotation} scale={[scale[0], scale[1], 1]}>
-      <planeGeometry />
-      <meshBasicMaterial map={map} color={color} transparent opacity={opacity} blending={AdditiveBlending} depthWrite={false} />
-    </mesh>
-  );
-}
+const FLOOR: SoftPlane["r"] = [-Math.PI / 2, 0, 0];
+const LEFT: SoftPlane["r"] = [0, Math.PI / 2, 0];
+const RIGHT: SoftPlane["r"] = [0, -Math.PI / 2, 0];
+/** Halos que las tiras LED dejan en suelo y paredes: todos en una sola malla aditiva. */
+const WASHES: SoftPlane[] = [
+  ...(
+    [
+      [-0.62, ICE],
+      [-0.22, "#a9c4ff"],
+      [0.22, "#ffcf9e"],
+      [0.62, AMBER],
+    ] as const
+  ).map(([x, c]): SoftPlane => ({ p: [x, -0.748, 0.2], r: FLOOR, s: [0.85, 0.6], c, o: 0.18 })),
+  { p: [-0.75, 0.16, WALL_Z + 0.004], s: [1.4, 0.8], c: ICE, o: 0.2 },
+  { p: [0.78, 0.16, WALL_Z + 0.004], s: [1.4, 0.8], c: AMBER, o: 0.18 },
+  { p: [0, 0.12, WALL_Z + 0.005], s: [1.9, 0.5], c: MAGENTA, o: 0.035 },
+  { p: [0, 0.66, WALL_Z + 0.003], s: [1.3, 0.5], c: VIOLET, o: 0.15 },
+  { p: [-1.045, 0.22, -0.42], r: LEFT, s: [1.0, 0.9], c: ICE, o: 0.3 },
+  { p: [-1.045, 0.4, -0.15], r: LEFT, s: [1.9, 1.5], c: ICE, o: 0.16 },
+  { p: [-1.045, 0.25, -0.45], r: LEFT, s: [0.8, 0.7], c: VIOLET, o: 0.06 },
+  { p: [1.045, 0.4, -0.3], r: RIGHT, s: [1.4, 1.1], c: AMBER, o: 0.12 },
+  { p: [1.046, 0.62, 0.12], r: RIGHT, s: [1.1, 1.2], c: AMBER, o: 0.1 },
+];
 
 /**
  * Iluminación ambiental de la pared: tira LED con el degradado frío → violeta → magenta → cálido,
@@ -162,23 +163,7 @@ export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }
         <planeGeometry args={[1.96, 0.008]} />
         <meshBasicMaterial map={under} color={hdr("#ffffff", 2.2)} toneMapped={false} />
       </mesh>
-      {[
-        [-0.62, ICE],
-        [-0.22, "#a9c4ff"],
-        [0.22, "#ffcf9e"],
-        [0.62, AMBER],
-      ].map(([x, c]) => (
-        <Wash key={x as number} map={dot} position={[x as number, -0.748, 0.2]} rotation={[-Math.PI / 2, 0, 0]} scale={[0.85, 0.6]} color={c as string} opacity={0.18} />
-      ))}
-      <Wash map={dot} position={[-0.75, 0.16, WALL_Z + 0.004]} scale={[1.4, 0.8]} color={ICE} opacity={0.2} />
-      <Wash map={dot} position={[0.78, 0.16, WALL_Z + 0.004]} scale={[1.4, 0.8]} color={AMBER} opacity={0.18} />
-      <Wash map={dot} position={[0, 0.12, WALL_Z + 0.005]} scale={[1.9, 0.5]} color={MAGENTA} opacity={0.035} />
-      <Wash map={dot} position={[0, 0.66, WALL_Z + 0.003]} scale={[1.3, 0.5]} color={VIOLET} opacity={0.15} />
-      <Wash map={dot} position={[-1.045, 0.22, -0.42]} rotation={[0, Math.PI / 2, 0]} scale={[1.0, 0.9]} color={ICE} opacity={0.3} />
-      <Wash map={dot} position={[-1.045, 0.4, -0.15]} rotation={[0, Math.PI / 2, 0]} scale={[1.9, 1.5]} color={ICE} opacity={0.16} />
-      <Wash map={dot} position={[-1.045, 0.25, -0.45]} rotation={[0, Math.PI / 2, 0]} scale={[0.8, 0.7]} color={VIOLET} opacity={0.06} />
-      <Wash map={dot} position={[1.045, 0.4, -0.3]} rotation={[0, -Math.PI / 2, 0]} scale={[1.4, 1.1]} color={AMBER} opacity={0.12} />
-      <Wash map={dot} position={[1.046, 0.62, 0.12]} rotation={[0, -Math.PI / 2, 0]} scale={[1.1, 1.2]} color={AMBER} opacity={0.1} />
+      <SoftPlanes map={dot} items={WASHES} additive />
 
       <pointLight ref={(l) => void (lights.current[0] = l)} position={[-0.38, 0.16, -0.46]} color={ICE} intensity={base[0]} distance={1.6} decay={1.6} />
       <pointLight ref={(l) => void (lights.current[1] = l)} position={[0.38, 0.16, -0.46]} color={AMBER} intensity={base[1]} distance={1.6} decay={1.6} />

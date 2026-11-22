@@ -2,9 +2,13 @@
 
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { mergeGeometries, mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import {
+  BoxGeometry,
   CatmullRomCurve3,
+  ConeGeometry,
+  CylinderGeometry,
   Color,
   DoubleSide,
   Float32BufferAttribute,
@@ -25,6 +29,7 @@ import {
   TubeGeometry,
   Vector3,
 } from "three";
+import { hdr } from "./palette";
 import { RoundedBox } from "./primitives";
 import { drawNoise, drawPothosLeaf, drawSnakeLeaf } from "./screens";
 import { Steam } from "./Steam";
@@ -457,36 +462,39 @@ const TROUGH = { x: -0.93, z: -0.2, len: 0.5, w: 0.13, h: 0.09, wall: 0.008 };
 const SOIL = TROUGH.h - 0.01;
 const CELLS = [-1, 0, 1].map((i) => TROUGH.z + (i * TROUGH.len) / 3);
 
+// Cada material de la jardinera en una sola malla: cerámica (base, laterales y tabiques), patas y tierra
+const PLANTER = (() => {
+  const { w, h, wall, len } = TROUGH;
+  const box = (sx: number, sy: number, sz: number, x: number, y: number, z: number, r = 0.003) => new RoundedBoxGeometry(sx, sy, sz, 2, r).translate(x, y, z);
+  const merge = (parts: BufferGeometry[]) => {
+    const g = mergeGeometries(parts, false);
+    parts.forEach((p) => p.dispose());
+    return g;
+  };
+  return {
+    ceramic: merge([
+      box(w, wall, len, 0, wall / 2 + 0.006, 0),
+      ...[-1, 1].map((sx) => box(wall, h - 0.006, len, sx * (w / 2 - wall / 2), h / 2 + 0.003, 0)),
+      ...[-1, -1 / 3, 1 / 3, 1].map((k) => box(w, h - 0.006, wall, 0, h / 2 + 0.003, (k * (len - wall)) / 2)),
+    ]),
+    // Patas de roble: la jardinera no apoya directamente en la mesa
+    feet: merge([-1, 1].map((sz) => box(w * 0.85, 0.006, 0.03, 0, 0.003, sz * (len / 2 - 0.05), 0.002))),
+    soil: merge(CELLS.map((cz) => new PlaneGeometry(w - wall * 2, len / 3 - wall).rotateX(-Math.PI / 2).translate(0, SOIL, cz - TROUGH.z))),
+  };
+})();
+
 function Planter() {
-  const { x, z, len, w, h, wall } = TROUGH;
-  const ceramic = <meshStandardMaterial color="#cdc8bd" roughness={0.72} />;
   return (
-    <group position={[x, 0, z]}>
-      <RoundedBox args={[w, wall, len]} radius={0.003} position={[0, wall / 2 + 0.006, 0]} castShadow receiveShadow>
-        {ceramic}
-      </RoundedBox>
-      {[-1, 1].map((sx) => (
-        <RoundedBox key={`l${sx}`} args={[wall, h - 0.006, len]} radius={0.003} position={[sx * (w / 2 - wall / 2), h / 2 + 0.003, 0]} castShadow receiveShadow>
-          {ceramic}
-        </RoundedBox>
-      ))}
-      {[-1, -1 / 3, 1 / 3, 1].map((k) => (
-        <RoundedBox key={`c${k}`} args={[w, h - 0.006, wall]} radius={0.003} position={[0, h / 2 + 0.003, (k * (len - wall)) / 2]} castShadow receiveShadow>
-          {ceramic}
-        </RoundedBox>
-      ))}
-      {/* Patas de roble: la jardinera no apoya directamente en la mesa */}
-      {[-1, 1].map((sz) => (
-        <RoundedBox key={`p${sz}`} args={[w * 0.85, 0.006, 0.03]} radius={0.002} position={[0, 0.003, sz * (len / 2 - 0.05)]}>
-          <meshStandardMaterial color="#8a6442" roughness={0.6} />
-        </RoundedBox>
-      ))}
-      {CELLS.map((cz) => (
-        <mesh key={cz} position={[0, SOIL, cz - z]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-          <planeGeometry args={[w - wall * 2, len / 3 - wall]} />
-          <meshStandardMaterial color="#2a2019" roughness={1} />
-        </mesh>
-      ))}
+    <group position={[TROUGH.x, 0, TROUGH.z]}>
+      <mesh geometry={PLANTER.ceramic} castShadow receiveShadow>
+        <meshStandardMaterial color="#cdc8bd" roughness={0.72} />
+      </mesh>
+      <mesh geometry={PLANTER.feet}>
+        <meshStandardMaterial color="#8a6442" roughness={0.6} />
+      </mesh>
+      <mesh geometry={PLANTER.soil} receiveShadow>
+        <meshStandardMaterial color="#2a2019" roughness={1} />
+      </mesh>
     </group>
   );
 }
@@ -508,6 +516,8 @@ export function Plants({ reduceMotion }: { reduceMotion: boolean }) {
       <group position={[TROUGH.x, 0, 0.25]} rotation={[0, Math.PI / 2, 0]} scale={1.15}>
         <Bonsai position={[0, 0, 0]} />
       </group>
+      {/* Clavado al fondo del cajón central, entre la sansevieria y el poto: el mástil se pierde entre las hojas */}
+      <Lantern position={[TROUGH.x - 0.04, SOIL, CELLS[1] + 0.06]} rotation={[0, -Math.PI / 4, 0]} />
       <Incense position={[TROUGH.x, 0, 0.125]} reduceMotion={reduceMotion} />
     </group>
   );
@@ -574,10 +584,146 @@ function Incense({ position, reduceMotion }: { position: Vec3; reduceMotion: boo
             <sphereGeometry args={[0.0016, 10, 8]} />
             <meshBasicMaterial ref={ember} toneMapped={false} />
           </mesh>
-          <pointLight position={[0, 0.002, 0]} color="#ff8a3d" intensity={0.05} distance={0.12} decay={2} />
           <Steam position={[0, 0.005, 0]} height={0.24} width={0.028} noise={noise} color="#d8dce6" opacity={0.34} />
         </group>
       </group>
+    </group>
+  );
+}
+
+// ——— Farolillo de jardín ———
+
+const LANTERN_AT: Vec3 = [0.082, 0.3, 0];
+
+/** Todo el hierro del farolillo (mástil en cayado, tejadillo, marcos y montantes) en una sola malla. */
+const IRON = (() => {
+  const post = new TubeGeometry(
+    new CatmullRomCurve3([
+      new Vector3(0, 0, 0),
+      new Vector3(0, 0.3, 0),
+      new Vector3(0.006, 0.36, 0),
+      new Vector3(0.04, 0.385, 0),
+      new Vector3(0.075, 0.37, 0),
+      new Vector3(0.082, 0.345, 0),
+    ]),
+    48,
+    0.0032,
+    8,
+  );
+  const [x, y, z] = LANTERN_AT;
+  const at = <T extends BufferGeometry>(g: T, dx: number, dy: number, dz: number) => g.translate(x + dx, y + dy, z + dz);
+  const roof = new ConeGeometry(0.034, 0.022, 4);
+  roof.rotateY(Math.PI / 4);
+  const parts: BufferGeometry[] = [
+    post,
+    at(new CylinderGeometry(0.0025, 0.0025, 0.014, 8), 0, 0.033, 0),
+    at(roof, 0, 0.019, 0),
+    at(new BoxGeometry(0.042, 0.004, 0.042), 0, 0.006, 0),
+    at(new BoxGeometry(0.038, 0.005, 0.038), 0, -0.05, 0),
+    ...[-1, 1].flatMap((a) => [-1, 1].map((b) => at(new BoxGeometry(0.003, 0.054, 0.003), a * 0.0165, -0.022, b * 0.0165))),
+  ];
+  // Las primitivas de three salen indexadas y con las mismas atributos: se pueden fundir sin más
+  const merged = mergeGeometries(parts, false);
+  parts.forEach((g) => g.dispose());
+  return merged;
+})();
+
+/** Farolillo de jardín de hierro negro con cristal esmerilado: luz cálida que cae sobre las plantas. */
+function Lantern({ position, rotation }: { position: Vec3; rotation?: Vec3 }) {
+  return (
+    <group position={position} rotation={rotation}>
+      <mesh geometry={IRON} castShadow>
+        <meshStandardMaterial color="#17171a" roughness={0.45} metalness={0.7} />
+      </mesh>
+      <group position={LANTERN_AT}>
+        {/* Cristal esmerilado iluminado desde dentro, con la bombilla al fondo */}
+        <mesh position={[0, -0.022, 0]}>
+          <boxGeometry args={[0.032, 0.052, 0.032]} />
+          <meshStandardMaterial color="#f4e6cf" roughness={0.4} emissive="#ffc98f" emissiveIntensity={1.4} />
+        </mesh>
+        <mesh position={[0, -0.022, 0]}>
+          <sphereGeometry args={[0.009, 12, 8]} />
+          <meshBasicMaterial color={hdr("#ffd8a8", 2.2)} toneMapped={false} />
+        </mesh>
+        <pointLight position={[0, -0.03, 0]} color="#ffc98f" intensity={1.2} distance={0.6} decay={1.8} />
+      </group>
+    </group>
+  );
+}
+
+// ——— Poto colgante de la balda ———
+
+const HANGING: { vines: Vec3[][]; leaves: Instance[] } = (() => {
+  const r = rng(91);
+  const vines: Vec3[][] = [];
+  const leaves: Instance[] = [];
+  // Guías que salen de la maceta, pasan por el canto de la balda y caen a distintas alturas
+  (
+    [
+      [-0.06, -0.14],
+      [-0.035, -0.26],
+      [-0.01, -0.19],
+      [0.015, -0.32],
+      [0.04, -0.21],
+      [0.065, -0.11],
+    ] as const
+  ).forEach(([x, end]) => {
+    const pts: Vec3[] = [
+      [x * 0.15, 0.048, 0.004],
+      [x * 0.45, 0.055, 0.03],
+      [x * 0.75, 0.04, 0.058],
+      [x * 0.9, 0.0, 0.07 + r() * 0.006],
+      [x * 1.05 + (r() - 0.5) * 0.02, end * 0.55, 0.072 + r() * 0.012],
+      [x * 1.15 + (r() - 0.5) * 0.03, end, 0.068 + r() * 0.015],
+    ];
+    vines.push(pts);
+    const curve = new CatmullRomCurve3(pts.map((p) => new Vector3(...p)));
+    const n = Math.round(-end * 45) + 4;
+    for (let i = 0; i < n; i += 1) {
+      const t = 0.12 + (i / n) * 0.88;
+      const p = curve.getPoint(t);
+      const side = i % 2 ? 1 : -1;
+      // Arriba las hojas se abren hacia delante; en la caída cuelgan con la punta hacia abajo
+      const hanging = p.y < 0.02;
+      leaves.push({
+        p: [p.x + side * 0.007, p.y, p.z + 0.004],
+        r: [hanging ? Math.PI - 0.5 + r() * 0.5 : -1.0 + r() * 0.4, Math.atan2(-side * 0.6, -1) + (r() - 0.5) * 0.6, (r() - 0.5) * 0.8],
+        s: Array(3).fill(0.019 * (1.1 - t * 0.35) * (0.85 + r() * 0.3)) as Vec3,
+        c: POTHOS_GREENS[Math.floor(r() * POTHOS_GREENS.length)],
+      });
+    }
+  });
+  // Mata de la maceta
+  for (let i = 0; i < 16; i += 1) {
+    const a = i * 2.39996;
+    const d = 0.004 + Math.sqrt(i / 16) * 0.024;
+    leaves.push({
+      p: [Math.cos(a) * d, 0.05 + (1 - d / 0.028) * 0.025, Math.sin(a) * d],
+      r: [-0.6 - (d / 0.028) * 0.6, Math.atan2(-Math.cos(a), -Math.sin(a)), (r() - 0.5) * 0.6],
+      s: Array(3).fill(0.026 + r() * 0.01) as Vec3,
+      c: POTHOS_GREENS[Math.floor(r() * POTHOS_GREENS.length)],
+    });
+  }
+  return { vines, leaves };
+})();
+
+const HANGING_STEMS: Stem[] = HANGING.vines.map((points) => ({ points, r0: 0.0015, r1: 0.001 }));
+
+/** Poto en una maceta pequeña de cerámica: sus guías rebosan por el canto de la balda y cuelgan. */
+export function HangingPothos({ position }: { position: Vec3 }) {
+  const variegated = useCanvasTexture(128, 128, drawPothosLeaf);
+  return (
+    <group position={position}>
+      <mesh position={[0, 0.022, 0]} castShadow>
+        <cylinderGeometry args={[0.03, 0.024, 0.044, 28]} />
+        <meshStandardMaterial color="#cfc6b4" roughness={0.6} />
+      </mesh>
+      <mesh position={[0, 0.042, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.027, 24]} />
+        <meshStandardMaterial color="#3a2a1e" roughness={1} />
+      </mesh>
+      <Stems stems={HANGING_STEMS} color="#6f8f3a" roughness={0.6} />
+      <Instances geometry={HEART} items={HANGING.leaves} roughness={0.38} side={DoubleSide} map={variegated} />
     </group>
   );
 }

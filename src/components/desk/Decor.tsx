@@ -2,7 +2,10 @@
 
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
-import { DoubleSide, type Group } from "three";
+import { BufferGeometry, Color, DoubleSide, Euler, Float32BufferAttribute, type Group, Matrix4, PlaneGeometry, Quaternion, Vector3 } from "three";
+import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { HangingPothos } from "./Plants";
 import { RoundedBox } from "./primitives";
 import { drawCalendar, drawClockFace, drawRug, drawSoftDot } from "./screens";
 import { useCanvasTexture } from "./useCanvasTexture";
@@ -27,60 +30,54 @@ const BOOKS: { w: number; h: number; c: string; lean?: number }[] = [
   { w: 0.021, h: 0.142, c: "#3d5a3a" },
   { w: 0.018, h: 0.158, c: "#1f1f24", lean: -0.2 },
 ];
-// Lomos uno junto a otro desde el extremo izquierdo de la balda
-const SHELVED = BOOKS.map((b, i) => ({ ...b, x: -0.215 + BOOKS.slice(0, i).reduce((acc, p) => acc + p.w + 0.002, 0) + b.w / 2 }));
+// Balda, libros, cantos de páginas y la pila tumbada comparten material: una sola malla con color por vértice
+const SHELF_WOOD = (() => {
+  const m = new Matrix4();
+  const q = new Quaternion();
+  const c = new Color();
+  const parts: BufferGeometry[] = [];
+  const add = (g: BufferGeometry, hex: string, p: Vec3, r: Vec3 = [0, 0, 0], pivot: Vec3 = [0, 0, 0]) => {
+    const flat = g.index ? g.toNonIndexed() : g;
+    flat.translate(...pivot);
+    flat.applyMatrix4(m.compose(new Vector3(...p), q.setFromEuler(new Euler(...r)), new Vector3(1, 1, 1)));
+    c.set(hex);
+    const n = flat.attributes.position.count;
+    flat.setAttribute("color", new Float32BufferAttribute(Array.from({ length: n }, () => [c.r, c.g, c.b]).flat(), 3));
+    parts.push(flat);
+  };
+  add(new RoundedBoxGeometry(0.5, 0.024, 0.14, 3, 0.004), "#9b6b43", [0, 0, 0.07]);
+  let x = -0.215;
+  BOOKS.forEach((b) => {
+    const at: Vec3 = [x + b.w / 2 + (b.lean ? 0.03 : 0), 0.012, 0.075];
+    const r: Vec3 = [0, 0, b.lean ?? 0];
+    x += b.w + 0.002;
+    add(new RoundedBoxGeometry(b.w, b.h, 0.105, 2, 0.002), b.c, at, r, [0, b.h / 2, 0]);
+    // Bloque de páginas asomando por delante
+    add(new PlaneGeometry(b.w * 0.55, b.h * 0.92), "#d9d0bd", at, r, [0, b.h / 2, 0.0528]);
+  });
+  add(new RoundedBoxGeometry(0.13, 0.022, 0.095, 2, 0.002), "#a2482f", [0.035, 0.023, 0.072], [0, 0.08, 0]);
+  add(new RoundedBoxGeometry(0.12, 0.018, 0.09, 2, 0.002), "#e1d7c3", [0.038, 0.043, 0.072], [0, -0.05, 0]);
+  const merged = mergeGeometries(parts, false);
+  parts.forEach((g) => g.dispose());
+  return merged;
+})();
 
-/** Balda flotante de roble con libros, una pila tumbada con un jarrón y una cámara de carrete. */
+/** Balda flotante de roble con libros, una pila tumbada con un poto colgante y una cámara de carrete. */
 export function Shelf({ position }: { position: Vec3 }) {
   const dot = useCanvasTexture(128, 128, drawSoftDot);
   return (
     <group position={position}>
-      <RoundedBox args={[0.5, 0.024, 0.14]} radius={0.004} position={[0, 0, 0.07]} castShadow receiveShadow>
-        <meshStandardMaterial color="#9b6b43" roughness={0.6} />
-      </RoundedBox>
+      <mesh geometry={SHELF_WOOD} castShadow receiveShadow>
+        <meshStandardMaterial vertexColors roughness={0.72} />
+      </mesh>
       {/* Sombra de la balda y sus objetos sobre la pared */}
       <mesh position={[0, -0.05, 0.002]} scale={[0.62, 0.16, 1]}>
         <planeGeometry />
         <meshBasicMaterial map={dot} color="#000000" transparent opacity={0.55} depthWrite={false} />
       </mesh>
 
-      {SHELVED.map((b) => (
-        <group key={b.x} position={[b.x + (b.lean ? 0.03 : 0), 0.012, 0.075]} rotation={[0, 0, b.lean ?? 0]}>
-          <RoundedBox args={[b.w, b.h, 0.105]} radius={0.002} position={[0, b.h / 2, 0]} castShadow>
-            <meshStandardMaterial color={b.c} roughness={0.75} />
-          </RoundedBox>
-          {/* Bloque de páginas asomando por delante */}
-          <mesh position={[0, b.h / 2, 0.0528]}>
-            <planeGeometry args={[b.w * 0.55, b.h * 0.92]} />
-            <meshStandardMaterial color="#d9d0bd" roughness={0.9} />
-          </mesh>
-        </group>
-      ))}
-
-      {/* Pila tumbada con un jarrón de cerámica encima */}
-      <RoundedBox args={[0.13, 0.022, 0.095]} radius={0.002} position={[0.035, 0.023, 0.072]} rotation={[0, 0.08, 0]} castShadow>
-        <meshStandardMaterial color="#a2482f" roughness={0.75} />
-      </RoundedBox>
-      <RoundedBox args={[0.12, 0.018, 0.09]} radius={0.002} position={[0.038, 0.043, 0.072]} rotation={[0, -0.05, 0]} castShadow>
-        <meshStandardMaterial color="#e1d7c3" roughness={0.75} />
-      </RoundedBox>
-      <group position={[0.04, 0.052, 0.072]}>
-        <mesh position={[0, 0.03, 0]} scale={[1, 1.25, 1]} castShadow>
-          <sphereGeometry args={[0.026, 24, 16]} />
-          <meshStandardMaterial color="#d6cbb8" roughness={0.55} />
-        </mesh>
-        <mesh position={[0, 0.067, 0]}>
-          <cylinderGeometry args={[0.009, 0.012, 0.018, 20]} />
-          <meshStandardMaterial color="#d6cbb8" roughness={0.55} />
-        </mesh>
-        {/* Espigas secas */}
-        {[-0.25, 0.05, 0.3].map((a, i) => (
-          <mesh key={a} position={[Math.sin(a) * 0.04, 0.11 + i * 0.006, 0]} rotation={[0, 0, -a]}>
-            <cylinderGeometry args={[0.0008, 0.001, 0.09 + i * 0.012, 5]} />
-            <meshStandardMaterial color="#c9ab7a" roughness={0.9} />
-          </mesh>
-        ))}
-      </group>
+      {/* Poto colgante sobre la pila: sus guías caen por delante de la balda */}
+      <HangingPothos position={[0.04, 0.052, 0.072]} />
 
       {/* Cámara de carrete: cuerpo negro, tapa cromada y objetivo */}
       <group position={[0.175, 0.012, 0.075]} rotation={[0, -0.35, 0]}>
