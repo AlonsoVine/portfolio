@@ -391,8 +391,9 @@ export const drawTablet =
       ctx.fill();
     }
     const { time, date } = clock(lang);
-    text(ctx, date, w / 2, h * 0.08, mono(f, 22), "#d4e0ff", { align: "center" });
-    text(ctx, time, w / 2, h * 0.21, display(f, 168, 200), "#f4f7ff", { align: "center", glow: 16 });
+    text(ctx, date, w / 2, h * 0.075, mono(f, 24, 500), "#e4ecff", { align: "center" });
+    // La hora queda por detrás del retrato, como un fondo con profundidad: es secundaria
+    text(ctx, time, w / 2, h * 0.3, display(f, 168, 200), "rgba(230,238,255,0.82)", { align: "center", glow: 12 });
   };
 
 /* ---------- superficies ---------- */
