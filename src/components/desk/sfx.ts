@@ -114,6 +114,29 @@ export function click() {
   play(buf, 0.5, f);
 }
 
+/** Taza de gres que se posa en el corcho: golpe sordo con un poco de timbre cerámico. */
+export function clink() {
+  const { ac, out } = audio();
+  const t = ac.currentTime;
+  for (const [f, peak, dur] of [
+    [1850, 0.05, 0.25],
+    [2730, 0.025, 0.18],
+    [180, 0.12, 0.08],
+  ] as const) {
+    const o = ac.createOscillator();
+    o.type = "sine";
+    o.frequency.value = f;
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(peak, t + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g);
+    g.connect(out);
+    o.start(t);
+    o.stop(t + dur + 0.02);
+  }
+}
+
 /** Vibración del mando: un zumbido grave con trémolo que se apaga. */
 export function rumble() {
   const { ac, out } = audio();

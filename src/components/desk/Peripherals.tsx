@@ -6,6 +6,7 @@ import {
   AdditiveBlending,
   BufferGeometry,
   Color,
+  type Group,
   Float32BufferAttribute,
   type Mesh,
   type InstancedMesh,
@@ -302,44 +303,64 @@ function shellPart(shell: SphereGeometry, keep: (x: number, y: number, z: number
 }
 
 const SHELL = mouseShell();
-// Botones: la parte frontal superior, partida por una ranura y por el hueco de la rueda
-const BUTTONS = shellPart(
-  SHELL,
-  (x, y, z) => y > 0.3 && z < 0.1 && Math.abs(x) > 0.06 && !(Math.abs(x) < 0.2 && z > -0.66 && z < -0.18),
-  [1.008, 1.014, 1.004],
-);
+// Botones: la parte frontal superior, partida por una ranura y por el hueco de la rueda; cada lado por separado
+const isButton = (x: number, y: number, z: number) => y > 0.3 && z < 0.1 && Math.abs(x) > 0.06 && !(Math.abs(x) < 0.2 && z > -0.66 && z < -0.18);
+const BUTTONS = [-1, 1].map((side) => shellPart(SHELL, (x, y, z) => isButton(x, y, z) && Math.sign(x) === side, [1.008, 1.014, 1.004]));
 // Faldón lateral gris grafito: marca la silueta y separa el ratón del tapete
 const SKIRT = shellPart(SHELL, (_x, y) => y > 0.02 && y < 0.26, [1.01, 1, 1.006]);
 /** Altura de la carcasa en el eje central para una z unitaria (para asentar la rueda). */
 const shellTop = (z: number) => Math.sqrt(1 - z * z) * (0.8 + 0.25 * smooth(-0.6, 0.5, z));
 
 const DPI_COLORS = [ICE, MINT, VIOLET, MAGENTA, AMBER];
+const SLIDE_S = 0.9;
+const CLICKS_AT = [0.35, 0.5];
 
 /**
  * Ratón inalámbrico clásico: carcasa esculpida, botones partidos, rueda de goma en su hueco y patines.
- * Hace clic a la vez que tu ratón de verdad, y al pulsarlo cambia de DPI con un destello del color nuevo.
+ * Hace clic a la vez que tu ratón de verdad. Al pulsarlo se desliza un poco, hace doble clic y cambia de DPI
+ * con un destello del color nuevo.
  */
 export function Mouse({ t, position, rotation }: Placed & { t: DeskCopy }) {
   const spill = useCanvasTexture(128, 128, drawSoftDot);
-  const buttons = useRef<Mesh>(null);
+  const left = useRef<Mesh>(null);
+  const right = useRef<Mesh>(null);
   const led = useRef<MeshBasicMaterial>(null);
   const flash = useRef<MeshBasicMaterial>(null);
-  const state = useRef({ dpi: 0, press: 0, flash: 0 });
+  const body = useRef<Group>(null);
+  const state = useRef({ dpi: 0, press: 0, flash: 0, slide: SLIDE_S, clicks: 0, side: 0, last: -10 });
 
   useEffect(() => {
+    // Copia los clics de tu ratón: izquierdo o derecho según el botón que pulses
     const down = (e: PointerEvent) => {
-      if (e.pointerType === "mouse") state.current.press = 1;
+      if (e.pointerType !== "mouse") return;
+      state.current.side = e.button === 2 ? 1 : 0;
+      state.current.press = 1;
     };
     window.addEventListener("pointerdown", down);
     return () => window.removeEventListener("pointerdown", down);
   }, []);
 
-  useFrame((_, delta) => {
+  useFrame(({ gl }, delta) => {
     const s = state.current;
-    if (s.press <= 0 && s.flash <= 0) return;
+    if (s.press <= 0 && s.flash <= 0 && s.slide >= SLIDE_S) return;
+    if (s.slide < SLIDE_S) {
+      s.slide = Math.min(SLIDE_S, s.slide + delta);
+      const p = s.slide / SLIDE_S;
+      // Un pequeño desplazamiento de ida y vuelta, como quien coloca el puntero, y dos clics a mitad
+      const go = Math.sin(Math.PI * Math.min(1, p / 0.85)) ** 2;
+      body.current?.position.set(0.012 * go, 0, -0.016 * go);
+      if (body.current) body.current.rotation.y = 0.12 * go;
+      while (s.clicks < CLICKS_AT.length && p >= CLICKS_AT[s.clicks]) {
+        s.clicks += 1;
+        s.press = 1;
+        click();
+      }
+      gl.shadowMap.needsUpdate = true;
+    }
     s.press = Math.max(0, s.press - delta * 9);
     s.flash = Math.max(0, s.flash - delta * 0.9);
-    if (buttons.current) buttons.current.position.y = -0.035 * s.press;
+    if (left.current) left.current.position.y = s.side === 0 ? -0.035 * s.press : 0;
+    if (right.current) right.current.position.y = s.side === 1 ? -0.035 * s.press : 0;
     if (flash.current) flash.current.opacity = 0.55 * s.flash ** 1.5;
   });
 
@@ -347,9 +368,14 @@ export function Mouse({ t, position, rotation }: Placed & { t: DeskCopy }) {
     const s = state.current;
     s.dpi = (s.dpi + 1) % DPI_COLORS.length;
     s.flash = 1;
+    s.slide = 0;
+    s.clicks = 0;
+    // Pulsado de nuevo enseguida, el doble clic pasa al otro botón
+    const now = performance.now() / 1000;
+    s.side = now - s.last < 2.5 ? 1 - s.side : 0;
+    s.last = now;
     led.current?.color.set(DPI_COLORS[s.dpi]).multiplyScalar(3);
     flash.current?.color.set(DPI_COLORS[s.dpi]);
-    click();
   };
   const hover = useHoverable(t.interact.click, nextDpi);
 
@@ -362,14 +388,17 @@ export function Mouse({ t, position, rotation }: Placed & { t: DeskCopy }) {
         <planeGeometry args={[0.13, 0.19]} />
         <meshBasicMaterial ref={flash} map={spill} color={ICE} transparent opacity={0} blending={AdditiveBlending} depthWrite={false} />
       </mesh>
+      <group ref={body}>
       <group position={[0, MOUSE_LIFT, 0]} scale={MOUSE_SCALE}>
         {/* Cuerpo: plástico más mate y algo más oscuro que los botones */}
         <mesh geometry={SHELL} castShadow receiveShadow>
           <meshStandardMaterial color="#0e0f12" roughness={0.7} />
         </mesh>
-        <mesh ref={buttons} geometry={BUTTONS} castShadow>
-          <meshStandardMaterial color="#2e3037" roughness={0.34} metalness={0.1} />
-        </mesh>
+        {BUTTONS.map((g, i) => (
+          <mesh key={i} ref={i === 0 ? left : right} geometry={g} castShadow>
+            <meshStandardMaterial color="#2e3037" roughness={0.34} metalness={0.1} />
+          </mesh>
+        ))}
         <mesh geometry={SKIRT}>
           <meshStandardMaterial color="#6a6d76" roughness={0.5} metalness={0.35} />
         </mesh>
@@ -409,6 +438,7 @@ export function Mouse({ t, position, rotation }: Placed & { t: DeskCopy }) {
           <meshStandardMaterial color="#d8d6d0" roughness={0.3} />
         </RoundedBox>
       ))}
+      </group>
     </group>
   );
 }

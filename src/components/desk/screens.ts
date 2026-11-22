@@ -958,44 +958,39 @@ export function drawMugRough(ctx: CanvasRenderingContext2D, w: number, h: number
   mugPass(ctx, w, h, true);
 }
 
-/** Cappuccino visto desde arriba: crema tostada al borde, roseta de leche y microburbujas. */
+/** Cappuccino visto desde arriba: crema tostada al borde y un corazón de leche limpio, como el de una barra. */
 export function drawLatte(ctx: CanvasRenderingContext2D, w: number, h: number) {
   const c = w / 2;
   const g = ctx.createRadialGradient(c, c, 0, c, c, c);
-  g.addColorStop(0, "#b77d4c");
-  g.addColorStop(0.75, "#9a6236");
-  g.addColorStop(0.93, "#5f3519");
+  g.addColorStop(0, "#a8703f");
+  g.addColorStop(0.7, "#93592f");
+  g.addColorStop(0.92, "#61361a");
   g.addColorStop(1, "#3a1d0c");
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
+  // Corazón: dos lóbulos y la punta, con el borde difuminado como la espuma al verterla
+  const heart = new Path2D();
+  const s = w * 0.3;
+  const cy = c - s * 0.12;
+  heart.moveTo(c, cy + s * 0.95);
+  heart.bezierCurveTo(c - s * 0.15, cy + s * 0.7, c - s * 1.05, cy + s * 0.2, c - s * 0.92, cy - s * 0.35);
+  heart.bezierCurveTo(c - s * 0.8, cy - s * 0.85, c - s * 0.15, cy - s * 0.85, c, cy - s * 0.38);
+  heart.bezierCurveTo(c + s * 0.15, cy - s * 0.85, c + s * 0.8, cy - s * 0.85, c + s * 0.92, cy - s * 0.35);
+  heart.bezierCurveTo(c + s * 1.05, cy + s * 0.2, c + s * 0.15, cy + s * 0.7, c, cy + s * 0.95);
+  ctx.save();
+  ctx.shadowColor = "rgba(240, 226, 204, 0.9)";
+  ctx.shadowBlur = w * 0.02;
+  ctx.fillStyle = "#f1e4cf";
+  ctx.fill(heart);
+  ctx.restore();
+  // Microespuma: puntos finos solo en la crema del borde, nunca encima del corazón
   const r = rng(3);
-  ctx.fillStyle = "#f2e5d0";
-  ctx.strokeStyle = "#f2e5d0";
-  // Roseta: hojas apiladas que se estrechan hacia arriba, atravesadas por el tallo
-  for (let i = 0; i < 7; i += 1) {
-    const y = h * (0.72 - i * 0.075);
-    const rw = w * (0.3 - i * 0.03);
-    const rh = h * 0.055;
-    ctx.beginPath();
-    ctx.moveTo(c - rw, y + rh * 0.3);
-    ctx.quadraticCurveTo(c, y - rh * 1.6, c + rw, y + rh * 0.3);
-    ctx.quadraticCurveTo(c, y - rh * 0.2, c - rw, y + rh * 0.3);
-    ctx.fill();
-  }
-  ctx.beginPath();
-  ctx.ellipse(c, h * 0.2, w * 0.05, h * 0.045, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.lineWidth = w * 0.012;
-  ctx.beginPath();
-  ctx.moveTo(c, h * 0.82);
-  ctx.lineTo(c, h * 0.2);
-  ctx.stroke();
-  for (let i = 0; i < 260; i += 1) {
+  for (let i = 0; i < 220; i += 1) {
     const a = r() * Math.PI * 2;
-    const d = c * (0.8 + r() * 0.18);
-    ctx.fillStyle = `rgba(230, 200, 160, ${0.2 + r() * 0.35})`;
+    const d = c * (0.82 + r() * 0.16);
+    ctx.fillStyle = `rgba(230, 200, 160, ${0.15 + r() * 0.25})`;
     ctx.beginPath();
-    ctx.arc(c + Math.cos(a) * d, c + Math.sin(a) * d, 0.6 + r() * 1.6, 0, Math.PI * 2);
+    ctx.arc(c + Math.cos(a) * d, c + Math.sin(a) * d, 0.5 + r() * 1.2, 0, Math.PI * 2);
     ctx.fill();
   }
 }

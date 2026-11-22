@@ -17,6 +17,7 @@ import {
 import { hdr, ICE } from "./palette";
 import { drawLatte, drawMugGlaze, drawMugRough, drawNoise, drawPhone, drawTablet, PHONE_BUTTONS, type DeskCopy } from "./screens";
 import { showHover, useHoverable } from "./interact";
+import { clink } from "./sfx";
 import { RoundedBox } from "./primitives";
 import { Steam, type SteamDrive } from "./Steam";
 import { useCanvasTexture } from "./useCanvasTexture";
@@ -269,9 +270,9 @@ function handleGeometry() {
 const MUG = mugGeometry();
 const HANDLE = handleGeometry();
 
-const SIP_S = 2.6;
+const LIFT_MUG_S = 1.5;
 
-/** Cappuccino en taza de gres esmaltada a mano, sobre posavasos de corcho. Al pulsarla se da un sorbo. */
+/** Cappuccino en taza de gres esmaltada a mano, sobre posavasos de corcho. Al pulsarla se levanta un poco y vuelve al posavasos. */
 export function Coffee({ t, position, reduceMotion }: Placed & { t: DeskCopy; reduceMotion: boolean }) {
   const mug = useRef<Group>(null);
   const sip = useRef(-1);
@@ -286,18 +287,17 @@ export function Coffee({ t, position, reduceMotion }: Placed & { t: DeskCopy; re
       return;
     }
     sip.current += Math.min(delta, 0.05);
-    const p = Math.min(1, sip.current / SIP_S);
-    // Sube (0-30 %), se inclina hacia la boca, aguanta y vuelve al posavasos (70-100 %)
-    const up = smoother(Math.min(1, p / 0.3)) * (1 - smoother(Math.max(0, (p - 0.7) / 0.3)));
-    const tilt = smoother(Math.min(1, Math.max(0, (p - 0.2) / 0.2))) * (1 - smoother(Math.max(0, (p - 0.55) / 0.2)));
-    g.position.set(-0.02 * up, 0.07 * up, 0.1 * up);
-    g.rotation.set(0.55 * tilt + 0.12 * up, 0, 0.1 * up);
-    d.gain = 1 - up;
+    const p = Math.min(1, sip.current / LIFT_MUG_S);
+    // Una sola curva suave de subida y bajada: nada de giros que dejen ver el café pegado a la taza
+    const up = Math.sin(Math.PI * p) ** 2;
+    g.position.set(0, 0.035 * up, 0);
+    d.stir = Math.max(d.stir, 0.5 * up);
     gl.shadowMap.needsUpdate = true;
     if (p >= 1) {
       sip.current = -1;
-      d.gain = 2.2;
-      d.stir = 0.6;
+      g.position.set(0, 0, 0);
+      d.gain = 1.8;
+      clink();
     }
   });
   const noise = useCanvasTexture(128, 128, drawNoise, { tileX: 1, color: false });

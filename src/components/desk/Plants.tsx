@@ -519,7 +519,7 @@ function Planter() {
  * Planta que se mece al rozarla: muelle amortiguado con pivote en la tierra. Pasar el puntero la empuja
  * un poco; un clic, más.
  */
-function Sway({ label, position, stiffness = 26, children }: { label: string; position: Vec3; stiffness?: number; children: ReactNode }) {
+export function Sway({ label, position, stiffness = 26, children }: { label: string; position: Vec3; stiffness?: number; children: ReactNode }) {
   const g = useRef<Group>(null);
   const s = useRef({ x: 0, z: 0, vx: 0, vz: 0 });
   const push = (k: number) => {
@@ -527,7 +527,7 @@ function Sway({ label, position, stiffness = 26, children }: { label: string; po
     s.current.vx += Math.cos(a) * k;
     s.current.vz += Math.sin(a) * k;
   };
-  const hover = useHoverable(label, () => push(1.4), () => push(0.6));
+  const hover = useHoverable(label, () => push(0.55), () => push(0.22));
   useFrame(({ gl }, delta) => {
     const m = s.current;
     const node = g.current;
@@ -538,7 +538,7 @@ function Sway({ label, position, stiffness = 26, children }: { label: string; po
     m.vz += (-stiffness * m.z - damp * m.vz) * dt;
     m.x += m.vx * dt;
     m.z += m.vz * dt;
-    node.rotation.set(m.x * 0.5, 0, m.z * 0.5);
+    node.rotation.set(m.x * 0.35, 0, m.z * 0.35);
     gl.shadowMap.needsUpdate = true;
   });
   return (

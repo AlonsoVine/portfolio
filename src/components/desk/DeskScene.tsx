@@ -95,7 +95,7 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
       {/* Cascos colgados de un gancho bajo el canto, en el extremo derecho */}
       <Headphones t={t} position={[0.74, -0.045, 0.3]} />
       {/* Pared del fondo: la balda equilibra el portátil; reloj y calendario, el monitor lateral */}
-      <Shelf position={[-0.6, 0.76, WALL_Z]} />
+      <Shelf t={t} position={[-0.6, 0.76, WALL_Z]} />
       <WallClock t={t} position={[0.6, 0.8, WALL_Z]} />
       <WallCalendar position={[0.86, 0.71, WALL_Z]} lang={lang} />
       {/* Pared izquierda: un mapa enmarcado, al mismo alto que la guitarra de enfrente */}

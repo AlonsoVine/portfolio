@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { BufferGeometry, Color, DoubleSide, SRGBColorSpace, TextureLoader, Euler, Float32BufferAttribute, type Group, Matrix4, PlaneGeometry, Quaternion, Vector3 } from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
-import { HangingPothos } from "./Plants";
+import { HangingPothos, Sway } from "./Plants";
 import { showHover, useHoverable } from "./interact";
 import { startAmbient, ticks } from "./sfx";
 import { ICE } from "./palette";
@@ -66,7 +66,7 @@ const SHELF_WOOD = (() => {
 })();
 
 /** Balda flotante de roble con libros, una pila tumbada con un poto colgante y una cámara de carrete. */
-export function Shelf({ position }: { position: Vec3 }) {
+export function Shelf({ t, position }: { t: DeskCopy; position: Vec3 }) {
   const dot = useCanvasTexture(128, 128, drawSoftDot);
   return (
     <group position={position}>
@@ -80,7 +80,9 @@ export function Shelf({ position }: { position: Vec3 }) {
       </mesh>
 
       {/* Poto colgante sobre la pila: sus guías caen por delante de la balda */}
-      <HangingPothos position={[0.04, 0.052, 0.072]} />
+      <Sway label={t.interact.plant} position={[0.04, 0.052, 0.072]} stiffness={18}>
+        <HangingPothos position={[0, 0, 0]} />
+      </Sway>
 
       {/* Cámara de carrete: cuerpo negro, tapa cromada y objetivo */}
       <group position={[0.175, 0.012, 0.075]} rotation={[0, -0.35, 0]}>
