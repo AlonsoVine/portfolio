@@ -2,7 +2,7 @@
 
 import { Canvas } from "@react-three/fiber";
 import { useState } from "react";
-import { Bloom, EffectComposer, N8AO, Noise, ToneMapping, Vignette } from "@react-three/postprocessing";
+import { Bloom, EffectComposer, N8AO, Noise, SMAA, ToneMapping, Vignette } from "@react-three/postprocessing";
 import { BlendFunction, ToneMappingMode } from "postprocessing";
 import { RectAreaLightUniformsLib } from "three/examples/jsm/lights/RectAreaLightUniformsLib.js";
 import type { Dictionary } from "@/i18n/dictionaries";
@@ -80,12 +80,14 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
       <LookControls reduceMotion={reduceMotion} />
       <Warmup onReady={onReady} onLow={() => setLow(true)} />
 
-      <EffectComposer multisampling={low ? 0 : 4} enableNormalPass={false}>
+      <EffectComposer multisampling={low ? 0 : 2} enableNormalPass={false}>
         {/* Oclusión ambiental: asienta los objetos sobre la mesa y oscurece los rincones */}
-        <>{!low && <N8AO halfRes aoRadius={0.06} distanceFalloff={0.5} intensity={2.2} color="#05060a" quality="medium" />}</>
+        <>{!low && <N8AO halfRes aoRadius={0.06} distanceFalloff={0.5} intensity={2.2} color="#05060a" quality="low" />}</>
         <Bloom mipmapBlur intensity={0.4} luminanceThreshold={1.15} luminanceSmoothing={0.3} radius={0.65} />
         <ToneMapping mode={ToneMappingMode.NEUTRAL} />
         <Vignette offset={0.28} darkness={0.58} />
+        {/* Sin MSAA en el modo bajo: SMAA evita los dientes de sierra a coste casi nulo */}
+        <>{low && <SMAA />}</>
         <Noise premultiply blendFunction={BlendFunction.SOFT_LIGHT} opacity={0.08} />
       </EffectComposer>
     </Canvas>

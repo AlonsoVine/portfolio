@@ -107,26 +107,30 @@ export function Coffee({ position, reduceMotion }: Placed & { reduceMotion: bool
     <group position={position}>
       {/* Posavasos de mandala */}
       <mesh position={[0, 0.003, 0]} receiveShadow castShadow>
-        <cylinderGeometry args={[0.062, 0.062, 0.006, 12]} />
+        <cylinderGeometry args={[0.062, 0.062, 0.006, 48]} />
         <meshStandardMaterial color="#9b3a55" roughness={0.7} />
       </mesh>
       <mesh position={[0, 0.0062, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.03, 0.055, 12]} />
+        <ringGeometry args={[0.03, 0.055, 48]} />
         <meshStandardMaterial color="#d38b4a" roughness={0.6} />
       </mesh>
       <group position={[0, 0.006, 0]}>
         <mesh castShadow receiveShadow>
           <latheGeometry args={[MUG, 48]} />
-          <meshPhysicalMaterial color="#8c7a2c" roughness={0.38} clearcoat={0.6} clearcoatRoughness={0.25} side={2} />
+          <meshStandardMaterial color="#8c7a2c" roughness={0.32} side={2} />
         </mesh>
         {/* Café con algo de crema y reflejo */}
         <mesh position={[0, 0.074, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <circleGeometry args={[0.0428, 40]} />
-          <meshPhysicalMaterial color="#2a150a" roughness={0.08} clearcoat={1} />
+          <meshStandardMaterial color="#140904" roughness={0.1} envMapIntensity={0.35} />
+        </mesh>
+        <mesh position={[0, 0.0742, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[0.033, 0.0428, 40]} />
+          <meshStandardMaterial color="#5a3519" roughness={0.6} transparent opacity={0.55} />
         </mesh>
         <mesh position={[0.046, 0.045, 0]} rotation={[0, 0, -Math.PI / 2]} castShadow>
           <torusGeometry args={[0.018, 0.0055, 12, 32, Math.PI]} />
-          <meshPhysicalMaterial color="#8c7a2c" roughness={0.38} clearcoat={0.6} />
+          <meshStandardMaterial color="#8c7a2c" roughness={0.32} />
         </mesh>
       </group>
       {!reduceMotion && (

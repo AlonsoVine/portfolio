@@ -32,18 +32,18 @@ export function Desk() {
       </mesh>
       <mesh position={[0, 0.7, WALL_Z]} receiveShadow>
         <planeGeometry args={[4.2, 1.9]} />
-        <meshStandardMaterial map={peg} bumpMap={peg} bumpScale={1.5} color="#8a8496" roughness={1} />
+        <meshLambertMaterial map={peg} bumpMap={peg} bumpScale={1.5} color="#8a8496" />
       </mesh>
       {/* Suelo: al mirar hacia abajo se intuye, en vez de un vacío negro */}
       <mesh position={[0, -0.75, 0.3]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[2.2, 2]} />
-        <meshStandardMaterial color="#1a1716" roughness={0.85} />
+        <meshLambertMaterial color="#1a1716" />
       </mesh>
       {/* Paredes laterales: el escritorio está en un hueco, no flotando en el vacío */}
       {[-1, 1].map((s) => (
         <mesh key={s} position={[s * 1.05, 0.6, 0.25]} rotation={[0, -s * (Math.PI / 2), 0]} receiveShadow>
           <planeGeometry args={[1.8, 1.9]} />
-          <meshStandardMaterial color="#3a3640" roughness={0.95} />
+          <meshLambertMaterial color="#3a3640" />
         </mesh>
       ))}
     </group>

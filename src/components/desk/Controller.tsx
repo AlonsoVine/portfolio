@@ -44,7 +44,7 @@ function bodyGeometry() {
   shape.splineThru([...right.slice(1), ...left, right[0]]);
   const g = new ExtrudeGeometry(shape, {
     depth: DEPTH,
-    curveSegments: 64,
+    curveSegments: 40,
     bevelEnabled: true,
     bevelThickness: BEVEL,
     bevelSize: BEVEL * 0.9,
@@ -53,6 +53,20 @@ function bodyGeometry() {
   // De planta (XY) a tumbado sobre la mesa: la extrusión pasa a ser la altura
   g.rotateX(Math.PI / 2);
   g.translate(0, DEPTH + BEVEL, 0);
+  // Empuñaduras más gruesas y caídas hacia el jugador; el centro, algo más bajo: un mando no es una losa
+  const p = g.attributes.position;
+  const sm = (a: number, b: number, x: number) => {
+    const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+    return t * t * (3 - 2 * t);
+  };
+  for (let i = 0; i < p.count; i += 1) {
+    const x = p.getX(i);
+    const y = p.getY(i);
+    const z = p.getZ(i);
+    const grip = sm(0.008, 0.042, z) * sm(0.02, 0.048, Math.abs(x));
+    const top = y / TOP;
+    p.setY(i, y * (1 + grip * 0.55) - grip * 0.004 * (1 - top) - (1 - grip) * 0.0025 * top);
+  }
   g.computeVertexNormals();
   return g;
 }

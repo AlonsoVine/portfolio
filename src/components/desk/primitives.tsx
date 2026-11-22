@@ -135,7 +135,7 @@ export function Warmup({ onReady, onLow }: { onReady: () => void; onLow: () => v
   const scene = useThree((s) => s.scene);
   const camera = useThree((s) => s.camera);
   const setDpr = useThree((s) => s.setDpr);
-  const probe = useRef({ phase: "compile" as "compile" | "measure" | "done", acc: 0, n: 0 });
+  const probe = useRef({ phase: "compile" as "compile" | "measure" | "done", samples: [] as number[], n: 0 });
 
   useEffect(() => {
     let alive = true;
@@ -161,12 +161,14 @@ export function Warmup({ onReady, onLow }: { onReady: () => void; onLow: () => v
     const p = probe.current;
     if (p.phase !== "measure") return;
     p.n += 1;
-    // Los primeros fotogramas tras compilar no son representativos
-    if (p.n <= 5) return;
-    p.acc += delta;
-    if (p.n < 35) return;
+    // Los primeros fotogramas tras compilar aún suben texturas: no son representativos
+    if (p.n <= 20) return;
+    p.samples.push(delta);
+    if (p.samples.length < 40) return;
     p.phase = "done";
-    if (p.acc / (p.n - 5) > 1 / 45) {
+    // Mediana: un tirón aislado no debe condenar a la máquina al modo bajo
+    const median = [...p.samples].sort((a, b) => a - b)[20];
+    if (median > 1 / 45) {
       setDpr(1);
       onLow();
     }

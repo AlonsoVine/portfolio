@@ -5,7 +5,6 @@ import { useLayoutEffect, useMemo, useRef } from "react";
 import {
   AdditiveBlending,
   BufferGeometry,
-  CylinderGeometry,
   Float32BufferAttribute,
   type InstancedMesh,
   type MeshBasicMaterial,
@@ -16,6 +15,7 @@ import { hdr, ICE, VIOLET } from "./palette";
 import { drawLegends, drawSoftDot, drawStrip } from "./screens";
 import { RoundedBox } from "./primitives";
 import { useCanvasTexture } from "./useCanvasTexture";
+import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 
 type Placed = { position: [number, number, number]; rotation?: [number, number, number] };
 
@@ -66,9 +66,15 @@ export function Keyboard({ position, rotation, reduceMotion }: Placed & { reduce
   const legends = useCanvasTexture(COLS * LEGEND_PX, DEPTH * LEGEND_PX, legendsDraw);
   const glow = useCanvasTexture(512, 4, drawStrip, { tileX: 1 });
   const spill = useCanvasTexture(128, 128, drawSoftDot);
-  // Tecla con perfil real: tronco de pirámide (base 1, cara superior 0.8) con caras planas
+  // Tecla con perfil real: cara superior más estrecha que la base y cantos redondeados que atrapan reflejos
   const geometry = useMemo(() => {
-    const g = new CylinderGeometry(0.8 / Math.SQRT2, 1 / Math.SQRT2, 1, 4, 1).rotateY(Math.PI / 4).toNonIndexed();
+    const g = new RoundedBoxGeometry(1, 1, 1, 2, 0.14);
+    const pos = g.attributes.position;
+    for (let i = 0; i < pos.count; i += 1) {
+      const k = 1 - 0.18 * (pos.getY(i) + 0.5);
+      pos.setX(i, pos.getX(i) * k);
+      pos.setZ(i, pos.getZ(i) * k);
+    }
     g.computeVertexNormals();
     return g;
   }, []);
@@ -119,7 +125,6 @@ export function Keyboard({ position, rotation, reduceMotion }: Placed & { reduce
         <planeGeometry args={[width * 1.7, depth * 2.6]} />
         <meshBasicMaterial map={spill} color={VIOLET} transparent opacity={0.4} blending={AdditiveBlending} depthWrite={false} />
       </mesh>
-      <pointLight position={[0, 0.05, 0]} color={VIOLET} intensity={0.35} distance={0.4} />
     </group>
   );
 }
@@ -142,7 +147,9 @@ function mouseShell() {
     let y = pos.getY(i);
     const z = pos.getZ(i);
     y = y < 0 ? y * 0.15 : y * (0.8 + 0.25 * smooth(-0.6, 0.5, z));
-    x *= 1 - 0.12 * Math.max(0, -z);
+    // Planta de rectángulo redondeado, no de huevo: los lados se empujan hacia fuera
+    x = Math.sign(x) * Math.abs(x) ** 0.78;
+    x *= 1 - 0.1 * Math.max(0, -z);
     x *= 1 - 0.08 * Math.exp(-(((z - 0.05) / 0.35) ** 2)) * smooth(-0.1, 0.4, y);
     pos.setXYZ(i, x, y, z);
   }
@@ -150,8 +157,8 @@ function mouseShell() {
   return g;
 }
 
-/** Los dos botones: el trozo frontal de la carcasa, separado por la ranura central y el hueco de la rueda. */
-function mouseButtons(shell: SphereGeometry) {
+/** Recorta de la carcasa los triángulos cuyo centro cumple `keep` y los infla un poco: piezas que asoman sobre el cuerpo. */
+function shellPart(shell: SphereGeometry, keep: (x: number, y: number, z: number) => boolean, inflate: [number, number, number]) {
   const flat = shell.toNonIndexed();
   const pos = flat.attributes.position;
   const nor = flat.attributes.normal;
@@ -166,8 +173,7 @@ function mouseButtons(shell: SphereGeometry) {
       cy += pos.getY(t + k) / 3;
       cz += pos.getZ(t + k) / 3;
     }
-    const slot = Math.abs(cx) < 0.16 && cz > -0.62 && cz < -0.2;
-    if (cy > 0.3 && cz < 0.12 && Math.abs(cx) > 0.035 && !slot) {
+    if (keep(cx, cy, cz)) {
       for (let k = 0; k < 3; k += 1) {
         keepP.push(pos.getX(t + k), pos.getY(t + k), pos.getZ(t + k));
         keepN.push(nor.getX(t + k), nor.getY(t + k), nor.getZ(t + k));
@@ -178,20 +184,26 @@ function mouseButtons(shell: SphereGeometry) {
   const g = new BufferGeometry();
   g.setAttribute("position", new Float32BufferAttribute(keepP, 3));
   g.setAttribute("normal", new Float32BufferAttribute(keepN, 3));
-  // Un pelo por encima de la carcasa: entre los dos asoma el cuerpo oscuro y se lee la junta
-  g.scale(1.008, 1.012, 1.004);
+  g.scale(...inflate);
   return g;
 }
 
 const SHELL = mouseShell();
-const BUTTONS = mouseButtons(SHELL);
+// Botones: la parte frontal superior, partida por una ranura y por el hueco de la rueda
+const BUTTONS = shellPart(
+  SHELL,
+  (x, y, z) => y > 0.3 && z < 0.1 && Math.abs(x) > 0.06 && !(Math.abs(x) < 0.2 && z > -0.66 && z < -0.18),
+  [1.008, 1.014, 1.004],
+);
+// Faldón lateral gris grafito: marca la silueta y separa el ratón del tapete
+const SKIRT = shellPart(SHELL, (_x, y) => y > 0.02 && y < 0.26, [1.01, 1, 1.006]);
 /** Altura de la carcasa en el eje central para una z unitaria (para asentar la rueda). */
 const shellTop = (z: number) => Math.sqrt(1 - z * z) * (0.8 + 0.25 * smooth(-0.6, 0.5, z));
 
 /** Ratón inalámbrico clásico: carcasa esculpida, botones partidos, rueda de goma en su hueco y patines. */
 export function Mouse({ position, rotation }: Placed) {
   const wheelZ = -0.42;
-  const wheelY = MOUSE_LIFT + shellTop(wheelZ) * MOUSE_SCALE[1] - 0.0018;
+  const wheelY = MOUSE_LIFT + shellTop(wheelZ) * MOUSE_SCALE[1] - 0.002;
   return (
     <group position={position} rotation={rotation}>
       <group position={[0, MOUSE_LIFT, 0]} scale={MOUSE_SCALE}>
@@ -200,22 +212,25 @@ export function Mouse({ position, rotation }: Placed) {
           <meshStandardMaterial color="#0e0f12" roughness={0.7} />
         </mesh>
         <mesh geometry={BUTTONS} castShadow>
-          <meshStandardMaterial color="#3a3c45" roughness={0.36} metalness={0.1} />
+          <meshStandardMaterial color="#2e3037" roughness={0.34} metalness={0.1} />
+        </mesh>
+        <mesh geometry={SKIRT}>
+          <meshStandardMaterial color="#6a6d76" roughness={0.5} metalness={0.35} />
         </mesh>
       </group>
       {/* Rueda: goma estriada sobre eje, con el hueco negro debajo */}
       <mesh position={[0, wheelY - 0.0012, wheelZ * MOUSE_SCALE[2]]}>
-        <boxGeometry args={[0.0072, 0.004, 0.017]} />
+        <boxGeometry args={[0.0105, 0.004, 0.02]} />
         <meshStandardMaterial color="#050506" roughness={1} />
       </mesh>
       <mesh position={[0, wheelY, wheelZ * MOUSE_SCALE[2]]} rotation={[0, 0, Math.PI / 2]} castShadow>
-        <cylinderGeometry args={[0.0056, 0.0056, 0.0048, 40]} />
-        <meshStandardMaterial color="#2a2b31" roughness={0.9} />
+        <cylinderGeometry args={[0.0068, 0.0068, 0.0062, 40]} />
+        <meshStandardMaterial color="#8a8e98" roughness={0.45} metalness={0.6} />
       </mesh>
       {[-1, 1].map((sx) => (
-        <mesh key={sx} position={[sx * 0.0026, wheelY, wheelZ * MOUSE_SCALE[2]]} rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[0.0049, 0.0049, 0.0006, 32]} />
-          <meshStandardMaterial color="#6d717c" roughness={0.35} metalness={0.8} />
+        <mesh key={sx} position={[sx * 0.0034, wheelY, wheelZ * MOUSE_SCALE[2]]} rotation={[0, 0, Math.PI / 2]}>
+          <cylinderGeometry args={[0.0062, 0.0062, 0.0008, 32]} />
+          <meshStandardMaterial color="#1a1b1f" roughness={0.9} />
         </mesh>
       ))}
       {/* Botón de DPI tras la rueda, con su piloto tenue */}
