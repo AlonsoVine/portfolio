@@ -373,8 +373,9 @@ export const drawPhone =
     ctx.fill();
   };
 
+/** Pantalla de bloqueo de la tablet: fondo y hora. El retrato se pinta encima en su propio plano con transparencia. */
 export const drawTablet =
-  (t: DeskCopy, lang: string): Draw =>
+  (lang: string): Draw =>
   (ctx, w, h, f) => {
     ctx.fillStyle = vgrad(ctx, h, ["#0a1a4a", "#071032", "#03081a"]);
     ctx.fillRect(0, 0, w, h);
@@ -390,21 +391,8 @@ export const drawTablet =
       ctx.fill();
     }
     const { time, date } = clock(lang);
-    text(ctx, date, w / 2, h * 0.12, mono(f, 22), "#d4e0ff", { align: "center" });
-    text(ctx, time, w / 2, h * 0.29, display(f, 168, 200), "#f4f7ff", { align: "center", glow: 16 });
-    const card = (y: number, title: string, body: string, dot: string) => {
-      ctx.fillStyle = "rgba(255,255,255,0.1)";
-      rrect(ctx, w * 0.08, y, w * 0.84, h * 0.085, 22);
-      ctx.fill();
-      ctx.fillStyle = dot;
-      ctx.beginPath();
-      ctx.arc(w * 0.15, y + h * 0.0425, 11, 0, Math.PI * 2);
-      ctx.fill();
-      text(ctx, title, w * 0.21, y + h * 0.037, mono(f, 20, 500), "#ffffff");
-      text(ctx, body, w * 0.21, y + h * 0.065, mono(f, 17), "#c9d8ff");
-    };
-    card(h * 0.38, t.screens.tabletCity, t.screens.tabletCityNote, AMBER);
-    card(h * 0.48, t.screens.tabletNote, t.screens.tabletNoteBody, ICE);
+    text(ctx, date, w / 2, h * 0.1, mono(f, 22), "#d4e0ff", { align: "center" });
+    text(ctx, time, w / 2, h * 0.25, display(f, 168, 200), "#f4f7ff", { align: "center", glow: 16 });
   };
 
 /* ---------- superficies ---------- */

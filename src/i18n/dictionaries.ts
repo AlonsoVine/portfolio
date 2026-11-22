@@ -39,10 +39,6 @@ export const es = {
       cvTimeline: "EXPERIENCIA",
       pressStart: "PULSA START",
       projectNames: ["Prensa", "Liberty"],
-      tabletCity: "Madrid",
-      tabletCityNote: "Hora local",
-      tabletNote: "Portfolio — 2026",
-      tabletNoteBody: "Mira hacia arriba ↑",
     },
   },
 };
@@ -90,10 +86,6 @@ export const en: Dictionary = {
       cvTimeline: "EXPERIENCE",
       pressStart: "PRESS START",
       projectNames: ["Prensa", "Liberty"],
-      tabletCity: "Madrid",
-      tabletCityNote: "Local time",
-      tabletNote: "Portfolio — 2026",
-      tabletNoteBody: "Look up ↑",
     },
   },
 };

@@ -87,7 +87,7 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
         <Controller position={[-0.47, 0, 0.2]} rotation={[0, 0.38, 0]} />
         <Phone t={t} lang={lang} position={[0.27, 0, -0.1]} rotation={[0, -0.15, 0]} />
         <Coffee position={[0.425, 0, -0.06]} reduceMotion={reduceMotion} />
-        <Tablet t={t} lang={lang} position={[0.6, 0, 0.15]} rotation={[0, -0.42, 0]} />
+        <Tablet lang={lang} position={[0.6, 0, 0.15]} rotation={[0, -0.42, 0]} />
       </group>
       <Mouse position={[0.27, 0, 0.13]} rotation={[0, -0.12, 0]} />
       <Plants reduceMotion={reduceMotion} />
