@@ -69,9 +69,9 @@ export function Phone({ t, lang, position, rotation }: { t: DeskCopy; lang: stri
 const PHOTO_URL = `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/desk/tablet-retrato.webp`;
 const SCREEN_W = 0.158;
 const SCREEN_H = 0.236;
-const PHOTO_H = SCREEN_W * (514 / 640);
-// En la mano: a unos 42 cm del ojo siguiendo la mirada en reposo, con la pantalla de cara a la silla
-const HOLD_POS = new Vector3(0.03, 0.372, 0.41);
+const PHOTO_H = SCREEN_W * (631 / 640);
+// En la mano: a unos 38 cm del ojo siguiendo la mirada en reposo, con la pantalla de cara a la silla
+const HOLD_POS = new Vector3(0.025, 0.383, 0.445);
 const HOLD_ROT = new Quaternion().setFromEuler(new Euler(Math.PI / 2 - 0.27 - 0.07, 0, 0));
 const LIFT_S = 1.1;
 const HOLD_S = 3.4;

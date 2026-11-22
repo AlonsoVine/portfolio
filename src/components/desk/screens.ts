@@ -391,8 +391,8 @@ export const drawTablet =
       ctx.fill();
     }
     const { time, date } = clock(lang);
-    text(ctx, date, w / 2, h * 0.1, mono(f, 22), "#d4e0ff", { align: "center" });
-    text(ctx, time, w / 2, h * 0.25, display(f, 168, 200), "#f4f7ff", { align: "center", glow: 16 });
+    text(ctx, date, w / 2, h * 0.08, mono(f, 22), "#d4e0ff", { align: "center" });
+    text(ctx, time, w / 2, h * 0.21, display(f, 168, 200), "#f4f7ff", { align: "center", glow: 16 });
   };
 
 /* ---------- superficies ---------- */
