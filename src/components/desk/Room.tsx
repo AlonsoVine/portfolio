@@ -5,7 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import { AdditiveBlending, type Color, type MeshBasicMaterial, type PointLight, type Texture } from "three";
 import { AMBER, hdr, ICE, MAGENTA, VIOLET } from "./palette";
-import { drawFabric, drawMatEdge, drawNeonSign, drawPegboard, drawSoftDot, drawStrip, drawWood, drawWoodRough, type DeskCopy } from "./screens";
+import { drawFabric, drawMatEdge, drawNeonSign, drawPegboard, drawSoftDot, drawStrip, drawUnderglow, drawWood, drawWoodRough, type DeskCopy } from "./screens";
 import { Dust, RoundedBox } from "./primitives";
 import { useCanvasTexture } from "./useCanvasTexture";
 
@@ -33,8 +33,8 @@ export function Desk() {
         <planeGeometry args={[1.5, 0.53]} />
         <meshStandardMaterial map={edge} transparent roughness={0.8} depthWrite={false} />
       </mesh>
-      <mesh position={[0, 0.7, WALL_Z]} receiveShadow>
-        <planeGeometry args={[4.2, 1.9]} />
+      <mesh position={[0, 0.45, WALL_Z]} receiveShadow>
+        <planeGeometry args={[4.2, 2.4]} />
         <meshLambertMaterial map={peg} bumpMap={peg} bumpScale={1.5} color="#8a8496" />
       </mesh>
       {/* Oclusión en las uniones: donde la mesa toca la pared y en las esquinas apenas llega luz */}
@@ -78,8 +78,8 @@ export function Desk() {
       </mesh>
       {/* Paredes laterales: el escritorio está en un hueco, no flotando en el vacío */}
       {[-1, 1].map((s) => (
-        <mesh key={s} position={[s * 1.05, 0.6, 0.25]} rotation={[0, -s * (Math.PI / 2), 0]} receiveShadow>
-          <planeGeometry args={[1.8, 1.9]} />
+        <mesh key={s} position={[s * 1.05, 0.45, 0.25]} rotation={[0, -s * (Math.PI / 2), 0]} receiveShadow>
+          <planeGeometry args={[1.8, 2.4]} />
           <meshLambertMaterial color="#3a3640" />
         </mesh>
       ))}
@@ -117,6 +117,7 @@ function Wash({
 export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }) {
   const strip = useCanvasTexture(512, 4, drawStrip, { tileX: 1 });
   const dot = useCanvasTexture(128, 128, drawSoftDot);
+  const under = useCanvasTexture(256, 4, drawUnderglow, { tileX: 1 });
   const signDraw = useMemo(() => drawNeonSign(t.firstName, t.lastName), [t]);
   const sign = useCanvasTexture(1024, 200, signDraw);
   const signMat = useRef<MeshBasicMaterial>(null);
@@ -175,6 +176,19 @@ export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }
         <meshPhysicalMaterial color="#0c0d12" roughness={0.12} transparent opacity={0.35} />
       </RoundedBox>
 
+      {/* Luz bajo la mesa: tira oculta tras el canto delantero; solo se ve su reflejo en el suelo, de hielo a ámbar */}
+      <mesh position={[0, -0.047, 0.25]} rotation={[Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[1.96, 0.008]} />
+        <meshBasicMaterial map={under} color={hdr("#ffffff", 2.2)} toneMapped={false} />
+      </mesh>
+      {[
+        [-0.62, ICE],
+        [-0.22, "#a9c4ff"],
+        [0.22, "#ffcf9e"],
+        [0.62, AMBER],
+      ].map(([x, c]) => (
+        <Wash key={x as number} map={dot} position={[x as number, -0.748, 0.2]} rotation={[-Math.PI / 2, 0, 0]} scale={[0.75, 0.55]} color={c as string} opacity={0.26} />
+      ))}
       <Wash map={dot} position={[-0.75, 0.3, WALL_Z + 0.004]} scale={[1.5, 1.1]} color={ICE} opacity={0.16} />
       <Wash map={dot} position={[0.78, 0.3, WALL_Z + 0.004]} scale={[1.5, 1.1]} color={AMBER} opacity={0.15} />
       <Wash map={dot} position={[0, 0.12, WALL_Z + 0.005]} scale={[1.9, 0.5]} color={MAGENTA} opacity={0.12} />

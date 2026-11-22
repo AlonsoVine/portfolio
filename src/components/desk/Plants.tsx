@@ -12,7 +12,7 @@ import {
   BufferGeometry,
   IcosahedronGeometry,
   type InstancedMesh,
-  LatheGeometry,
+
   Object3D,
   PlaneGeometry,
   Quaternion,
@@ -20,10 +20,11 @@ import {
   ShapeGeometry,
   type Texture,
   TubeGeometry,
-  Vector2,
+
   Vector3,
 } from "three";
 import { RoundedBox } from "./primitives";
+import { hdr } from "./palette";
 import { drawPothosLeaf, drawSnakeLeaf } from "./screens";
 import { useCanvasTexture } from "./useCanvasTexture";
 
@@ -96,7 +97,6 @@ function padGeometry() {
   return g;
 }
 const PAD = padGeometry();
-
 
 const leafKey = () => "leaf";
 // Translucidez barata: la cara en sombra recoge algo de la luz que atraviesa la hoja
@@ -312,27 +312,21 @@ const POTHOS: { vines: Vec3[][]; leaves: Instance[] } = (() => {
       leaf([p.x + nx * 0.008, p.y + 0.003, p.z + nz * 0.008], [tan.x + nx * 0.8, tan.z + nz * 0.8], -1.1 + r() * 0.4, size * (1.1 - t * 0.45) * (0.85 + r() * 0.3));
     }
   };
-  // Guías colgantes hacia delante y hacia fuera, lejos del portátil, cada una con un brote lateral
-  [1.6, 2.0, 2.4, 2.8, 3.2, 3.6].forEach((phi, k) => {
+  // Guías que rebosan por el canto exterior de la jardinera y cuelgan por fuera, de largos distintos
+  [2.3, 2.65, 3.0, 3.35, 3.7, 4.0].forEach((phi, k) => {
     const c = Math.cos(phi);
     const s = Math.sin(phi);
-    const reach = 0.09 + (k % 3) * 0.025 + r() * 0.02;
+    const end = [0.004, 0.022, 0.01, 0.038, 0.006, 0.028][k];
     const pts: Vec3[] = [
-      [c * 0.012, 0.075, s * 0.012],
-      [c * 0.038, 0.08, s * 0.038],
-      [c * 0.048, 0.06, s * 0.048],
-      [c * 0.05, 0.03, s * 0.05],
-      [c * 0.056, 0.006, s * 0.056],
-      [c * reach, 0.006, s * reach],
-      [c * (reach + 0.04) + s * 0.015, 0.004, s * (reach + 0.04) - c * 0.015],
+      [c * 0.012, 0.074, s * 0.012],
+      [c * 0.034, 0.08, s * 0.034],
+      [c * 0.05, 0.074, s * 0.05],
+      [c * 0.057, 0.055, s * 0.057],
+      [c * 0.058 + s * 0.006, (0.055 + end) / 2, s * 0.058 - c * 0.006],
+      [c * 0.056 + s * 0.012, end, s * 0.056 - c * 0.012],
     ];
     vines.push(pts);
-    along(pts, 9, 0.026);
-    if (k % 2 === 0) {
-      const fork: Vec3[] = [pts[3], [c * (reach - 0.01) - s * 0.03, 0.005, s * (reach - 0.01) + c * 0.03], [c * reach - s * 0.06, 0.004, s * reach + c * 0.06]];
-      vines.push(fork);
-      along(fork, 4, 0.02, 0.2);
-    }
+    along(pts, 8, 0.024);
   });
   // Tallos que trepan: dan altura y volumen a la mata
   [2.6].forEach((phi, k) => {
@@ -357,34 +351,12 @@ const POTHOS: { vines: Vec3[][]; leaves: Instance[] } = (() => {
   return { vines, leaves };
 })();
 
-const TERRACOTTA = new LatheGeometry(
-  [
-    [0, 0],
-    [0.03, 0],
-    [0.031, 0.002],
-    [0.036, 0.048],
-    [0.041, 0.049],
-    [0.042, 0.062],
-    [0.038, 0.062],
-    [0.037, 0.05],
-    [0, 0.05],
-  ].map(([x, y]) => new Vector2(x, y)),
-  40,
-);
-
 const POTHOS_STEMS: Stem[] = POTHOS.vines.map((points) => ({ points, r0: 0.0018, r1: 0.0011 }));
 
 function Pothos({ position }: { position: Vec3 }) {
   const variegated = useCanvasTexture(128, 128, drawPothosLeaf);
   return (
     <group position={position}>
-      <mesh geometry={TERRACOTTA} castShadow receiveShadow>
-        <meshStandardMaterial color="#b0643f" roughness={0.92} />
-      </mesh>
-      <mesh position={[0, 0.058, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <circleGeometry args={[0.037, 28]} />
-        <meshStandardMaterial color="#2c221a" roughness={1} />
-      </mesh>
       <Stems stems={POTHOS_STEMS} color="#6f8f3a" roughness={0.6} />
       <Instances geometry={HEART} items={POTHOS.leaves} roughness={0.38} side={DoubleSide} map={variegated} />
     </group>
@@ -414,19 +386,6 @@ function SnakePlant({ position }: { position: Vec3 }) {
   const leafTex = useCanvasTexture(64, 256, drawSnakeLeaf);
   return (
     <group position={position} rotation={[0, 0.5, 0]}>
-      {/* Macetero cilíndrico de cemento, sobrio y pesado */}
-      <mesh position={[0, 0.037, 0]} castShadow receiveShadow>
-        <cylinderGeometry args={[0.046, 0.04, 0.074, 40]} />
-        <meshStandardMaterial color="#6d6c69" roughness={0.95} />
-      </mesh>
-      <mesh position={[0, 0.0745, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.041, 0.046, 40]} />
-        <meshStandardMaterial color="#7a7975" roughness={0.9} />
-      </mesh>
-      <mesh position={[0, 0.07, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <circleGeometry args={[0.042, 28]} />
-        <meshStandardMaterial color="#2c221a" roughness={1} />
-      </mesh>
       <Instances geometry={BLADE} items={BLADES} roughness={0.5} side={DoubleSide} map={leafTex} />
     </group>
   );
@@ -485,38 +444,95 @@ const ARECA_STEMS: Stem[] = ARECA.canes.map((points) => ({ points, r0: 0.0034, r
 function Areca({ position }: { position: Vec3 }) {
   return (
     <group position={position}>
-      {/* Macetero alto de cerámica mate blanca */}
-      <mesh position={[0, 0.045, 0]} castShadow receiveShadow>
-        <cylinderGeometry args={[0.05, 0.043, 0.09, 40]} />
-        <meshStandardMaterial color="#e4e0d8" roughness={0.8} />
-      </mesh>
-      <mesh position={[0, 0.087, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <circleGeometry args={[0.047, 28]} />
-        <meshStandardMaterial color="#2c221a" roughness={1} />
-      </mesh>
       <Stems stems={ARECA_STEMS} color="#8a9a4a" roughness={0.6} />
       <Instances geometry={BLADE} items={ARECA.leaflets} roughness={0.5} side={DoubleSide} />
     </group>
   );
 }
 
+// Jardinera triple de cerámica mate: tres compartimentos a lo largo del canto izquierdo
+const TROUGH = { x: -0.93, z: -0.2, len: 0.5, w: 0.13, h: 0.09, wall: 0.008 };
+const SOIL = TROUGH.h - 0.01;
+const CELLS = [-1, 0, 1].map((i) => TROUGH.z + (i * TROUGH.len) / 3);
+
+function Planter() {
+  const { x, z, len, w, h, wall } = TROUGH;
+  const ceramic = <meshStandardMaterial color="#e6e1d8" roughness={0.62} />;
+  return (
+    <group position={[x, 0, z]}>
+      <RoundedBox args={[w, wall, len]} radius={0.003} position={[0, wall / 2 + 0.006, 0]} castShadow receiveShadow>
+        {ceramic}
+      </RoundedBox>
+      {[-1, 1].map((sx) => (
+        <RoundedBox key={`l${sx}`} args={[wall, h - 0.006, len]} radius={0.003} position={[sx * (w / 2 - wall / 2), h / 2 + 0.003, 0]} castShadow receiveShadow>
+          {ceramic}
+        </RoundedBox>
+      ))}
+      {[-1, -1 / 3, 1 / 3, 1].map((k) => (
+        <RoundedBox key={`c${k}`} args={[w, h - 0.006, wall]} radius={0.003} position={[0, h / 2 + 0.003, (k * (len - wall)) / 2]} castShadow receiveShadow>
+          {ceramic}
+        </RoundedBox>
+      ))}
+      {/* Patas de roble: la jardinera no apoya directamente en la mesa */}
+      {[-1, 1].map((sz) => (
+        <RoundedBox key={`p${sz}`} args={[w * 0.85, 0.006, 0.03]} radius={0.002} position={[0, 0.003, sz * (len / 2 - 0.05)]}>
+          <meshStandardMaterial color="#8a6442" roughness={0.6} />
+        </RoundedBox>
+      ))}
+      {CELLS.map((cz) => (
+        <mesh key={cz} position={[0, SOIL, cz - z]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+          <planeGeometry args={[w - wall * 2, len / 3 - wall]} />
+          <meshStandardMaterial color="#2a2019" roughness={1} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
 /**
- * Rincón verde a la izquierda (el «dragón verde» del feng shui, elemento madera):
- * de fondo a frente y de alto a bajo: areca en la esquina, sansevieria, poto y bonsái.
- * Cada una asoma por encima o al lado de la anterior vista desde la silla.
+ * Rincón verde a la izquierda (el «dragón verde» del feng shui, elemento madera): una jardinera triple
+ * con las plantas de alta a baja hacia el usuario (areca, sansevieria, poto) y el bonsái delante.
  */
 export function Plants() {
   return (
     <group>
-      <Areca position={[-0.97, 0, -0.47]} />
-      <SnakePlant position={[-0.985, 0, -0.24]} />
-      <group position={[-0.885, 0, 0.02]} scale={1.3}>
+      <Planter />
+      <Areca position={[TROUGH.x, SOIL - 0.087, CELLS[0]]} />
+      <SnakePlant position={[TROUGH.x, SOIL - 0.07, CELLS[1]]} />
+      <group position={[TROUGH.x, SOIL - 0.058 * 1.3, CELLS[2]]} scale={1.3}>
         <Pothos position={[0, 0, 0]} />
       </group>
       <group position={[-0.8, 0, 0.2]} scale={1.15}>
         <Bonsai position={[0, 0, 0]} />
       </group>
-      {/* Contraluz frío desde la pared azul: recorta las hojas y les da volumen */}
+      <MushroomLamp position={[-0.975, 0, 0.27]} />
+    </group>
+  );
+}
+
+/** Lamparita seta: pie y vástago de latón, tulipa de vidrio opalino. Luz cálida y tenue sobre las plantas. */
+function MushroomLamp({ position }: { position: Vec3 }) {
+  const brass = <meshStandardMaterial color="#b08a4a" roughness={0.28} metalness={0.9} />;
+  return (
+    <group position={position}>
+      <mesh position={[0, 0.005, 0]} castShadow>
+        <cylinderGeometry args={[0.042, 0.046, 0.01, 40]} />
+        {brass}
+      </mesh>
+      <mesh position={[0, 0.1, 0]} castShadow>
+        <cylinderGeometry args={[0.005, 0.006, 0.18, 16]} />
+        {brass}
+      </mesh>
+      <mesh position={[0, 0.186, 0]} scale={[1, 0.72, 1]} castShadow>
+        <sphereGeometry args={[0.07, 40, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <meshStandardMaterial color="#f3ece0" roughness={0.35} emissive="#ffcf98" emissiveIntensity={1.15} />
+      </mesh>
+      {/* Bajo la tulipa, la bombilla vista desde abajo */}
+      <mesh position={[0, 0.185, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.069, 40]} />
+        <meshBasicMaterial color={hdr("#ffd8a8", 1.6)} toneMapped={false} side={DoubleSide} />
+      </mesh>
+      <pointLight position={[0, 0.16, 0]} color="#ffc98f" intensity={0.9} distance={0.9} decay={1.8} />
     </group>
   );
 }

@@ -711,7 +711,7 @@ export const drawMatEdge: Draw = (ctx, w, h) => {
 };
 
 
-const FONT_FREE = new Set<Draw>([drawMugGlaze, drawMugRough, drawLatte, drawPothosLeaf, drawWoodRough, drawSnakeLeaf, drawSpruceTop, drawFretboard, drawWood, drawPegboard, drawFabric, drawMatEdge, drawStrip, drawSoftDot, drawNoise, drawXboxLogo]);
+const FONT_FREE = new Set<Draw>([drawUnderglow, drawMugGlaze, drawMugRough, drawLatte, drawPothosLeaf, drawWoodRough, drawSnakeLeaf, drawSpruceTop, drawFretboard, drawWood, drawPegboard, drawFabric, drawMatEdge, drawStrip, drawSoftDot, drawNoise, drawXboxLogo]);
 /** Hoja de sansevieria: verde oscuro con bandas onduladas claras y borde amarillo. */
 export function drawSnakeLeaf(ctx: CanvasRenderingContext2D, w: number, h: number) {
   ctx.fillStyle = "#24442a";
@@ -959,4 +959,15 @@ export function drawLatte(ctx: CanvasRenderingContext2D, w: number, h: number) {
     ctx.arc(c + Math.cos(a) * d, c + Math.sin(a) * d, 0.6 + r() * 1.6, 0, Math.PI * 2);
     ctx.fill();
   }
+}
+
+/** Tira LED bajo la mesa: degradado continuo de hielo a ámbar, sin puntos de diodo a la vista. */
+export function drawUnderglow(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const g = ctx.createLinearGradient(0, 0, w, 0);
+  g.addColorStop(0, "#7fd4ff");
+  g.addColorStop(0.45, "#c8c6ff");
+  g.addColorStop(0.55, "#ffd2a0");
+  g.addColorStop(1, "#ffad4a");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
 }
