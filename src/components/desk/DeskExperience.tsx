@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useState, useSyncExternalStore } from "react";
 import type { Dictionary } from "@/i18n/dictionaries";
+import { DeskCursor } from "./DeskCursor";
 
 // three.js solo existe en el cliente y pesa: se carga aparte para no engordar el hero
 const DeskScene = dynamic(() => import("./DeskScene"), { ssr: false });
@@ -28,6 +29,7 @@ export function DeskExperience({ t, lang }: { t: Dictionary["desk"]; lang: strin
         <span className="desk-loader-label">{t.loading}</span>
         <span className="desk-loader-bar" />
       </div>
+      <DeskCursor reduceMotion={reduceMotion} />
       <p className="desk-hint">
         <span data-pointer>{t.hintPointer}</span>
         <span data-touch>{t.hintTouch}</span>

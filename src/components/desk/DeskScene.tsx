@@ -83,24 +83,24 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
       <SideMonitor t={t} position={[0.655, 0, -0.22]} rotation={[0, -0.56, 0]} />
       {/* Lo que va sobre el tapete se apoya en su cara superior (4 mm), no lo atraviesa */}
       <group position={[0, 0.004, 0]}>
-        <Keyboard position={[-0.04, 0, 0.1]} reduceMotion={reduceMotion} />
-        <Controller position={[-0.47, 0, 0.2]} rotation={[0, 0.38, 0]} />
-        <Phone t={t} lang={lang} position={[0.27, 0, -0.1]} rotation={[0, -0.15, 0]} />
-        <Coffee position={[0.425, 0, -0.06]} reduceMotion={reduceMotion} />
-        <Tablet lang={lang} position={[0.6, 0, 0.15]} rotation={[0, -0.42, 0]} />
+        <Keyboard t={t} position={[-0.04, 0, 0.1]} reduceMotion={reduceMotion} />
+        <Controller t={t} position={[-0.47, 0, 0.2]} rotation={[0, 0.38, 0]} />
+        <Phone t={t} lang={lang} position={[0.25, 0, -0.025]} rotation={[0, -0.22, 0]} />
+        <Coffee t={t} position={[0.425, 0, -0.06]} reduceMotion={reduceMotion} />
+        <Tablet t={t} lang={lang} position={[0.6, 0, 0.15]} rotation={[0, -0.42, 0]} />
       </group>
-      <Mouse position={[0.27, 0, 0.13]} rotation={[0, -0.12, 0]} />
-      <Plants reduceMotion={reduceMotion} />
+      <Mouse t={t} position={[0.27, 0, 0.13]} rotation={[0, -0.12, 0]} />
+      <Plants t={t} reduceMotion={reduceMotion} />
       <Rug />
       {/* Cascos colgados de un gancho bajo el canto, en el extremo derecho */}
-      <Headphones position={[0.74, -0.045, 0.3]} />
+      <Headphones t={t} position={[0.74, -0.045, 0.3]} />
       {/* Pared del fondo: la balda equilibra el portátil; reloj y calendario, el monitor lateral */}
       <Shelf position={[-0.6, 0.76, WALL_Z]} />
-      <WallClock position={[0.6, 0.8, WALL_Z]} />
+      <WallClock t={t} position={[0.6, 0.8, WALL_Z]} />
       <WallCalendar position={[0.86, 0.71, WALL_Z]} lang={lang} />
       {/* Pared izquierda: un mapa enmarcado, al mismo alto que la guitarra de enfrente */}
       <MapFrame position={[-1.049, 0.47, 0.22]} rotation={[0, Math.PI / 2, 0]} />
-      <Guitar position={[1.02, 0.1, 0.11]} rotation={[0, -Math.PI / 2, 0]} />
+      <Guitar t={t} position={[1.02, 0.1, 0.11]} rotation={[0, -Math.PI / 2, 0]} />
 
       <LookControls reduceMotion={reduceMotion} />
       <Warmup onReady={onReady} onLow={() => setLow(true)} />

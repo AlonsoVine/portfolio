@@ -1,11 +1,15 @@
 "use client";
 
-import { useMemo } from "react";
-import { ExtrudeGeometry, Shape, Vector2 } from "three";
+import { useFrame } from "@react-three/fiber";
+import { useMemo, useRef } from "react";
+import { ExtrudeGeometry, type Group, type MeshBasicMaterial, Shape, Vector2 } from "three";
 import { hdr } from "./palette";
 import { RoundedBox } from "./primitives";
 import { drawFaceButton, drawXboxLogo } from "./screens";
 import { useCanvasTexture } from "./useCanvasTexture";
+import { useHoverable } from "./interact";
+import { rumble } from "./sfx";
+import type { DeskCopy } from "./screens";
 
 type Placed = { position: [number, number, number]; rotation?: [number, number, number] };
 
@@ -124,11 +128,34 @@ function FaceButton({ l, c, x, z }: { l: string; c: string; x: number; z: number
 }
 
 /** Mando de Xbox blanco: silueta extruida con bisel generoso, gatillos, bumpers, sticks, cruceta y botonera. */
-export function Controller({ position, rotation }: Placed) {
+const RUMBLE_S = 0.6;
+const LOGO_ON = hdr("#ffffff", 1.3);
+
+/** Mando de consola. Al pulsarlo vibra sobre el tapete y el logo se enciende con fuerza. */
+export function Controller({ t, position, rotation }: Placed & { t: DeskCopy }) {
   const body = useMemo(() => bodyGeometry(), []);
   const logo = useCanvasTexture(128, 128, drawXboxLogo);
+  const shell = useRef<Group>(null);
+  const logoMat = useRef<MeshBasicMaterial>(null);
+  const since = useRef(RUMBLE_S);
+  useFrame(({ clock, gl }, delta) => {
+    const g = shell.current;
+    if (!g || since.current >= RUMBLE_S) return;
+    since.current += delta;
+    const amp = Math.max(0, 1 - since.current / RUMBLE_S) ** 1.5;
+    const tt = clock.elapsedTime;
+    g.position.set(Math.sin(tt * 95) * 0.0016 * amp, 0, Math.cos(tt * 83) * 0.0011 * amp);
+    g.rotation.y = Math.sin(tt * 71) * 0.035 * amp;
+    logoMat.current?.color.copy(LOGO_ON).multiplyScalar(1 + 2.5 * amp);
+    gl.shadowMap.needsUpdate = true;
+  });
+  const hover = useHoverable(t.interact.rumble, () => {
+    since.current = 0;
+    rumble();
+  });
   return (
-    <group position={position} rotation={rotation}>
+    <group position={position} rotation={rotation} {...hover}>
+      <group ref={shell}>
       <mesh geometry={body} castShadow receiveShadow>
         <meshPhysicalMaterial {...WHITE} />
       </mesh>
@@ -184,12 +211,13 @@ export function Controller({ position, rotation }: Placed) {
         </mesh>
         <mesh position={[0, 0.0022, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <circleGeometry args={[0.0072, 32]} />
-          <meshBasicMaterial map={logo} color={hdr("#ffffff", 1.3)} toneMapped={false} />
+          <meshBasicMaterial ref={logoMat} map={logo} color={LOGO_ON} toneMapped={false} />
         </mesh>
       </group>
       <RoundedBox args={[0.009, 0.0035, 0.002]} radius={0.001} position={[0, TOP * 0.55, -0.0345]}>
         <meshStandardMaterial {...BLACK} />
       </RoundedBox>
+      </group>
     </group>
   );
 }

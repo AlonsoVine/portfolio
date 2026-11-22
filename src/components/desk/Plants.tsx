@@ -1,7 +1,7 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { mergeGeometries, mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import {
@@ -34,7 +34,10 @@ import {
 import { hdr } from "./palette";
 import { RoundedBox } from "./primitives";
 import { drawNoise, drawPothosLeaf, drawSnakeLeaf } from "./screens";
-import { Steam } from "./Steam";
+import { Steam, type SteamDrive } from "./Steam";
+import { useHoverable } from "./interact";
+import { blow } from "./sfx";
+import type { DeskCopy } from "./screens";
 import { useCanvasTexture } from "./useCanvasTexture";
 
 type Vec3 = [number, number, number];
@@ -512,23 +515,65 @@ function Planter() {
  * Rincón verde a la izquierda (el «dragón verde» del feng shui, elemento madera): una jardinera triple
  * con las plantas de alta a baja hacia el usuario (areca, sansevieria, poto) y el bonsái delante.
  */
-export function Plants({ reduceMotion }: { reduceMotion: boolean }) {
+/**
+ * Planta que se mece al rozarla: muelle amortiguado con pivote en la tierra. Pasar el puntero la empuja
+ * un poco; un clic, más.
+ */
+function Sway({ label, position, stiffness = 26, children }: { label: string; position: Vec3; stiffness?: number; children: ReactNode }) {
+  const g = useRef<Group>(null);
+  const s = useRef({ x: 0, z: 0, vx: 0, vz: 0 });
+  const push = (k: number) => {
+    const a = Math.random() * Math.PI * 2;
+    s.current.vx += Math.cos(a) * k;
+    s.current.vz += Math.sin(a) * k;
+  };
+  const hover = useHoverable(label, () => push(1.4), () => push(0.6));
+  useFrame(({ gl }, delta) => {
+    const m = s.current;
+    const node = g.current;
+    if (!node || Math.abs(m.x) + Math.abs(m.z) + Math.abs(m.vx) + Math.abs(m.vz) < 1e-4) return;
+    const dt = Math.min(delta, 0.05);
+    const damp = 2 * 0.25 * Math.sqrt(stiffness);
+    m.vx += (-stiffness * m.x - damp * m.vx) * dt;
+    m.vz += (-stiffness * m.z - damp * m.vz) * dt;
+    m.x += m.vx * dt;
+    m.z += m.vz * dt;
+    node.rotation.set(m.x * 0.5, 0, m.z * 0.5);
+    gl.shadowMap.needsUpdate = true;
+  });
+  return (
+    <group ref={g} position={position} {...hover}>
+      {children}
+    </group>
+  );
+}
+
+export function Plants({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }) {
+  const label = t.interact.plant;
   return (
     <group>
       <Planter />
-      <Areca position={[TROUGH.x, SOIL - 0.087, CELLS[0]]} />
-      <SnakePlant position={[TROUGH.x, SOIL - 0.07, CELLS[1]]} />
-      <group position={[TROUGH.x, SOIL - 0.058 * 1.3, CELLS[2]]} scale={1.3}>
-        <Pothos position={[0, 0, 0]} />
-      </group>
+      <Sway label={label} position={[TROUGH.x, SOIL - 0.087, CELLS[0]]} stiffness={14}>
+        <Areca position={[0, 0, 0]} />
+      </Sway>
+      <Sway label={label} position={[TROUGH.x, SOIL - 0.07, CELLS[1]]} stiffness={30}>
+        <SnakePlant position={[0, 0, 0]} />
+      </Sway>
+      <Sway label={label} position={[TROUGH.x, SOIL - 0.058 * 1.3, CELLS[2]]} stiffness={20}>
+        <group scale={1.3}>
+          <Pothos position={[0, 0, 0]} />
+        </group>
+      </Sway>
       {/* En la misma línea que la jardinera y con el lado largo paralelo a ella, junto al canto de la mesa */}
-      <group position={[TROUGH.x, 0, 0.25]} rotation={[0, Math.PI / 2, 0]} scale={1.15}>
-        <Bonsai position={[0, 0, 0]} />
-      </group>
+      <Sway label={label} position={[TROUGH.x, 0, 0.25]} stiffness={60}>
+        <group rotation={[0, Math.PI / 2, 0]} scale={1.15}>
+          <Bonsai position={[0, 0, 0]} />
+        </group>
+      </Sway>
       {/* Clavado al fondo del cajón central, entre la sansevieria y el poto: el mástil se pierde entre las hojas */}
       <Lantern position={[TROUGH.x - 0.04, SOIL, CELLS[1] + 0.06]} rotation={[0, -Math.PI / 4, 0]} />
-      <Incense position={[TROUGH.x, 0, 0.125]} reduceMotion={reduceMotion} />
-      <Candle position={[TROUGH.x + 0.045, 0, 0.08]} reduceMotion={reduceMotion} />
+      <Incense t={t} position={[TROUGH.x, 0, 0.125]} reduceMotion={reduceMotion} />
+      <Candle t={t} position={[TROUGH.x + 0.045, 0, 0.08]} reduceMotion={reduceMotion} />
     </group>
   );
 }
@@ -566,25 +611,40 @@ const LOTUS = (() => {
 })();
 
 /** Vela de cera junto al incienso: llama viva con su punto de luz cálida sobre la mesa. */
-function Candle({ position, reduceMotion }: { position: Vec3; reduceMotion: boolean }) {
+const OUT_S = 5;
+
+function Candle({ t, position, reduceMotion }: { t: DeskCopy; position: Vec3; reduceMotion: boolean }) {
+  const noise = useCanvasTexture(128, 128, drawNoise, { tileX: 1, color: false });
   const flame = useRef<Group>(null);
   const light = useRef<PointLight>(null);
+  const blownAt = useRef(-100);
+  const smoke = useRef<SteamDrive>({ gain: 0, stir: 0.3 });
+  const hover = useHoverable(t.interact.blow, () => {
+    const now = performance.now() / 1000;
+    if (now - blownAt.current < OUT_S + 0.6) return;
+    blownAt.current = now;
+    blow();
+  });
   useFrame(({ clock }) => {
-    if (reduceMotion) return;
-    const t = clock.elapsedTime;
+    const tt = clock.elapsedTime;
+    // Apagada: la llama se encoge en un instante, queda un hilo de humo y a los pocos segundos vuelve a prender
+    const since = performance.now() / 1000 - blownAt.current;
+    const lit = since < 0.15 ? 1 - since / 0.15 : since < OUT_S ? 0 : Math.min(1, (since - OUT_S) / 0.6);
+    smoke.current.gain = since < OUT_S ? Math.max(0, 1 - since / 3.5) ** 1.5 : 0;
     // Titileo de llama: varias ondas sin relación entre sí más algún bajón breve, para que no se note el ciclo
-    const wave = Math.sin(t * 9.1) * 0.5 + Math.sin(t * 13.7 + 1.3) * 0.3 + Math.sin(t * 4.3 + 0.7) * 0.2;
-    const dip = Math.max(0, Math.sin(t * 1.7) * Math.sin(t * 0.63 + 2)) ** 6 * 0.35;
+    const wave = reduceMotion ? 0 : Math.sin(tt * 9.1) * 0.5 + Math.sin(tt * 13.7 + 1.3) * 0.3 + Math.sin(tt * 4.3 + 0.7) * 0.2;
+    const dip = reduceMotion ? 0 : Math.max(0, Math.sin(tt * 1.7) * Math.sin(tt * 0.63 + 2)) ** 6 * 0.35;
     const f = 0.82 + wave * 0.14 - dip;
     if (flame.current) {
-      flame.current.scale.set(1 - wave * 0.05, f, 1 - wave * 0.05);
-      flame.current.rotation.z = Math.sin(t * 2.1) * 0.06 + Math.sin(t * 7.9) * 0.025;
+      flame.current.visible = lit > 0.01;
+      flame.current.scale.set((1 - wave * 0.05) * lit, f * lit, (1 - wave * 0.05) * lit);
+      flame.current.rotation.z = reduceMotion ? 0 : Math.sin(tt * 2.1) * 0.06 + Math.sin(tt * 7.9) * 0.025;
     }
-    if (light.current) light.current.intensity = 0.55 * f;
+    if (light.current) light.current.intensity = 0.55 * f * lit;
   });
   const H = 0.045;
   return (
-    <group position={position}>
+    <group position={position} {...hover}>
       {/* Platillo de latón a juego con el loto */}
       <mesh position={[0, 0.002, 0]} castShadow receiveShadow>
         <cylinderGeometry args={[0.026, 0.024, 0.004, 40]} />
@@ -614,18 +674,34 @@ function Candle({ position, reduceMotion }: { position: Vec3; reduceMotion: bool
         </mesh>
       </group>
       <pointLight ref={light} position={[0, H + 0.03, 0]} color="#ff9a4d" intensity={0.55} distance={0.45} decay={2} />
+      {!reduceMotion && <Steam position={[0, 0.012 + H, 0]} height={0.16} width={0.02} noise={noise} color="#c9ccd4" opacity={0.5} drive={smoke} />}
     </group>
   );
 }
 
 /** Varilla de incienso en un platillo de piedra: se consume despacio, con la brasa viva y un hilo de humo. */
-function Incense({ position, reduceMotion }: { position: Vec3; reduceMotion: boolean }) {
+function Incense({ t: copy, position, reduceMotion }: { t: DeskCopy; position: Vec3; reduceMotion: boolean }) {
   const noise = useCanvasTexture(128, 128, drawNoise, { tileX: 1, color: false });
   const stick = useRef<Mesh>(null);
   const tip = useRef<Group>(null);
   const ember = useRef<MeshBasicMaterial>(null);
+  // Pasar la mano por el humo lo agita; un clic además aviva la brasa y suelta una bocanada
+  const smoke = useRef<SteamDrive>({ gain: 1, stir: 0 });
+  const hover = useHoverable(
+    copy.interact.smoke,
+    () => {
+      smoke.current.stir = 1.6;
+      smoke.current.gain = 1.8;
+    },
+    () => {
+      smoke.current.stir = Math.max(smoke.current.stir, 1);
+    },
+  );
 
-  useFrame(({ clock }) => {
+  useFrame(({ clock }, delta) => {
+    const sm = smoke.current;
+    sm.stir *= Math.exp(-delta * 0.8);
+    sm.gain += (1 - sm.gain) * Math.min(1, delta * 0.7);
     const t = clock.elapsedTime;
     // Empieza ya algo quemada y vuelve a empezar cuando se agota: el ciclo es tan lento que no se nota
     const left = reduceMotion ? 0.7 : 0.85 - 0.5 * ((t / BURN_SECONDS) % 1);
@@ -637,12 +713,13 @@ function Incense({ position, reduceMotion }: { position: Vec3; reduceMotion: boo
     if (tip.current) tip.current.position.y = h;
     if (ember.current) {
       const flicker = reduceMotion ? 1 : 0.8 + 0.2 * Math.sin(t * 7.3) * Math.sin(t * 3.1 + 1);
-      ember.current.color.setRGB(3.2 * flicker, 0.9 * flicker, 0.25 * flicker);
+      const glow = flicker * (1 + (sm.gain - 1) * 0.8);
+      ember.current.color.setRGB(3.2 * glow, 0.9 * glow, 0.25 * glow);
     }
   });
 
   return (
-    <group position={position}>
+    <group position={position} {...hover}>
       {/* Loto de latón: los pétalos recogen la ceniza y el cáliz sujeta la varilla */}
       <mesh geometry={LOTUS} castShadow receiveShadow>
         <meshStandardMaterial color="#d4ad55" roughness={0.28} metalness={1} side={DoubleSide} />
@@ -671,7 +748,7 @@ function Incense({ position, reduceMotion }: { position: Vec3; reduceMotion: boo
             <sphereGeometry args={[0.0016, 10, 8]} />
             <meshBasicMaterial ref={ember} toneMapped={false} />
           </mesh>
-          <Steam position={[0, 0.005, 0]} height={0.24} width={0.028} noise={noise} color="#d8dce6" opacity={0.34} />
+          <Steam position={[0, 0.005, 0]} height={0.24} width={0.028} noise={noise} color="#d8dce6" opacity={0.34} drive={smoke} />
         </group>
       </group>
     </group>

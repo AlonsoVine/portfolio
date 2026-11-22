@@ -822,3 +822,118 @@ html[data-cursor="custom"] * {
     width: 100%;
   }
 }
+
+/* Cursor del escritorio: punto + aro; sobre un objeto pulsable el aro se abre y muestra la acción */
+.desk-cursor {
+  display: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .desk,
+  .desk * {
+    cursor: none;
+  }
+
+  .desk-cursor {
+    display: block;
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 20;
+  }
+}
+
+.desk-cursor-dot,
+.desk-cursor-ring {
+  position: absolute;
+  left: 0;
+  top: 0;
+  will-change: transform;
+}
+
+.desk-cursor-dot::before {
+  content: "";
+  position: absolute;
+  left: -3px;
+  top: -3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink);
+  box-shadow: 0 0 10px rgb(var(--tone-a-rgb) / 0.8);
+  transition: transform 0.25s var(--ease-out), background 0.25s;
+}
+
+.desk-cursor-ring::before {
+  content: "";
+  position: absolute;
+  left: -14px;
+  top: -14px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--ink-faint);
+  transition:
+    transform 0.35s var(--ease-out),
+    border-color 0.35s,
+    background 0.35s,
+    box-shadow 0.35s;
+}
+
+.desk-cursor-label {
+  position: absolute;
+  left: 30px;
+  top: -9px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--stage);
+  background: var(--tone-a);
+  opacity: 0;
+  transform: translateX(-6px);
+  transition:
+    opacity 0.25s,
+    transform 0.35s var(--ease-out);
+}
+
+.desk-cursor[data-active] .desk-cursor-ring::before {
+  transform: scale(1.6);
+  border-color: rgb(var(--tone-a-rgb) / 0.9);
+  background: rgb(var(--tone-a-rgb) / 0.08);
+  box-shadow: 0 0 18px rgb(var(--tone-a-rgb) / 0.45);
+  animation: desk-cursor-pulse 1.6s var(--ease-in-out) infinite;
+}
+
+.desk-cursor[data-active] .desk-cursor-dot::before {
+  transform: scale(0.6);
+  background: var(--tone-b);
+}
+
+.desk-cursor[data-active] .desk-cursor-label {
+  opacity: 1;
+  transform: none;
+}
+
+.desk-cursor-ring[data-press]::before {
+  transform: scale(1.15);
+}
+
+@keyframes desk-cursor-pulse {
+  50% {
+    box-shadow: 0 0 26px rgb(var(--tone-a-rgb) / 0.7);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-cursor[data-active] .desk-cursor-ring::before {
+    animation: none;
+  }
+}
+
+.desk-cursor[data-active] .desk-cursor-ring[data-press]::before {
+  transform: scale(1.3);
+}

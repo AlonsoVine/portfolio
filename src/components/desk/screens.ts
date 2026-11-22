@@ -345,6 +345,13 @@ function clock(lang: string) {
   };
 }
 
+/** Franjas verticales (fracción de alto, desde arriba) de los botones del móvil: el dibujo y el clic las comparten. */
+export const PHONE_BUTTONS = { linkedin: [0.53, 0.645], github: [0.675, 0.79] } as const;
+
+const GITHUB_MARK_D =
+  "M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z";
+
+/** Móvil en su soporte: hora, estado y dos botones grandes a LinkedIn y GitHub. */
 export const drawPhone =
   (t: DeskCopy, lang: string): Draw =>
   (ctx, w, h, f) => {
@@ -353,21 +360,50 @@ export const drawPhone =
     glow(ctx, w * 0.2, h * 0.75, w * 0.9, VIOLET, 0.45);
     glow(ctx, w * 0.95, h * 0.35, w * 0.7, ICE, 0.3);
     const { time, date } = clock(lang);
-    text(ctx, date, w / 2, h * 0.11, mono(f, 20), "#c9d8ff", { align: "center" });
-    text(ctx, time, w / 2, h * 0.26, display(f, 118, 300), "#f2f6ff", { align: "center", glow: 14 });
-    // Notificación
-    ctx.fillStyle = "rgba(255,255,255,0.1)";
-    rrect(ctx, w * 0.06, h * 0.6, w * 0.88, h * 0.11, 24);
-    ctx.fill();
+    text(ctx, date, w / 2, h * 0.085, mono(f, 20), "#c9d8ff", { align: "center" });
+    text(ctx, time, w / 2, h * 0.22, display(f, 112, 300), "#f2f6ff", { align: "center", glow: 14 });
+    text(ctx, t.screens.phoneName, w / 2, h * 0.33, mono(f, 24, 600), "#ffffff", { align: "center" });
+    ctx.font = mono(f, 17);
+    const status = t.screens.phoneStatus;
+    const sw = ctx.measureText(status).width;
     ctx.fillStyle = MINT;
     ctx.shadowColor = MINT;
-    ctx.shadowBlur = 12;
+    ctx.shadowBlur = 10;
     ctx.beginPath();
-    ctx.arc(w * 0.16, h * 0.655, 13, 0, Math.PI * 2);
+    ctx.arc(w / 2 - sw / 2 - 14, h * 0.37 - 6, 6, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
-    text(ctx, t.screens.phoneName, w * 0.26, h * 0.645, mono(f, 20, 500), "#ffffff");
-    text(ctx, t.screens.phoneStatus, w * 0.26, h * 0.68, mono(f, 17), "#c9d8ff");
+    text(ctx, status, w / 2 + 6, h * 0.37, mono(f, 17), "#c9d8ff", { align: "center" });
+    text(ctx, t.screens.phoneLinks.toUpperCase(), w / 2, h * 0.49, mono(f, 15, 500), "rgba(201,216,255,0.7)", { align: "center", spacing: 4 });
+
+    const button = ([y0, y1]: readonly [number, number], bg: string, label: string, sub: string, icon: (x: number, y: number, s: number) => void) => {
+      const y = h * y0;
+      const bh = h * (y1 - y0);
+      ctx.fillStyle = bg;
+      rrect(ctx, w * 0.08, y, w * 0.84, bh, 26);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,0.18)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      const s = bh * 0.5;
+      icon(w * 0.14, y + (bh - s) / 2, s);
+      text(ctx, label, w * 0.14 + s + 18, y + bh * 0.47, mono(f, 26, 600), "#ffffff");
+      text(ctx, sub, w * 0.14 + s + 18, y + bh * 0.75, mono(f, 15), "rgba(255,255,255,0.75)");
+    };
+    button(PHONE_BUTTONS.linkedin, "#0a66c2", "LinkedIn", "/in/alonso-viñé", (x, y, s) => {
+      ctx.fillStyle = "#ffffff";
+      rrect(ctx, x, y, s, s, s * 0.18);
+      ctx.fill();
+      text(ctx, "in", x + s / 2, y + s * 0.8, `700 ${s * 0.72}px Arial, sans-serif`, "#0a66c2", { align: "center" });
+    });
+    button(PHONE_BUTTONS.github, "#24292f", "GitHub", "@AlonsoVine", (x, y, s) => {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(s / 16, s / 16);
+      ctx.fillStyle = "#ffffff";
+      ctx.fill(new Path2D(GITHUB_MARK_D));
+      ctx.restore();
+    });
     ctx.fillStyle = "rgba(255,255,255,0.75)";
     rrect(ctx, w * 0.33, h * 0.955, w * 0.34, 6, 3);
     ctx.fill();
@@ -1250,8 +1286,26 @@ export const drawCalendar =
         ctx.arc(x, y - w * 0.014, cw * 0.36, 0, Math.PI * 2);
         ctx.stroke();
       }
+      const past = d < now.getDate();
       ctx.fillStyle = i % 7 >= 5 ? "#b4623a" : "#2a2522";
+      ctx.globalAlpha = past ? 0.55 : 1;
       ctx.fillText(String(d), x, y);
+      ctx.globalAlpha = 1;
+      if (past) {
+        // Tachado a rotulador rojo, cada aspa algo distinta como hecha a mano
+        const r = cw * 0.3;
+        const cy = y - w * 0.014;
+        const j = (k: number) => Math.sin(d * 12.9898 + k * 78.233) * r * 0.12;
+        ctx.strokeStyle = "rgba(196,48,40,0.85)";
+        ctx.lineWidth = w * 0.007;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(x - r + j(1), cy - r + j(2));
+        ctx.lineTo(x + r + j(3), cy + r + j(4));
+        ctx.moveTo(x + r + j(5), cy - r + j(6));
+        ctx.lineTo(x - r + j(7), cy + r + j(8));
+        ctx.stroke();
+      }
     }
     ctx.textAlign = "left";
   };

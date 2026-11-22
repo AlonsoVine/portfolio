@@ -1,10 +1,14 @@
 "use client";
 
+import { useFrame } from "@react-three/fiber";
 import { useLayoutEffect, useRef } from "react";
 import { BackSide, CylinderGeometry, ExtrudeGeometry, Float32BufferAttribute, type InstancedMesh, Object3D, Path, Shape, ShapeGeometry, Vector2 } from "three";
 import { RoundedBox } from "./primitives";
 import { drawFretboard, drawSoftDot, drawSpruceTop } from "./screens";
 import { useCanvasTexture } from "./useCanvasTexture";
+import { useHoverable } from "./interact";
+import { strum } from "./sfx";
+import type { DeskCopy } from "./screens";
 
 type Placed = { position: [number, number, number]; rotation?: [number, number, number] };
 
@@ -67,28 +71,44 @@ const TOP = topGeometry();
 const BINDING = new ExtrudeGeometry(outline(true), { depth: 0.002, curveSegments: 48, bevelEnabled: true, bevelThickness: 0.001, bevelSize: BEVEL + 0.0007, bevelSegments: 1 });
 const STRING = new CylinderGeometry(1, 1, 1, 6, 1);
 
-/** Seis cuerdas de entorchado metálico, de la selleta a la cejuela, más gruesas en los graves. */
-function Strings() {
+const RING_S = 3;
+const o = new Object3D();
+
+/**
+ * Seis cuerdas de entorchado metálico, de la selleta a la cejuela, más gruesas en los graves.
+ * Tras un rasgueo vibran: se ensanchan como lo hace una cuerda borrosa al ojo y se van calmando.
+ */
+function Strings({ pluck }: { pluck: { current: number } }) {
   const ref = useRef<InstancedMesh>(null);
-  useLayoutEffect(() => {
-    const mesh = ref.current;
-    if (!mesh) return;
-    const o = new Object3D();
+  const place = (mesh: InstancedMesh, amp: number, time: number) => {
     for (let i = 0; i < 6; i += 1) {
       const k = i / 5 - 0.5;
       const x0 = k * 0.054;
       const x1 = k * 0.036;
       const len = NUT_Y - SADDLE_Y;
       const r = 0.0009 - i * 0.00004;
+      // Los graves vibran más ancho y más despacio que los agudos
+      const blur = 1 + amp * (4 - i * 0.4) * (0.55 + 0.45 * Math.abs(Math.sin(time * (31 + i * 9))));
       o.position.set((x0 + x1) / 2, (SADDLE_Y + NUT_Y) / 2, FRONT + 0.0093);
       o.rotation.set(0, 0, Math.atan2(x0 - x1, len));
-      o.scale.set(r, len, r);
+      o.scale.set(r * blur, len, r * (1 + (blur - 1) * 0.3));
       o.updateMatrix();
       mesh.setMatrixAt(i, o.matrix);
     }
     mesh.instanceMatrix.needsUpdate = true;
+  };
+  useLayoutEffect(() => {
+    const mesh = ref.current;
+    if (!mesh) return;
+    place(mesh, 0, 0);
     mesh.computeBoundingSphere();
-  }, []);
+  });
+  useFrame(({ clock }) => {
+    const mesh = ref.current;
+    const since = performance.now() / 1000 - pluck.current;
+    if (!mesh || since > RING_S + 0.1) return;
+    place(mesh, since > RING_S ? 0 : Math.exp(-since * 1.6) * (1 - since / RING_S), clock.elapsedTime);
+  });
   return (
     <instancedMesh ref={ref} args={[STRING, undefined, 6]}>
       <meshStandardMaterial color="#d8d2c4" roughness={0.18} metalness={1} envMapIntensity={1.5} />
@@ -97,13 +117,18 @@ function Strings() {
 }
 
 /** Guitarra acústica colgada de un soporte de pared: tapa de abeto, aros de caoba y diapasón de palosanto. */
-export function Guitar({ position, rotation }: Placed) {
+export function Guitar({ t, position, rotation }: Placed & { t: DeskCopy }) {
+  const pluck = useRef(-10);
+  const hover = useHoverable(t.interact.strum, () => {
+    pluck.current = performance.now() / 1000;
+    strum();
+  });
   const spruce = useCanvasTexture(512, 640, drawSpruceTop);
   const board = useCanvasTexture(64, 512, drawFretboard);
   const dot = useCanvasTexture(128, 128, drawSoftDot);
 
   return (
-    <group position={position} rotation={rotation}>
+    <group position={position} rotation={rotation} {...hover}>
       <mesh geometry={BODY} castShadow receiveShadow>
         <meshPhysicalMaterial color="#3a1a0c" roughness={0.5} clearcoat={0.7} clearcoatRoughness={0.35} />
       </mesh>
@@ -147,7 +172,7 @@ export function Guitar({ position, rotation }: Placed) {
         <meshStandardMaterial color="#efe8d8" roughness={0.4} />
       </RoundedBox>
 
-      <Strings />
+      <Strings pluck={pluck} />
 
       {/* Pala inclinada hacia atrás con sus seis clavijas */}
       <group position={[0, NUT_Y + 0.002, FRONT - 0.004]} rotation={[-0.24, 0, 0]}>

@@ -6,8 +6,11 @@ import { BufferGeometry, Color, DoubleSide, SRGBColorSpace, TextureLoader, Euler
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { HangingPothos } from "./Plants";
+import { showHover, useHoverable } from "./interact";
+import { startAmbient, ticks } from "./sfx";
+import { ICE } from "./palette";
 import { RoundedBox } from "./primitives";
-import { drawCalendar, drawClockFace, drawRug, drawSoftDot } from "./screens";
+import { drawCalendar, drawClockFace, drawRug, drawSoftDot, type DeskCopy } from "./screens";
 import { useCanvasTexture } from "./useCanvasTexture";
 
 type Vec3 = [number, number, number];
@@ -100,8 +103,17 @@ export function Shelf({ position }: { position: Vec3 }) {
   );
 }
 
-/** Reloj de pared con marco de nogal: marca la hora real. */
-export function WallClock({ position, radius = 0.093 }: { position: Vec3; radius?: number }) {
+const smoother = (k: number) => k * k * k * (k * (k * 6 - 15) + 10);
+const SPIN_S = 1.8;
+
+/** Reloj de pared con marco de nogal: marca la hora real. Al pulsarlo las agujas dan vueltas hasta la hora. */
+export function WallClock({ t, position, radius = 0.093 }: { t: DeskCopy; position: Vec3; radius?: number }) {
+  const spin = useRef(-10);
+  const hover = useHoverable(t.interact.clock, () => {
+    if (performance.now() / 1000 - spin.current < SPIN_S) return;
+    spin.current = performance.now() / 1000;
+    ticks(26, SPIN_S);
+  });
   const face = useCanvasTexture(256, 256, drawClockFace);
   const dot = useCanvasTexture(128, 128, drawSoftDot);
   const hour = useRef<Group>(null);
@@ -113,10 +125,13 @@ export function WallClock({ position, radius = 0.093 }: { position: Vec3; radius
     const s = d.getSeconds() + d.getMilliseconds() / 1000;
     const m = d.getMinutes() + s / 60;
     const h = (d.getHours() % 12) + m / 60;
-    if (hour.current) hour.current.rotation.z = -(h / 12) * Math.PI * 2;
-    if (minute.current) minute.current.rotation.z = -(m / 60) * Math.PI * 2;
+    // Vueltas de más que se van gastando: las agujas frenan y caen justo en la hora
+    const left = 1 - smoother(Math.min(1, (performance.now() / 1000 - spin.current) / SPIN_S));
+    const turn = Math.PI * 2 * left;
+    if (hour.current) hour.current.rotation.z = -(h / 12) * Math.PI * 2 + turn * 0.5;
+    if (minute.current) minute.current.rotation.z = -(m / 60) * Math.PI * 2 + turn * 3;
     // La aguja de segundos avanza a saltos, como un reloj de cuarzo
-    if (second.current) second.current.rotation.z = -(Math.floor(s) / 60) * Math.PI * 2;
+    if (second.current) second.current.rotation.z = -(Math.floor(s) / 60) * Math.PI * 2 + turn * 8;
   });
 
   const hand = (len: number, width: number, z: number, color: string, tail = 0) => (
@@ -127,7 +142,7 @@ export function WallClock({ position, radius = 0.093 }: { position: Vec3; radius
   );
 
   return (
-    <group position={position}>
+    <group position={position} {...hover}>
       <mesh position={[0.01, -0.012, 0.001]} scale={[radius * 2.9, radius * 2.9, 1]}>
         <planeGeometry />
         <meshBasicMaterial map={dot} color="#000000" transparent opacity={0.5} depthWrite={false} />
@@ -254,12 +269,39 @@ export function MapFrame({ position, rotation }: { position: Vec3; rotation?: Ve
 }
 
 /** Gancho atornillado bajo el canto con unos cascos cerrados colgando de la diadema. */
-export function Headphones({ position }: { position: Vec3 }) {
+export function Headphones({ t, position }: { t: DeskCopy; position: Vec3 }) {
   const R = 0.085;
   const hookY = -0.06;
   const cy = hookY - 0.006 - R;
+  const swing = useRef<Group>(null);
+  const pushed = useRef(-10);
+  const stop = useRef<(() => void) | null>(null);
+  const [playing, setPlaying] = useState(false);
+  useEffect(() => () => stop.current?.(), []);
+  useFrame(({ gl }) => {
+    const g = swing.current;
+    const s = performance.now() / 1000 - pushed.current;
+    if (!g || s > 4) return;
+    // Péndulo amortiguado colgado del gancho
+    const a = s > 3.9 ? 0 : Math.exp(-s * 1.3) * Math.sin(s * 6.5);
+    g.rotation.set(a * 0.22, 0, a * 0.05);
+    gl.shadowMap.needsUpdate = true;
+  });
+  const hover = useHoverable(playing ? t.interact.musicOff : t.interact.musicOn, () => {
+    pushed.current = performance.now() / 1000;
+    if (stop.current) {
+      stop.current();
+      stop.current = null;
+      setPlaying(false);
+      showHover(t.interact.musicOn);
+    } else {
+      stop.current = startAmbient();
+      setPlaying(true);
+      showHover(t.interact.musicOff);
+    }
+  });
   return (
-    <group position={position}>
+    <group position={position} {...hover}>
       {/* Gancho: pletina bajo el tablero, bajante y brazo hacia delante con la punta levantada */}
       <mesh position={[0, -0.003, 0]} castShadow>
         <boxGeometry args={[0.03, 0.005, 0.045]} />
@@ -278,7 +320,9 @@ export function Headphones({ position }: { position: Vec3 }) {
         <meshStandardMaterial color="#1b1c20" roughness={0.45} metalness={0.7} />
       </mesh>
 
-      <group position={[0, cy, 0.045]}>
+      {/* Cuelgan del gancho: el pivote del balanceo está en él */}
+      <group ref={swing} position={[0, hookY, 0.045]}>
+      <group position={[0, cy - hookY, 0]}>
         {/* Diadema: arco de acero con almohadilla de piel encima, apoyada en el gancho */}
         <mesh castShadow>
           <torusGeometry args={[R, 0.004, 8, 48, Math.PI]} />
@@ -303,7 +347,8 @@ export function Headphones({ position }: { position: Vec3 }) {
               {/* Aro de acento en la tapa exterior */}
               <mesh position={[0, -s * 0.0135, 0]} rotation={[Math.PI / 2, 0, 0]}>
                 <torusGeometry args={[0.03, 0.0016, 8, 40]} />
-                <meshStandardMaterial color="#c9a24a" roughness={0.3} metalness={1} />
+                {/* Con la música puesta el aro se enciende, como el piloto de unos cascos inalámbricos */}
+                <meshStandardMaterial color="#c9a24a" roughness={0.3} metalness={1} emissive={playing ? ICE : "#000000"} emissiveIntensity={playing ? 2.5 : 0} />
               </mesh>
               {/* Almohadilla de polipiel hacia dentro */}
               <mesh position={[0, s * 0.016, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[1, 1, 1.4]}>
@@ -313,6 +358,7 @@ export function Headphones({ position }: { position: Vec3 }) {
             </group>
           </group>
         ))}
+      </group>
       </group>
     </group>
   );

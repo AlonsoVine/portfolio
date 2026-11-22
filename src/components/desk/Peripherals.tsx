@@ -1,18 +1,22 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import {
   AdditiveBlending,
   BufferGeometry,
+  Color,
   Float32BufferAttribute,
+  type Mesh,
   type InstancedMesh,
   type MeshBasicMaterial,
   Object3D,
   SphereGeometry,
 } from "three";
-import { hdr, ICE, VIOLET } from "./palette";
-import { drawLegends, drawSoftDot, drawStrip } from "./screens";
+import { AMBER, GRADIENT, hdr, ICE, MAGENTA, MINT, VIOLET } from "./palette";
+import { drawLegends, drawSoftDot, drawStrip, type DeskCopy } from "./screens";
+import { useHoverable } from "./interact";
+import { click } from "./sfx";
 import { RoundedBox } from "./primitives";
 import { useCanvasTexture } from "./useCanvasTexture";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
@@ -57,11 +61,52 @@ const KEYS: Key[] = (() => {
   return keys;
 })();
 
+// Tecla física (KeyboardEvent.code) → índice de la tecla dibujada; las repetidas (⇧, Ctrl) por orden de aparición
+const CODE_TO_KEY: Record<string, number> = (() => {
+  const at = (label: string, n = 0) => KEYS.map((k, i) => (k.label === label ? i : -1)).filter((i) => i >= 0)[n] ?? -1;
+  const m: Record<string, number> = {};
+  for (const c of "ABCDEFGHIJKLMNOPQRSTUVWXYZ") m[`Key${c}`] = at(c);
+  for (let d = 0; d <= 9; d += 1) m[`Digit${d}`] = at(String(d));
+  for (let f = 1; f <= 12; f += 1) m[`F${f}`] = at(`F${f}`);
+  const named: Record<string, [string, number?]> = {
+    Escape: ["Esc"], Backquote: ["º"], Minus: ["'"], Equal: ["¡"], Backspace: ["⌫"], Tab: ["⇥"],
+    BracketLeft: ["`"], BracketRight: ["+"], Enter: ["↵"], CapsLock: ["⇪"], Semicolon: ["Ñ"], Quote: ["´"],
+    Backslash: ["Ç"], ShiftLeft: ["⇧", 0], IntlBackslash: ["<"], Comma: [","], Period: ["."], Slash: ["-"],
+    ShiftRight: ["⇧", 1], ControlLeft: ["Ctrl", 0], MetaLeft: ["⊞"], AltLeft: ["Alt"], Space: [""],
+    AltRight: ["AltGr"], ContextMenu: ["☰"], ControlRight: ["Ctrl", 1], PrintScreen: ["Impr"], ScrollLock: ["Bloq"],
+    Pause: ["Pausa"], Insert: ["Ins"], Home: ["Inicio"], PageUp: ["RePág"], Delete: ["Supr"], End: ["Fin"],
+    PageDown: ["AvPág"], ArrowUp: ["↑"], ArrowLeft: ["←"], ArrowDown: ["↓"], ArrowRight: ["→"],
+  };
+  for (const [code, [label, n]] of Object.entries(named)) m[code] = at(label, n ?? 0);
+  return m;
+})();
+
+// Color de cada tecla encendida: el degradado del RGB según su posición. Va multiplicado por el gris del
+// material (casi negro en lineal), así que se escala para que la tecla llegue a brillar de verdad
+const KEY_BASE = new Color("#16171c");
+const KEY_GLOW = KEYS.map((k) => {
+  const t = Math.min(0.999, k.x / COLS) * (GRADIENT.length - 1);
+  const c = new Color(GRADIENT[Math.floor(t)]).lerp(new Color(GRADIENT[Math.floor(t) + 1]), t - Math.floor(t));
+  return new Color(c.r / KEY_BASE.r, c.g / KEY_BASE.g, c.b / KEY_BASE.b).multiplyScalar(1.6);
+});
+const WHITE = new Color(1, 1, 1);
+const RIPPLE_S = 1.3;
+const o = new Object3D();
+const c = new Color();
+
 const LEGEND_PX = 64;
 const legendsDraw = drawLegends(KEYS, LEGEND_PX);
 
-export function Keyboard({ position, rotation, reduceMotion }: Placed & { reduceMotion: boolean }) {
+/**
+ * Teclado TKL con RGB que fluye. Las teclas que pulsas en tu teclado de verdad se hunden y se encienden,
+ * y un clic sobre él lanza una onda de luz desde la tecla tocada.
+ */
+export function Keyboard({ t, position, rotation, reduceMotion }: Placed & { t: DeskCopy; reduceMotion: boolean }) {
   const keysRef = useRef<InstancedMesh>(null);
+  const heat = useRef(new Float32Array(KEYS.length));
+  const held = useRef(new Set<number>());
+  const ripple = useRef({ x: 0, z: 0, at: -10 });
+  const lit = useRef(false);
   const glowMat = useRef<MeshBasicMaterial>(null);
   const legends = useCanvasTexture(COLS * LEGEND_PX, DEPTH * LEGEND_PX, legendsDraw);
   const glow = useCanvasTexture(512, 4, drawStrip, { tileX: 1 });
@@ -92,11 +137,74 @@ export function Keyboard({ position, rotation, reduceMotion }: Placed & { reduce
       mesh.setMatrixAt(i, o.matrix);
     });
     mesh.instanceMatrix.needsUpdate = true;
+    KEYS.forEach((_, i) => mesh.setColorAt(i, WHITE));
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
   }, [width, depth]);
+
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      const i = CODE_TO_KEY[e.code];
+      if (i === undefined || i < 0) return;
+      held.current.add(i);
+      heat.current[i] = 1;
+    };
+    const up = (e: KeyboardEvent) => {
+      const i = CODE_TO_KEY[e.code];
+      if (i !== undefined) held.current.delete(i);
+    };
+    // Al perder el foco no llega el keyup: se sueltan todas
+    const blur = () => held.current.clear();
+    window.addEventListener("keydown", down);
+    window.addEventListener("keyup", up);
+    window.addEventListener("blur", blur);
+    return () => {
+      window.removeEventListener("keydown", down);
+      window.removeEventListener("keyup", up);
+      window.removeEventListener("blur", blur);
+    };
+  }, []);
 
   useFrame((_, delta) => {
     const map = glowMat.current?.map;
     if (map && !reduceMotion) map.offset.x = (map.offset.x - delta * 0.06) % 1;
+
+    const mesh = keysRef.current;
+    if (!mesh) return;
+    const h = heat.current;
+    const since = performance.now() / 1000 - ripple.current.at;
+    const waving = since < RIPPLE_S;
+    let any = waving || held.current.size > 0;
+    for (let i = 0; i < h.length && !any; i += 1) any = h[i] > 0.002;
+    if (!any && !lit.current) return;
+    lit.current = any;
+    const fade = Math.exp(-delta * 2.2);
+    let peak = 0;
+    KEYS.forEach((k, i) => {
+      if (held.current.has(i)) h[i] = 1;
+      else h[i] *= fade;
+      let v = h[i];
+      if (waving) {
+        const d = Math.hypot(k.x - ripple.current.x, (k.z - ripple.current.z) * 1.2);
+        v = Math.max(v, Math.exp(-(((d - since * 26) / 1.4) ** 2)) * (1 - since / RIPPLE_S));
+      }
+      peak = Math.max(peak, v);
+      const press = held.current.has(i) ? 1 : h[i] > 0.6 ? (h[i] - 0.6) / 0.4 : 0;
+      o.position.set(k.x * U - width / 2, 0.026 - press * 0.0035, k.z * U - depth / 2 + U / 2);
+      o.scale.set(k.w * U - 0.0022, 0.0105, U - 0.0022);
+      o.updateMatrix();
+      mesh.setMatrixAt(i, o.matrix);
+      mesh.setColorAt(i, c.copy(WHITE).lerp(KEY_GLOW[i], v));
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    // Toda la retroiluminación se aviva un momento con cada pulsación
+    glowMat.current?.color.setScalar(0.75 + peak * 0.9);
+  });
+
+  const hover = useHoverable(t.interact.keys, (e) => {
+    const p = keysRef.current?.worldToLocal(e.point.clone());
+    if (!p) return;
+    ripple.current = { x: (p.x + width / 2) / U, z: (p.z + depth / 2 - U / 2) / U, at: performance.now() / 1000 };
   });
 
   return (
@@ -109,7 +217,12 @@ export function Keyboard({ position, rotation, reduceMotion }: Placed & { reduce
         <planeGeometry args={[width, depth]} />
         <meshBasicMaterial ref={glowMat} map={glow} color={hdr("#ffffff", 0.75)} toneMapped={false} />
       </mesh>
-      <instancedMesh ref={keysRef} args={[geometry, undefined, KEYS.length]} castShadow>
+      <instancedMesh
+        ref={keysRef}
+        args={[geometry, undefined, KEYS.length]}
+        castShadow
+        {...hover}
+      >
         <meshStandardMaterial color="#16171c" roughness={0.55} metalness={0.05} />
       </instancedMesh>
       <mesh position={[0, 0.0315, 0]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -200,18 +313,61 @@ const SKIRT = shellPart(SHELL, (_x, y) => y > 0.02 && y < 0.26, [1.01, 1, 1.006]
 /** Altura de la carcasa en el eje central para una z unitaria (para asentar la rueda). */
 const shellTop = (z: number) => Math.sqrt(1 - z * z) * (0.8 + 0.25 * smooth(-0.6, 0.5, z));
 
-/** Ratón inalámbrico clásico: carcasa esculpida, botones partidos, rueda de goma en su hueco y patines. */
-export function Mouse({ position, rotation }: Placed) {
+const DPI_COLORS = [ICE, MINT, VIOLET, MAGENTA, AMBER];
+
+/**
+ * Ratón inalámbrico clásico: carcasa esculpida, botones partidos, rueda de goma en su hueco y patines.
+ * Hace clic a la vez que tu ratón de verdad, y al pulsarlo cambia de DPI con un destello del color nuevo.
+ */
+export function Mouse({ t, position, rotation }: Placed & { t: DeskCopy }) {
+  const spill = useCanvasTexture(128, 128, drawSoftDot);
+  const buttons = useRef<Mesh>(null);
+  const led = useRef<MeshBasicMaterial>(null);
+  const flash = useRef<MeshBasicMaterial>(null);
+  const state = useRef({ dpi: 0, press: 0, flash: 0 });
+
+  useEffect(() => {
+    const down = (e: PointerEvent) => {
+      if (e.pointerType === "mouse") state.current.press = 1;
+    };
+    window.addEventListener("pointerdown", down);
+    return () => window.removeEventListener("pointerdown", down);
+  }, []);
+
+  useFrame((_, delta) => {
+    const s = state.current;
+    if (s.press <= 0 && s.flash <= 0) return;
+    s.press = Math.max(0, s.press - delta * 9);
+    s.flash = Math.max(0, s.flash - delta * 0.9);
+    if (buttons.current) buttons.current.position.y = -0.035 * s.press;
+    if (flash.current) flash.current.opacity = 0.55 * s.flash ** 1.5;
+  });
+
+  const nextDpi = () => {
+    const s = state.current;
+    s.dpi = (s.dpi + 1) % DPI_COLORS.length;
+    s.flash = 1;
+    led.current?.color.set(DPI_COLORS[s.dpi]).multiplyScalar(3);
+    flash.current?.color.set(DPI_COLORS[s.dpi]);
+    click();
+  };
+  const hover = useHoverable(t.interact.click, nextDpi);
+
   const wheelZ = -0.42;
   const wheelY = MOUSE_LIFT + shellTop(wheelZ) * MOUSE_SCALE[1] - 0.002;
   return (
-    <group position={position} rotation={rotation}>
+    <group position={position} rotation={rotation} {...hover}>
+      {/* Destello bajo el ratón al cambiar de DPI */}
+      <mesh position={[0, 0.0015, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[0.13, 0.19]} />
+        <meshBasicMaterial ref={flash} map={spill} color={ICE} transparent opacity={0} blending={AdditiveBlending} depthWrite={false} />
+      </mesh>
       <group position={[0, MOUSE_LIFT, 0]} scale={MOUSE_SCALE}>
         {/* Cuerpo: plástico más mate y algo más oscuro que los botones */}
         <mesh geometry={SHELL} castShadow receiveShadow>
           <meshStandardMaterial color="#0e0f12" roughness={0.7} />
         </mesh>
-        <mesh geometry={BUTTONS} castShadow>
+        <mesh ref={buttons} geometry={BUTTONS} castShadow>
           <meshStandardMaterial color="#2e3037" roughness={0.34} metalness={0.1} />
         </mesh>
         <mesh geometry={SKIRT}>
@@ -239,7 +395,7 @@ export function Mouse({ position, rotation }: Placed) {
       </RoundedBox>
       <mesh position={[0, wheelY + 0.0021, -0.0105]} rotation={[-Math.PI / 2 - 0.12, 0, 0]}>
         <circleGeometry args={[0.0007, 12]} />
-        <meshBasicMaterial color={ICE} />
+        <meshBasicMaterial ref={led} color={hdr(ICE, 3)} toneMapped={false} />
       </mesh>
       {/* Botones laterales para el pulgar */}
       {[-0.002, 0.016].map((z) => (

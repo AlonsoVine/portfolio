@@ -8,6 +8,8 @@ import { AMBER, hdr, ICE, MAGENTA, VIOLET } from "./palette";
 import { drawEdgeFalloff, drawFabric, drawFloorFalloff, drawMatEdge, drawNeonSign, drawPegboard, drawSoftDot, drawStrip, drawUnderglow, drawWood, drawWoodRough, type DeskCopy } from "./screens";
 import { Dust, RoundedBox, SoftPlanes, type SoftPlane } from "./primitives";
 import { useCanvasTexture } from "./useCanvasTexture";
+import { useHoverable } from "./interact";
+import { zap } from "./sfx";
 
 export const WALL_Z = -0.6;
 
@@ -106,7 +108,14 @@ const WASHES: SoftPlane[] = [
  * Iluminación ambiental de la pared: tira LED con el degradado frío → violeta → magenta → cálido,
  * barras verticales detrás de la ultrawide y el rótulo de neón con el nombre, como en el hero.
  */
+const FLICKER_S = 1.1;
+
 export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }) {
+  const knock = useRef(-10);
+  const hover = useHoverable(t.interact.neon, () => {
+    knock.current = performance.now() / 1000;
+    zap();
+  });
   const strip = useCanvasTexture(512, 4, drawStrip, { tileX: 1 });
   const dot = useCanvasTexture(256, 256, drawSoftDot);
   // Dos ciclos hielo/ámbar a lo largo de la mesa que fluyen como la retroiluminación del teclado
@@ -132,7 +141,13 @@ export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }
     // Zumbido del neón: parpadeo casi imperceptible y algún fallo esporádico
     // Fallo esporádico del neón: azar por tramos de 0,1 s, de media uno cada ~12 s
     const h = Math.sin(Math.floor(tt * 10) * 12.9898) * 43758.5453;
-    const glitch = h - Math.floor(h) > 0.992 ? 0.6 : 1;
+    let glitch = h - Math.floor(h) > 0.992 ? 0.6 : 1;
+    // Tras el golpecito el tubo falla unos instantes y vuelve a prender
+    const since = performance.now() / 1000 - knock.current;
+    if (since < FLICKER_S) {
+      const r = Math.sin(Math.floor(since * 16) * 78.233) * 43758.5453;
+      glitch = since > FLICKER_S * 0.8 || r - Math.floor(r) > 0.5 ? 1 : 0.08;
+    }
     if (signMat.current) signMat.current.color.copy(signColor).multiplyScalar((0.94 + Math.sin(tt * 2.3) * 0.04) * glitch);
     lights.current.forEach((l, i) => {
       if (l) l.intensity = base[i] * (0.9 + Math.sin(tt * 0.7 + i * 2) * 0.1);
@@ -146,7 +161,7 @@ export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }
         <capsuleGeometry args={[0.006, 1.7, 4, 8]} />
         <meshBasicMaterial ref={stripMat} map={strip} color={hdr("#ffffff", 3)} toneMapped={false} />
       </mesh>
-      <mesh position={[0, 0.66, WALL_Z + 0.012]}>
+      <mesh position={[0, 0.66, WALL_Z + 0.012]} {...hover}>
         <planeGeometry args={[0.72, 0.225]} />
         <meshBasicMaterial ref={signMat} map={sign} color={signColor} transparent depthWrite={false} toneMapped={false} />
       </mesh>

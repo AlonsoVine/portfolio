@@ -6,6 +6,7 @@ import { Color, DoubleSide, PlaneGeometry, type ShaderMaterial, type Texture } f
 
 const vertex = /* glsl */ `
   uniform float uTime;
+  uniform float uStir;
   uniform sampler2D uNoise;
   varying vec2 vUv;
 
@@ -25,6 +26,9 @@ const vertex = /* glsl */ `
       texture2D(uNoise, vec2(0.75, uTime * 0.01)).r - 0.5
     );
     p.xz += wind * pow(uv.y, 2.0) * 0.9;
+    // Al agitarlo (la mano que pasa cerca) el hilo se ondula y se deshace en remolinos
+    p.x += uStir * sin(uv.y * 14.0 - uTime * 4.0) * 0.4 * uv.y;
+    p.z += uStir * cos(uv.y * 11.0 - uTime * 3.3) * 0.35 * uv.y;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
     vUv = uv;
   }
@@ -53,6 +57,9 @@ const fragment = /* glsl */ `
   }
 `;
 
+/** Mando externo del humo: `gain` multiplica la opacidad y `stir` lo agita. */
+export type SteamDrive = { gain: number; stir: number };
+
 /** Vapor del café: cinta de shader con ruido que se retuerce y sube, como el de una taza recién hecha. */
 export function Steam({
   position,
@@ -62,6 +69,7 @@ export function Steam({
   noise,
   color = "#ffe6c8",
   opacity = 0.22,
+  drive,
 }: {
   position: [number, number, number];
   height?: number;
@@ -70,6 +78,7 @@ export function Steam({
   noise: Texture;
   color?: string;
   opacity?: number;
+  drive?: { current: SteamDrive };
 }) {
   const material = useRef<ShaderMaterial>(null);
   const geometry = useMemo(() => {
@@ -84,12 +93,17 @@ export function Steam({
       uNoise: { value: noise },
       uColor: { value: new Color(color) },
       uOpacity: { value: opacity },
+      uStir: { value: 0 },
     }),
     [noise, color, opacity],
   );
 
   useFrame(({ clock }) => {
-    if (material.current) material.current.uniforms.uTime.value = clock.elapsedTime * 2.2 + seed * 37;
+    const m = material.current;
+    if (!m) return;
+    m.uniforms.uTime.value = clock.elapsedTime * 2.2 + seed * 37;
+    m.uniforms.uOpacity.value = opacity * (drive ? drive.current.gain : 1);
+    m.uniforms.uStir.value = drive ? drive.current.stir : 0;
   });
 
   return (
