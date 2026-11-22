@@ -5,7 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import { AdditiveBlending, type Color, type MeshBasicMaterial, type PointLight, type Texture } from "three";
 import { AMBER, hdr, ICE, MAGENTA, VIOLET } from "./palette";
-import { drawFabric, drawMatEdge, drawNeonSign, drawPegboard, drawSoftDot, drawStrip, drawWood, type DeskCopy } from "./screens";
+import { drawFabric, drawMatEdge, drawNeonSign, drawPegboard, drawSoftDot, drawStrip, drawWood, drawWoodRough, type DeskCopy } from "./screens";
 import { Dust, RoundedBox } from "./primitives";
 import { useCanvasTexture } from "./useCanvasTexture";
 
@@ -13,6 +13,7 @@ export const WALL_Z = -0.6;
 
 export function Desk() {
   const wood = useCanvasTexture(1024, 512, drawWood, { tileX: 2 });
+  const woodRough = useCanvasTexture(1024, 512, drawWoodRough, { tileX: 2, color: false });
   const peg = useCanvasTexture(512, 512, drawPegboard, { tileX: 10, tileY: 5 });
   const fabric = useCanvasTexture(256, 256, drawFabric, { tileX: 14, tileY: 5.2 });
   const edge = useCanvasTexture(750, 280, drawMatEdge);
@@ -20,7 +21,7 @@ export function Desk() {
   return (
     <group>
       <RoundedBox args={[2.1, 0.045, 0.92]} radius={0.012} position={[0, -0.0225, -0.14]} receiveShadow>
-        <meshStandardMaterial map={wood} bumpMap={wood} bumpScale={0.15} color="#c9a184" roughness={0.5} metalness={0} />
+        <meshStandardMaterial map={wood} roughnessMap={woodRough} roughness={0.85} bumpMap={woodRough} bumpScale={-0.06} color="#c4a088" metalness={0} />
       </RoundedBox>
       <RoundedBox args={[1.5, 0.004, 0.56]} radius={0.002} smoothness={2} position={[-0.02, 0.002, 0.06]} receiveShadow>
         <meshStandardMaterial map={fabric} bumpMap={fabric} bumpScale={0.35} color="#45474e" roughness={0.95} />

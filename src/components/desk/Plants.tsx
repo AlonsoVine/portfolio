@@ -6,6 +6,7 @@ import {
   CatmullRomCurve3,
   Color,
   DoubleSide,
+  Float32BufferAttribute,
   Euler,
   Matrix4,
   BufferGeometry,
@@ -24,7 +25,7 @@ import {
 } from "three";
 import { ICE } from "./palette";
 import { RoundedBox } from "./primitives";
-import { drawSnakeLeaf } from "./screens";
+import { drawPothosLeaf, drawSnakeLeaf } from "./screens";
 import { useCanvasTexture } from "./useCanvasTexture";
 
 type Vec3 = [number, number, number];
@@ -67,11 +68,14 @@ function heartGeometry() {
   s.bezierCurveTo(-0.55, 0.12, -0.2, -0.06, 0, 0.08);
   const g = new ShapeGeometry(s, 10);
   const pos = g.attributes.position;
+  const uv: number[] = [];
   for (let i = 0; i < pos.count; i += 1) {
     const x = pos.getX(i);
     const y = pos.getY(i);
     pos.setZ(i, x * x * 0.5 - y * y * 0.12);
+    uv.push(x + 0.5, y);
   }
+  g.setAttribute("uv", new Float32BufferAttribute(uv, 2));
   g.computeVertexNormals();
   return g;
 }
@@ -370,6 +374,7 @@ const TERRACOTTA = new LatheGeometry(
 const POTHOS_STEMS: Stem[] = POTHOS.vines.map((points) => ({ points, r0: 0.0018, r1: 0.0011 }));
 
 function Pothos({ position }: { position: Vec3 }) {
+  const variegated = useCanvasTexture(128, 128, drawPothosLeaf);
   return (
     <group position={position}>
       <mesh geometry={TERRACOTTA} castShadow receiveShadow>
@@ -380,7 +385,7 @@ function Pothos({ position }: { position: Vec3 }) {
         <meshStandardMaterial color="#2c221a" roughness={1} />
       </mesh>
       <Stems stems={POTHOS_STEMS} color="#6f8f3a" roughness={0.6} />
-      <Instances geometry={HEART} items={POTHOS.leaves} roughness={0.38} side={DoubleSide} />
+      <Instances geometry={HEART} items={POTHOS.leaves} roughness={0.38} side={DoubleSide} map={variegated} />
     </group>
   );
 }

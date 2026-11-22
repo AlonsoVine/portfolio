@@ -438,19 +438,28 @@ export const drawSoftDot: Draw = (ctx, w, h) => {
   ctx.fillRect(0, 0, w, h);
 };
 
-export const drawWood: Draw = (ctx, w, h) => {
-  const base = ctx.createLinearGradient(0, 0, 0, h);
-  base.addColorStop(0, "#3d2719");
-  base.addColorStop(0.5, "#4a2f1e");
-  base.addColorStop(1, "#382316");
-  ctx.fillStyle = base;
+/**
+ * Madera de la mesa. Con `rough` pinta el mapa de rugosidad con la misma veta (misma semilla):
+ * la veta oscura es poro abierto y mate, la clara queda pulida por el barniz.
+ */
+function woodPass(ctx: CanvasRenderingContext2D, w: number, h: number, rough: boolean) {
+  if (rough) {
+    ctx.fillStyle = "#6e6e6e";
+  } else {
+    const base = ctx.createLinearGradient(0, 0, 0, h);
+    base.addColorStop(0, "#3d2719");
+    base.addColorStop(0.5, "#4a2f1e");
+    base.addColorStop(1, "#382316");
+    ctx.fillStyle = base;
+  }
   ctx.fillRect(0, 0, w, h);
   const r = rng(11);
-  // Vetas largas onduladas con grosor y tono variables, y algún nudo
   for (let i = 0; i < 340; i += 1) {
     const y = r() * h;
     const dark = r() > 0.45;
-    ctx.strokeStyle = dark ? `rgba(18,9,3,${0.15 + r() * 0.3})` : `rgba(150,100,62,${0.06 + r() * 0.14})`;
+    const a = dark ? 0.15 + r() * 0.3 : 0.06 + r() * 0.14;
+    if (rough) ctx.strokeStyle = dark ? `rgba(170,170,170,${a})` : `rgba(60,60,60,${a * 1.6})`;
+    else ctx.strokeStyle = dark ? `rgba(18,9,3,${a})` : `rgba(150,100,62,${a})`;
     ctx.lineWidth = 0.5 + r() * 2.6;
     ctx.beginPath();
     const ph = r() * 10;
@@ -458,18 +467,30 @@ export const drawWood: Draw = (ctx, w, h) => {
     for (let x = 0; x <= w; x += 24) ctx.lineTo(x, y + Math.sin(x * 0.003 + ph) * 9 + Math.sin(x * 0.017 + ph * 3) * 2);
     ctx.stroke();
   }
-  for (let k = 0; k < 3; k += 1) {
+  // Nudos: pocos, alargados y deformados, con la veta envolviéndolos (nada de dianas)
+  for (let k = 0; k < 2; k += 1) {
     const cx = r() * w;
     const cy = r() * h;
-    for (let ring = 1; ring < 9; ring += 1) {
-      ctx.strokeStyle = `rgba(20,10,4,${0.25 - ring * 0.02})`;
-      ctx.lineWidth = 1.2;
+    for (let ring = 1; ring < 7; ring += 1) {
+      ctx.strokeStyle = rough ? `rgba(160,160,160,${0.18 - ring * 0.02})` : `rgba(20,10,4,${0.18 - ring * 0.02})`;
+      ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.ellipse(cx, cy, ring * 7, ring * 2.6, 0, 0, Math.PI * 2);
+      for (let t = 0; t <= 64; t += 1) {
+        const ang = (t / 64) * Math.PI * 2;
+        const wob = 1 + 0.18 * Math.sin(ang * 3 + ring) + 0.1 * Math.sin(ang * 5 + k);
+        const x = cx + Math.cos(ang) * ring * 9 * wob;
+        const y = cy + Math.sin(ang) * ring * 2.2 * wob;
+        if (t === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
       ctx.stroke();
     }
   }
-};
+}
+
+export const drawWood: Draw = (ctx, w, h) => woodPass(ctx, w, h, false);
+export const drawWoodRough: Draw = (ctx, w, h) => woodPass(ctx, w, h, true);
+
 export const drawPegboard: Draw = (ctx, w, h) => {
   ctx.fillStyle = "#2a2730";
   ctx.fillRect(0, 0, w, h);
@@ -676,7 +697,7 @@ export const drawMatEdge: Draw = (ctx, w, h) => {
 };
 
 
-const FONT_FREE = new Set<Draw>([drawSnakeLeaf, drawSpruceTop, drawFretboard, drawWood, drawPegboard, drawFabric, drawMatEdge, drawStrip, drawSoftDot, drawNoise, drawXboxLogo]);
+const FONT_FREE = new Set<Draw>([drawPothosLeaf, drawWoodRough, drawSnakeLeaf, drawSpruceTop, drawFretboard, drawWood, drawPegboard, drawFabric, drawMatEdge, drawStrip, drawSoftDot, drawNoise, drawXboxLogo]);
 /** Hoja de sansevieria: verde oscuro con bandas onduladas claras y borde amarillo. */
 export function drawSnakeLeaf(ctx: CanvasRenderingContext2D, w: number, h: number) {
   ctx.fillStyle = "#24442a";
@@ -778,4 +799,27 @@ export function drawFretboard(ctx: CanvasRenderingContext2D, w: number, h: numbe
       ctx.fill();
     }
   }
+}
+
+/** Hoja de poto dorado (u a lo ancho, v a lo largo): nervio central claro y pinceladas amarillas que salen de él. */
+export function drawPothosLeaf(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  ctx.fillStyle = "#d9e6cf";
+  ctx.fillRect(0, 0, w, h);
+  const r = rng(29);
+  for (let i = 0; i < 16; i += 1) {
+    const y = h * (0.15 + r() * 0.75);
+    const side = r() > 0.5 ? 1 : -1;
+    ctx.strokeStyle = `rgba(255, 226, 120, ${0.35 + r() * 0.4})`;
+    ctx.lineWidth = 2 + r() * 5;
+    ctx.beginPath();
+    ctx.moveTo(w / 2, y);
+    ctx.quadraticCurveTo(w / 2 + side * w * 0.2, y - h * 0.08, w / 2 + side * w * (0.3 + r() * 0.15), y - h * (0.12 + r() * 0.1));
+    ctx.stroke();
+  }
+  ctx.strokeStyle = "rgba(240, 236, 180, 0.8)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(w / 2, h);
+  ctx.lineTo(w / 2, h * 0.05);
+  ctx.stroke();
 }
