@@ -120,7 +120,7 @@ const WASHES: SoftPlane[] = [
   { p: [-0.75, 0.16, WALL_Z + 0.004], s: [1.4, 0.8], c: ICE, o: 0.2 },
   { p: [0.78, 0.16, WALL_Z + 0.004], s: [1.4, 0.8], c: AMBER, o: 0.18 },
   { p: [0, 0.12, WALL_Z + 0.005], s: [1.9, 0.5], c: MAGENTA, o: 0.035 },
-  { p: [0, 0.66, WALL_Z + 0.003], s: [1.3, 0.5], c: VIOLET, o: 0.15 },
+  { p: [0, 0.63, WALL_Z + 0.003], s: [1.3, 0.5], c: VIOLET, o: 0.15 },
   { p: [-1.045, 0.22, -0.42], r: LEFT, s: [1.0, 0.9], c: ICE, o: 0.3 },
   { p: [-1.045, 0.4, -0.15], r: LEFT, s: [1.9, 1.5], c: ICE, o: 0.16 },
   { p: [-1.045, 0.25, -0.45], r: LEFT, s: [0.8, 0.7], c: VIOLET, o: 0.06 },
@@ -185,14 +185,14 @@ export function Leds({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean }
         <capsuleGeometry args={[0.006, 1.7, 4, 8]} />
         <meshBasicMaterial ref={stripMat} map={strip} color={hdr("#ffffff", 3)} toneMapped={false} />
       </mesh>
-      <mesh position={[0, 0.66, WALL_Z + 0.012]} {...hover}>
+      <mesh position={[0, 0.63, WALL_Z + 0.012]} {...hover}>
         <planeGeometry args={[0.72, 0.225]} />
         <meshBasicMaterial ref={signMat} map={sign} color={signColor} transparent depthWrite={false} toneMapped={false} />
       </mesh>
       {/* Rótulo montado directo en la pared con cuatro separadores metálicos, sin placa */}
       {[-0.27, 0.27].flatMap((x) =>
         [-0.04, 0.04].map((y) => (
-          <mesh key={`${x}${y}`} position={[x, 0.66 + y, WALL_Z + 0.006]} rotation={[Math.PI / 2, 0, 0]}>
+          <mesh key={`${x}${y}`} position={[x, 0.63 + y, WALL_Z + 0.006]} rotation={[Math.PI / 2, 0, 0]}>
             <cylinderGeometry args={[0.0035, 0.0035, 0.012, 10]} />
             <meshStandardMaterial color="#9a9aa0" roughness={0.3} metalness={0.9} />
           </mesh>

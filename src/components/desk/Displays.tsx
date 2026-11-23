@@ -37,12 +37,13 @@ const NOTE = (() => {
   return g;
 })();
 
-function StickyNote({ msg, paper, strike, arrow, position, tilt }: { msg: string; paper: string; strike?: boolean; arrow?: boolean; position: [number, number, number]; tilt: number }) {
-  const draw = useMemo(() => drawNote(msg, paper, { strike, arrow }), [msg, paper, strike, arrow]);
+function StickyNote({ msg, paper, arrow, position, tilt }: { msg: string; paper: string; arrow?: boolean; position: [number, number, number]; tilt: number }) {
+  const draw = useMemo(() => drawNote(msg, paper, { arrow }), [msg, paper, arrow]);
   const map = useCanvasTexture(256, 256, draw);
   return (
     <mesh geometry={NOTE} position={position} rotation={[0, 0, tilt]}>
-      <meshStandardMaterial map={map} roughness={0.9} />
+      {/* Sin iluminar: la lámpara del monitor les caía encima y los quemaba; así se leen siempre igual */}
+      <meshBasicMaterial map={map} color="#c4c4c4" />
     </mesh>
   );
 }
@@ -226,9 +227,8 @@ export function SideMonitor({ t, position, rotation }: { t: DeskCopy } & Placed)
           <meshBasicMaterial map={map} color={SCREEN} toneMapped={false} />
         </mesh>
         <Glass w={0.536} h={0.296} z={0.009} />
-        {/* Post-its pegados al marco: uno cuelga del borde inferior señalando al móvil, el otro, en el canto derecho sin salirse (a la derecha queda la guitarra) */}
+        {/* Post-it colgando del borde inferior del marco, sin tapar la pantalla, señalando al móvil */}
         <StickyNote msg={t.notes.talk} paper="#f6e07a" arrow position={[-0.17, -0.19, 0.0125]} tilt={0.06} />
-        <StickyNote msg={t.notes.todo} paper="#f4a9c4" strike position={[0.236, 0.09, 0.0125]} tilt={-0.08} />
 
         {/* Lámpara de monitor con luz asimétrica hacia la mesa */}
         <group position={[0, 0.172, 0.012]}>

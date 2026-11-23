@@ -45,9 +45,12 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
   return (
     <Canvas
       className="desk-canvas"
-      shadows
+      // Sombras de varianza: se ven igual de suaves que PCF y, como no muestrean en bucle, los shaders
+      // compilan en la mitad de tiempo (en Windows la compilación pasa por Direct3D y es lo que más tarda)
+      shadows="variance"
       flat
-      dpr={[1, 1.25]}
+      // El modo bajo va en la propia prop: si se cambiara con setDpr, el siguiente render del Canvas lo pisaría
+      dpr={low ? 1 : [1, 1.25]}
       camera={{ position: EYE, fov: 56, near: 0.02, far: 8 }}
       gl={{ antialias: false, powerPreference: "high-performance", stencil: false }}
       onCreated={({ gl }) => {

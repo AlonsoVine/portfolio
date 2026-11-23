@@ -240,10 +240,10 @@ function Cat({ t, position, rotation, reduceMotion }: { t: DeskCopy; position: [
             </group>
           </group>
         ))}
-        {/* Bigotes finos */}
+        {/* Tres bigotes finos por lado, abiertos en abanico */}
         {[-1, 1].flatMap((s) =>
-          [-1, 1].map((k) => (
-            <mesh key={`${s}${k}`} position={[s * 0.045, -0.018 + k * 0.004, 0.036]} rotation={[0, s * 0.35, Math.PI / 2 + s * k * 0.12]}>
+          [-1, 0, 1].map((k) => (
+            <mesh key={`${s}${k}`} position={[s * 0.045, -0.018 + k * 0.0045, 0.036]} rotation={[0, s * 0.35, Math.PI / 2 + s * k * 0.13]}>
               <cylinderGeometry args={[0.0005, 0.0005, 0.04, 4]} />
               <meshBasicMaterial color="#fff6e8" transparent opacity={0.8} />
             </mesh>

@@ -9,6 +9,7 @@ import {
   Float32BufferAttribute,
   HalfFloatType,
   Matrix4,
+  type Object3D,
   NormalBlending,
   Quaternion,
   Vector3,
@@ -137,14 +138,13 @@ export function Dust({ count = 70, map }: { count?: number; map: Texture }) {
  * Preparación antes de revelar la escena, mientras el loader la tapa:
  * 1. compila todos los shaders (si no, cada material se compila al entrar en cuadro y girar pega un tirón);
  * 2. sube todas las texturas a la GPU;
- * 3. mide unos fotogramas y, si no llega a ~45 fps, baja el DPR y avisa para quitar efectos caros.
+ * 3. mide unos fotogramas y, si no llega a ~40 fps, avisa para bajar la resolución y quitar efectos caros.
  * Decidir la calidad aquí evita que los efectos desaparezcan de golpe a mitad de la visita.
  */
 export function Warmup({ onReady, onLow }: { onReady: () => void; onLow: () => void }) {
   const gl = useThree((s) => s.gl);
   const scene = useThree((s) => s.scene);
   const camera = useThree((s) => s.camera);
-  const setDpr = useThree((s) => s.setDpr);
   const probe = useRef({ phase: "compile" as "compile" | "measure" | "done", samples: [] as number[], n: 0 });
 
   useEffect(() => {
@@ -159,17 +159,32 @@ export function Warmup({ onReady, onLow }: { onReady: () => void; onLow: () => v
     compiling
       .catch(() => undefined)
       .then(() => {
-        target.dispose();
-        if (!alive) return;
+        if (!alive) {
+          target.dispose();
+          return;
+        }
+        const culled: Object3D[] = [];
         scene.traverse((o) => {
           const material = (o as Mesh).material;
           for (const m of Array.isArray(material) ? material : material ? [material] : []) {
             for (const value of Object.values(m)) if ((value as Texture | null)?.isTexture) gl.initTexture(value as Texture);
           }
+          if (o.frustumCulled) {
+            culled.push(o);
+            o.frustumCulled = false;
+          }
         });
+        // Un fotograma completo sin descartar nada de lo que queda fuera de cuadro: en Windows (ANGLE sobre
+        // Direct3D) el shader no termina de prepararse hasta que se dibuja de verdad, y si no se hace aquí,
+        // cada objeto pega un tirón la primera vez que la cámara gira hacia él
+        gl.setRenderTarget(target);
+        gl.render(scene, camera);
+        gl.setRenderTarget(prev);
+        for (const o of culled) o.frustumCulled = true;
+        target.dispose();
         probe.current.phase = "measure";
       });
-    if (process.env.NODE_ENV !== "production") Object.assign(window, { __desk: gl });
+    if (process.env.NODE_ENV !== "production") Object.assign(window, { __desk: gl, __deskScene: scene });
     return () => {
       alive = false;
     };
@@ -180,16 +195,13 @@ export function Warmup({ onReady, onLow }: { onReady: () => void; onLow: () => v
     if (p.phase !== "measure") return;
     p.n += 1;
     // Los primeros fotogramas tras compilar aún suben texturas: no son representativos
-    if (p.n <= 10) return;
+    if (p.n <= 6) return;
     p.samples.push(delta);
-    if (p.samples.length < 30) return;
+    if (p.samples.length < 20) return;
     p.phase = "done";
     // Mediana: un tirón aislado no debe condenar a la máquina al modo bajo
-    const median = [...p.samples].sort((a, b) => a - b)[15];
-    if (median > 1 / 40) {
-      setDpr(1);
-      onLow();
-    }
+    const median = [...p.samples].sort((a, b) => a - b)[10];
+    if (median > 1 / 40) onLow();
     requestAnimationFrame(onReady);
   });
   return null;

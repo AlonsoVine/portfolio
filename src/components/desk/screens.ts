@@ -1759,9 +1759,9 @@ FONT_FREE.add(drawNightSky).add(drawTabby);
 const HAND = '"Segoe Print", "Bradley Hand", "Marker Felt", "Comic Sans MS", cursive';
 const PEN = "#1e2b66";
 
-/** Post-it escrito a mano. `strike` lo tacha; `arrow` dibuja una flecha hacia abajo a la izquierda. */
+/** Post-it escrito a mano. `arrow` dibuja una flecha hacia abajo a la izquierda. */
 export const drawNote =
-  (msg: string, paper: string, opts: { strike?: boolean; arrow?: boolean } = {}): Draw =>
+  (msg: string, paper: string, opts: { arrow?: boolean } = {}): Draw =>
   (ctx, w, h) => {
     ctx.fillStyle = paper;
     ctx.fillRect(0, 0, w, h);
@@ -1795,27 +1795,7 @@ export const drawNote =
       ctx.rotate(-0.04);
       text(ctx, l, 0, 0, ctx.font, PEN, { align: "center" });
       ctx.restore();
-      if (opts.strike) {
-        const half = ctx.measureText(l).width / 2 + 6;
-        ctx.strokeStyle = "#c0262c";
-        ctx.lineWidth = 4;
-        ctx.lineCap = "round";
-        ctx.beginPath();
-        ctx.moveTo(w / 2 - half, y - size * 0.28 + 3);
-        ctx.quadraticCurveTo(w / 2, y - size * 0.38, w / 2 + half, y - size * 0.3 - 4);
-        ctx.stroke();
-      }
     });
-    if (opts.strike) {
-      // Visto bueno en rojo al pie
-      ctx.strokeStyle = "#c0262c";
-      ctx.lineWidth = 6;
-      ctx.beginPath();
-      ctx.moveTo(w * 0.66, h * 0.8);
-      ctx.lineTo(w * 0.73, h * 0.88);
-      ctx.lineTo(w * 0.86, h * 0.7);
-      ctx.stroke();
-    }
     if (opts.arrow) {
       ctx.strokeStyle = PEN;
       ctx.lineWidth = 5;
