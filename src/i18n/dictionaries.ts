@@ -1,5 +1,6 @@
 export const es = {
   lang: "es",
+  langSwitch: "Idioma",
   meta: {
     title: "Alonso Viñé — Portfolio",
     description: "Portfolio de Alonso Viñé, Full Stack Developer especializado en DevOps e IA.",
@@ -29,6 +30,7 @@ export const es = {
       lift: "Coger",
       linkedin: "Abrir LinkedIn",
       github: "Abrir GitHub",
+      email: "Escribir un correo",
       strum: "Tocar",
       rumble: "Hacer vibrar",
       click: "Cambiar DPI",
@@ -82,6 +84,7 @@ export type Dictionary = typeof es;
 
 export const en: Dictionary = {
   lang: "en",
+  langSwitch: "Language",
   meta: {
     title: "Alonso Viñé — Portfolio",
     description: "Portfolio of Alonso Viñé, Full Stack Developer focused on DevOps and AI.",
@@ -111,6 +114,7 @@ export const en: Dictionary = {
       lift: "Pick up",
       linkedin: "Open LinkedIn",
       github: "Open GitHub",
+      email: "Send an email",
       strum: "Strum",
       rumble: "Rumble",
       click: "Change DPI",

@@ -15,7 +15,7 @@ import {
   Vector3,
 } from "three";
 import { hdr, ICE } from "./palette";
-import { drawLatte, drawMugGlaze, drawMugRough, drawNoise, drawPhone, drawTablet, PHONE_BUTTONS, type DeskCopy } from "./screens";
+import { drawLatte, drawMugGlaze, drawMugRough, drawNoise, drawPhone, drawTablet, CONTACT_EMAIL, PHONE_BUTTONS, type DeskCopy } from "./screens";
 import { showHover, useHoverable } from "./interact";
 import { clink } from "./sfx";
 import { RoundedBox } from "./primitives";
@@ -31,6 +31,7 @@ const CLOCK_REFRESH_MS = 20_000;
 const LINKS = {
   linkedin: "https://www.linkedin.com/in/alonso-vi%C3%B1%C3%A9-barrancos/",
   github: "https://github.com/AlonsoVine",
+  email: `mailto:${CONTACT_EMAIL}`,
 } as const;
 type LinkId = keyof typeof LINKS;
 const PHONE_W = 0.07;
@@ -45,7 +46,7 @@ const linkAt = (e: ThreeEvent<PointerEvent | MouseEvent>): LinkId | null => {
   }) ?? null;
 };
 
-/** Móvil en su soporte, girado hacia la silla: la pantalla lleva a LinkedIn y GitHub. */
+/** Móvil en su soporte, girado hacia la silla: la pantalla lleva a LinkedIn, GitHub y el correo. */
 export function Phone({ t, lang, position, rotation }: { t: DeskCopy; lang: string } & Placed) {
   const draw = useMemo(() => drawPhone(t, lang), [t, lang]);
   const map = useCanvasTexture(360, 800, draw, { refreshMs: CLOCK_REFRESH_MS });
@@ -91,7 +92,9 @@ export function Phone({ t, lang, position, rotation }: { t: DeskCopy; lang: stri
           onClick={(e) => {
             e.stopPropagation();
             const id = linkAt(e);
-            if (id) window.open(LINKS[id], "_blank", "noopener,noreferrer");
+            // El correo abre el cliente de correo en la misma pestaña; las redes, en una nueva
+            if (id === "email") window.location.href = LINKS.email;
+            else if (id) window.open(LINKS[id], "_blank", "noopener,noreferrer");
           }}
         >
           <planeGeometry args={[PHONE_W, PHONE_H]} />

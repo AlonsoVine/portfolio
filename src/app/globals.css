@@ -937,3 +937,42 @@ html[data-cursor="custom"] * {
 .desk-cursor[data-active] .desk-cursor-ring[data-press]::before {
   transform: scale(1.3);
 }
+
+/* ───────── Idioma ───────── */
+
+.lang-switch {
+  position: fixed;
+  top: clamp(18px, 3vh, 36px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--ink-faint);
+}
+
+.lang-switch > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lang-switch button {
+  padding: 4px 2px;
+  color: var(--ink-dim);
+  transition: color 0.2s;
+}
+
+.lang-switch button:hover,
+.lang-switch button:focus-visible {
+  color: var(--ink);
+}
+
+.lang-switch button[aria-pressed="true"] {
+  color: var(--ink);
+  text-shadow: 0 0 10px rgb(236 235 242 / 0.45);
+}

@@ -1,10 +1,9 @@
-import { Hero } from "@/components/hero/Hero";
-import { es } from "@/i18n/dictionaries";
+import { HomeContent } from "@/components/hero/HomeContent";
 
 export default function Home() {
   return (
     <main>
-      <Hero t={es.hero} />
+      <HomeContent />
     </main>
   );
 }

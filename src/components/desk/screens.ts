@@ -346,12 +346,18 @@ function clock(lang: string) {
 }
 
 /** Rectángulos [x0, y0, x1, y1] (fracción de la pantalla, desde arriba a la izquierda) de los chips del móvil: el dibujo y el clic los comparten. */
-export const PHONE_BUTTONS = { linkedin: [0.07, 0.48, 0.485, 0.86], github: [0.515, 0.48, 0.93, 0.86] } as const;
+export const PHONE_BUTTONS = {
+  linkedin: [0.07, 0.345, 0.485, 0.68],
+  github: [0.515, 0.345, 0.93, 0.68],
+  email: [0.07, 0.705, 0.93, 0.905],
+} as const;
+/** Correo de contacto: el mismo que publica el portfolio. */
+export const CONTACT_EMAIL = "alonvineba@gmail.com";
 
 const GITHUB_MARK_D =
   "M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z";
 
-/** Móvil en su soporte: hora, estado y dos chips grandes a LinkedIn y GitHub. */
+/** Móvil en su soporte: hora, nombre con su estado y chips grandes a LinkedIn, GitHub y el correo. */
 export const drawPhone =
   (t: DeskCopy, lang: string): Draw =>
   (ctx, w, h, f) => {
@@ -360,21 +366,22 @@ export const drawPhone =
     glow(ctx, w * 0.2, h * 0.75, w * 0.9, VIOLET, 0.45);
     glow(ctx, w * 0.95, h * 0.35, w * 0.7, ICE, 0.3);
     const { time, date } = clock(lang);
-    text(ctx, date, w / 2, h * 0.085, mono(f, 20), "#c9d8ff", { align: "center" });
-    text(ctx, time, w / 2, h * 0.22, display(f, 112, 300), "#f2f6ff", { align: "center", glow: 14 });
-    text(ctx, t.screens.phoneName, w / 2, h * 0.33, mono(f, 24, 600), "#ffffff", { align: "center" });
-    ctx.font = mono(f, 17);
+    text(ctx, date, w / 2, h * 0.065, mono(f, 18), "#c9d8ff", { align: "center" });
+    text(ctx, time, w / 2, h * 0.165, display(f, 96, 300), "#f2f6ff", { align: "center", glow: 14 });
+    // Nombre y estado en dos renglones apretados: el punto verde va pegado al estado, no suelto debajo
+    text(ctx, t.screens.phoneName, w / 2, h * 0.225, mono(f, 22, 600), "#ffffff", { align: "center" });
+    ctx.font = mono(f, 14);
     const status = t.screens.phoneStatus;
-    const sw = ctx.measureText(status).width;
+    const sw = ctx.measureText(status).width + 16;
     ctx.fillStyle = MINT;
     ctx.shadowColor = MINT;
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 8;
     ctx.beginPath();
-    ctx.arc(w / 2 - sw / 2 - 14, h * 0.37 - 6, 6, 0, Math.PI * 2);
+    ctx.arc(w / 2 - sw / 2 + 4, h * 0.258 - 5, 4.5, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
-    text(ctx, status, w / 2 + 6, h * 0.37, mono(f, 17), "#c9d8ff", { align: "center" });
-    text(ctx, t.screens.phoneLinks.toUpperCase(), w / 2, h * 0.445, mono(f, 15, 500), "rgba(201,216,255,0.7)", { align: "center", spacing: 4 });
+    text(ctx, status, w / 2 + 8, h * 0.258, mono(f, 14), "#c9d8ff", { align: "center" });
+    text(ctx, t.screens.phoneLinks.toUpperCase(), w / 2, h * 0.322, mono(f, 14, 500), "rgba(201,216,255,0.7)", { align: "center", spacing: 4 });
 
     // Dos chips grandes, uno al lado del otro: icono enorme y el nombre debajo
     const chip = ([x0, y0, x1, y1]: readonly [number, number, number, number], bg: string, edge: string, label: string, sub: string, icon: (x: number, y: number, s: number) => void) => {
@@ -417,6 +424,51 @@ export const drawPhone =
       ctx.fill(new Path2D(GITHUB_MARK_D));
       ctx.restore();
     });
+
+    // Correo: chip ancho, con el sobre a la izquierda y la dirección al lado
+    {
+      const [x0, y0, x1, y1] = PHONE_BUTTONS.email;
+      const x = w * x0;
+      const y = h * y0;
+      const cw = w * (x1 - x0);
+      const ch = h * (y1 - y0);
+      ctx.save();
+      ctx.shadowColor = AMBER;
+      ctx.shadowBlur = 24;
+      ctx.fillStyle = hgrad(ctx, x, x + cw, ["#c2622a", "#d98a3c"]);
+      rrect(ctx, x, y, cw, ch, 30);
+      ctx.fill();
+      ctx.restore();
+      const sheen = ctx.createLinearGradient(0, y, 0, y + ch);
+      sheen.addColorStop(0, "rgba(255,255,255,0.18)");
+      sheen.addColorStop(0.5, "rgba(255,255,255,0)");
+      ctx.fillStyle = sheen;
+      rrect(ctx, x, y, cw, ch, 30);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,0.25)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      const s = ch * 0.5;
+      const ix = x + cw * 0.1;
+      const iy = y + (ch - s * 0.75) / 2;
+      ctx.fillStyle = "#ffffff";
+      rrect(ctx, ix, iy, s, s * 0.75, s * 0.1);
+      ctx.fill();
+      ctx.strokeStyle = "#c2622a";
+      ctx.lineWidth = s * 0.08;
+      ctx.lineJoin = "round";
+      ctx.beginPath();
+      ctx.moveTo(ix + s * 0.1, iy + s * 0.12);
+      ctx.lineTo(ix + s / 2, iy + s * 0.42);
+      ctx.lineTo(ix + s * 0.9, iy + s * 0.12);
+      ctx.stroke();
+      const tx = ix + s + cw * 0.07;
+      text(ctx, "Email", tx, y + ch * 0.47, display(f, 28, 700), "#ffffff");
+      ctx.font = mono(f, 13);
+      let size = 13;
+      while (ctx.measureText(CONTACT_EMAIL).width > x + cw - tx - 14 && size > 9) ctx.font = mono(f, (size -= 0.5));
+      text(ctx, CONTACT_EMAIL, tx, y + ch * 0.72, ctx.font, "rgba(255,255,255,0.85)");
+    }
     ctx.fillStyle = "rgba(255,255,255,0.75)";
     rrect(ctx, w * 0.33, h * 0.955, w * 0.34, 6, 3);
     ctx.fill();
@@ -1652,15 +1704,15 @@ export const drawNightSky: Draw = (ctx, w, h) => {
   }
 };
 
-/** Pelaje de gato atigrado naranja: rayas onduladas que, en la esfera, rodean el cuerpo. */
+/** Pelaje de gato naranja: rayas suaves y onduladas que, en la esfera, rodean el cuerpo. */
 export const drawTabby: Draw = (ctx, w, h) => {
-  ctx.fillStyle = hgrad(ctx, 0, w, ["#c9783a", "#d58a48", "#c9783a"]);
+  ctx.fillStyle = hgrad(ctx, 0, w, ["#dc8642", "#e6964f", "#dc8642"]);
   ctx.fillRect(0, 0, w, h);
   const r = rng(5);
-  for (let i = 0; i < 22; i += 1) {
-    const x0 = (i / 22) * w + r() * 8;
-    ctx.strokeStyle = `rgba(120,58,22,${0.35 + r() * 0.3})`;
-    ctx.lineWidth = 5 + r() * 8;
+  for (let i = 0; i < 14; i += 1) {
+    const x0 = (i / 14) * w + r() * 8;
+    ctx.strokeStyle = `rgba(176,92,38,${0.22 + r() * 0.18})`;
+    ctx.lineWidth = 6 + r() * 6;
     ctx.beginPath();
     for (let y = h * 0.08; y <= h * 0.92; y += 8) {
       const x = x0 + Math.sin(y * 0.03 + i) * 6;

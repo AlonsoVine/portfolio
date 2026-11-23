@@ -13,7 +13,7 @@ import { zap } from "./sfx";
 
 export const WALL_Z = -0.6;
 /** Hueco de la ventana en la pared izquierda (x = −1,05): centro en z e y, ancho, alto y grosor del muro. */
-export const WINDOW = { z: 0.2, y: 0.6, w: 0.62, h: 0.56, depth: 0.16 };
+export const WINDOW = { z: 0.28, y: 0.6, w: 0.62, h: 0.56, depth: 0.16 };
 
 // Pared izquierda con el hueco de la ventana recortado; en coordenadas del plano, x local es −z del mundo
 const LEFT_WALL = (() => {

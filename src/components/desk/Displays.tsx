@@ -226,9 +226,9 @@ export function SideMonitor({ t, position, rotation }: { t: DeskCopy } & Placed)
           <meshBasicMaterial map={map} color={SCREEN} toneMapped={false} />
         </mesh>
         <Glass w={0.536} h={0.296} z={0.009} />
-        {/* Post-its pegados al marco: uno cuelga del borde inferior señalando al móvil, el otro asoma por el canto derecho */}
+        {/* Post-its pegados al marco: uno cuelga del borde inferior señalando al móvil, el otro, en el canto derecho sin salirse (a la derecha queda la guitarra) */}
         <StickyNote msg={t.notes.talk} paper="#f6e07a" arrow position={[-0.17, -0.19, 0.0125]} tilt={0.06} />
-        <StickyNote msg={t.notes.todo} paper="#f4a9c4" strike position={[0.299, 0.085, 0.0125]} tilt={-0.08} />
+        <StickyNote msg={t.notes.todo} paper="#f4a9c4" strike position={[0.236, 0.09, 0.0125]} tilt={-0.08} />
 
         {/* Lámpara de monitor con luz asimétrica hacia la mesa */}
         <group position={[0, 0.172, 0.012]}>

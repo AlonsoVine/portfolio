@@ -15,35 +15,40 @@ const FRAME = "#e6e1d6";
 const OAK = "#8f6038";
 
 // Cola: una cadena de esferas que rodea el cuerpo por delante; así la punta puede levantarse y ondear sola
-const TAIL_N = 34;
+const TAIL_N = 96;
 const o = new Object3D();
 function placeTail(mesh: InstancedMesh, time: number, love: number, idle: number) {
   for (let i = 0; i < TAIL_N; i += 1) {
     const u = i / (TAIL_N - 1);
-    const a = Math.PI * (1.12 - 0.98 * u);
+    const a = Math.PI * (1.12 - 0.9 * u);
     const tip = Math.max(0, (u - 0.5) / 0.5);
     // Con cariño, la punta se alza en gancho y se mece despacio, como un gato a gusto
     const lift = love * tip * tip * 0.07;
     const sway = (love * 0.022 + idle * 0.004) * tip * Math.sin(time * (love ? 3.2 : 0.8) - u * 5);
-    o.position.set(Math.cos(a) * (0.118 + sway), 0.016 + lift, Math.sin(a) * (0.1 + sway) + 0.005);
-    o.scale.setScalar(0.0175 * (1 - u * 0.4));
+    o.position.set(Math.cos(a) * (0.112 + sway), 0.017 + lift, Math.sin(a) * (0.096 + sway) + 0.004);
+    o.scale.setScalar(0.019 * (1 - u * 0.3));
     o.updateMatrix();
     mesh.setMatrixAt(i, o.matrix);
   }
   mesh.instanceMatrix.needsUpdate = true;
 }
 
+const GINGER = "#e08a45";
+const CREAM = "#f6e6cc";
+const INK = "#2b1c14";
+
 /**
- * Gato atigrado tumbado en el alféizar, hecho un ovillo y con los ojos entornados: respira despacio y parpadea de
- * vez en cuando. Al acariciarlo ronronea, levanta la cabeza y cierra los ojos de gusto; cada tercera caricia
- * además levanta la punta de la cola y la mece con cariño.
+ * Gato naranja tumbado en el alféizar, en estilo de peluche: cabeza grande y redonda, mofletes, ojos grandes y
+ * brillantes. Respira despacio y parpadea. Al acariciarlo ronronea, entorna los ojos de gusto (dos arquitos) y
+ * levanta la cabeza; cada tercera caricia además alza la punta de la cola y la mece con cariño.
  */
 function Cat({ t, position, rotation, reduceMotion }: { t: DeskCopy; position: [number, number, number]; rotation?: [number, number, number]; reduceMotion: boolean }) {
   const fur = useCanvasTexture(256, 256, drawTabby);
   const body = useRef<Group>(null);
   const head = useRef<Group>(null);
   const ear = useRef<Group>(null);
-  const eyes = useRef<(Group | null)[]>([]);
+  const open = useRef<(Group | null)[]>([]);
+  const shut = useRef<(Group | null)[]>([]);
   const tail = useRef<InstancedMesh>(null);
   const petted = useRef(-10);
   const loved = useRef(-10);
@@ -65,100 +70,136 @@ function Cat({ t, position, rotation, reduceMotion }: { t: DeskCopy; position: [
     const time = clock.elapsedTime;
     const now = performance.now() / 1000;
     const s = now - petted.current;
-    const pet = s < 1.8 ? Math.sin((Math.PI * s) / 1.8) : 0;
+    const pet = s < 2.2 ? Math.sin((Math.PI * s) / 2.2) : 0;
     const l = now - loved.current;
     const love = l < 3 ? Math.sin((Math.PI * l) / 3) : 0;
     if (body.current) body.current.scale.y = reduceMotion ? 1 : 1 + Math.sin(time * 1.6) * 0.025;
-    if (head.current) head.current.rotation.x = 0.1 - pet * 0.25;
+    if (head.current) head.current.rotation.x = -pet * 0.18;
     if (ear.current) ear.current.rotation.z = s < 0.5 ? Math.sin(s * 40) * 0.25 * (1 - s / 0.5) : 0;
-    // Ojos entornados; al acariciarlo los cierra de gusto y, de tanto en tanto, parpadea
-    const blink = !reduceMotion && time % 5.3 < 0.16 ? 0.1 : 1;
-    const open = Math.min(blink, 1 - pet * 0.88);
-    for (const e of eyes.current) if (e) e.scale.y = open;
+    // Al acariciarlo cierra los ojos de gusto; si no, parpadea de vez en cuando
+    const blink = !reduceMotion && time % 4.7 < 0.14;
+    const happy = pet > 0.25;
+    for (const e of open.current) if (e) e.visible = !happy && !blink;
+    for (const e of shut.current) if (e) e.visible = happy || blink;
     if (tail.current && (!reduceMotion || love)) placeTail(tail.current, time, love, reduceMotion ? 0 : 1);
   });
-  const coat = <meshStandardMaterial map={fur} roughness={0.95} />;
-  const cream = <meshStandardMaterial color="#ecd6b6" roughness={0.95} />;
+  const coat = <meshStandardMaterial map={fur} color="#ffffff" roughness={0.9} />;
+  const plain = <meshStandardMaterial color={GINGER} roughness={0.9} />;
+  const cream = <meshStandardMaterial color={CREAM} roughness={0.9} />;
+  const ink = <meshBasicMaterial color={INK} />;
   return (
     <group position={position} rotation={rotation} {...hover}>
       <group ref={body}>
-        {/* Lomo enroscado y cadera */}
-        <mesh position={[0, 0.055, 0]} scale={[0.125, 0.062, 0.092]} castShadow>
+        {/* Cuerpo de hogaza, cadera y pecho claro */}
+        <mesh position={[-0.01, 0.052, 0]} scale={[0.115, 0.058, 0.085]} castShadow>
           <sphereGeometry args={[1, 32, 20]} />
           {coat}
         </mesh>
-        <mesh position={[-0.06, 0.06, -0.015]} scale={[0.065, 0.06, 0.07]} castShadow>
+        <mesh position={[-0.065, 0.056, -0.012]} scale={[0.06, 0.055, 0.065]} castShadow>
           <sphereGeometry args={[1, 24, 16]} />
           {coat}
         </mesh>
+        <mesh position={[0.07, 0.04, 0.035]} scale={[0.045, 0.04, 0.045]}>
+          <sphereGeometry args={[1, 20, 14]} />
+          {cream}
+        </mesh>
       </group>
       <instancedMesh ref={tail} args={[undefined, undefined, TAIL_N]} castShadow>
-        <sphereGeometry args={[1, 12, 8]} />
-        {coat}
+        <sphereGeometry args={[1, 20, 14]} />
+        {plain}
       </instancedMesh>
-      {/* Cabeza apoyada sobre las patas */}
-      <group ref={head} position={[0.105, 0.062, 0.05]} rotation={[0.1, 0.35, 0]}>
-        <mesh position={[0, 0.02, 0]} scale={[1.08, 0.9, 0.95]} castShadow>
-          <sphereGeometry args={[0.05, 28, 20]} />
-          {coat}
+      {/* Patitas delanteras, asomando bajo la cabeza */}
+      {[0, 1].map((i) => (
+        <mesh key={i} position={[0.1 + i * 0.012, 0.012, 0.075 + i * 0.022]} rotation={[0, 0.6, 0]} scale={[1.5, 0.8, 1]}>
+          <sphereGeometry args={[0.014, 14, 10]} />
+          {cream}
         </mesh>
-        {/* Carrillos, barbilla y nariz */}
+      ))}
+      {/* Cabeza grande y redonda, de cara a la habitación */}
+      <group ref={head} position={[0.09, 0.075, 0.045]} rotation={[0, 0.5, 0]}>
+        <mesh scale={[1.12, 0.95, 0.95]} castShadow>
+          <sphereGeometry args={[0.056, 32, 24]} />
+          {plain}
+        </mesh>
+        {/* Mofletes y hocico claros */}
         {[-1, 1].map((s) => (
-          <mesh key={s} position={[s * 0.011, 0.006, 0.041]} scale={[1, 0.8, 0.8]}>
-            <sphereGeometry args={[0.013, 14, 10]} />
+          <mesh key={s} position={[s * 0.02, -0.02, 0.038]} scale={[1.2, 0.85, 0.8]}>
+            <sphereGeometry args={[0.02, 16, 12]} />
             {cream}
           </mesh>
         ))}
-        <mesh position={[0, -0.006, 0.036]} scale={[1, 0.7, 0.8]}>
-          <sphereGeometry args={[0.012, 12, 8]} />
+        <mesh position={[0, -0.03, 0.04]} scale={[1.2, 0.7, 0.8]}>
+          <sphereGeometry args={[0.016, 14, 10]} />
           {cream}
         </mesh>
-        <mesh position={[0, 0.013, 0.051]} rotation={[0.4, 0, 0]} scale={[1.3, 0.8, 0.6]}>
-          <sphereGeometry args={[0.0045, 8, 6]} />
-          <meshStandardMaterial color="#b86a6a" roughness={0.6} />
+        {/* Nariz rosa y boquita en «w» */}
+        <mesh position={[0, -0.011, 0.056]} rotation={[0.3, 0, 0]} scale={[1.4, 0.9, 0.7]}>
+          <sphereGeometry args={[0.0045, 10, 8]} />
+          <meshStandardMaterial color="#f08a9a" roughness={0.5} />
         </mesh>
-        {/* Ojos de color ámbar verdoso con la pupila en rendija y un brillo */}
+        {[-1, 1].map((s) => (
+          <mesh key={s} position={[s * 0.005, -0.019, 0.055]} rotation={[0, 0, Math.PI + s * 0.3]}>
+            <torusGeometry args={[0.005, 0.0011, 4, 10, Math.PI]} />
+            {ink}
+          </mesh>
+        ))}
+        {/* Ojos grandes y brillantes; al cerrarlos quedan dos arquitos de gusto */}
         {[-1, 1].map((s, i) => (
-          <group
-            key={s}
-            ref={(g) => {
-              eyes.current[i] = g;
-            }}
-            position={[s * 0.019, 0.029, 0.042]}
-            rotation={[-0.1, s * 0.38, -s * 0.18]}
-          >
-            <mesh scale={[1.3, 0.75, 0.45]}>
-              <sphereGeometry args={[0.0095, 16, 12]} />
-              <meshStandardMaterial color="#b9c43c" roughness={0.15} emissive="#4a5210" emissiveIntensity={0.6} />
-            </mesh>
-            <mesh position={[0, 0, 0.0035]} scale={[0.28, 0.68, 0.3]}>
-              <sphereGeometry args={[0.0095, 10, 8]} />
-              <meshBasicMaterial color="#0b0805" />
-            </mesh>
-            <mesh position={[0.003, 0.0028, 0.0045]}>
-              <sphereGeometry args={[0.0013, 6, 4]} />
-              <meshBasicMaterial color="#ffffff" />
-            </mesh>
+          <group key={s} position={[s * 0.024, 0.006, 0.046]} rotation={[0, s * 0.32, 0]}>
+            <group
+              ref={(g) => {
+                open.current[i] = g;
+              }}
+            >
+              <mesh scale={[1, 1.12, 0.5]}>
+                <sphereGeometry args={[0.0105, 18, 14]} />
+                <meshStandardMaterial color="#1c140f" roughness={0.1} />
+              </mesh>
+              <mesh position={[0.0035 * -s, 0.004, 0.005]}>
+                <sphereGeometry args={[0.0032, 8, 6]} />
+                <meshBasicMaterial color="#ffffff" />
+              </mesh>
+              <mesh position={[0.003 * s, -0.004, 0.005]}>
+                <sphereGeometry args={[0.0015, 6, 4]} />
+                <meshBasicMaterial color="#ffffff" />
+              </mesh>
+            </group>
+            <group
+              ref={(g) => {
+                shut.current[i] = g;
+              }}
+              visible={false}
+            >
+              <mesh position={[0, -0.002, 0.002]}>
+                <torusGeometry args={[0.008, 0.0016, 4, 12, Math.PI]} />
+                {ink}
+              </mesh>
+            </group>
           </group>
         ))}
-        {[-1, 1].map((s) => (
-          <group key={s} ref={s === 1 ? ear : undefined} position={[s * 0.029, 0.058, -0.004]} rotation={[-0.1, 0, -s * 0.38]}>
-            <mesh rotation={[0, Math.PI / 4, 0]} scale={[1, 1, 0.55]} castShadow>
-              <coneGeometry args={[0.021, 0.04, 4]} />
-              {coat}
+        {/* Bigotes finos */}
+        {[-1, 1].flatMap((s) =>
+          [-1, 1].map((k) => (
+            <mesh key={`${s}${k}`} position={[s * 0.045, -0.018 + k * 0.004, 0.036]} rotation={[0, s * 0.35, Math.PI / 2 + s * k * 0.12]}>
+              <cylinderGeometry args={[0.0005, 0.0005, 0.04, 4]} />
+              <meshBasicMaterial color="#fff6e8" transparent opacity={0.8} />
             </mesh>
-            <mesh position={[0, -0.003, 0.006]} rotation={[0, Math.PI / 4, 0]} scale={[0.6, 0.7, 0.3]}>
-              <coneGeometry args={[0.021, 0.04, 4]} />
-              <meshStandardMaterial color="#d99a8c" roughness={0.9} />
+          )),
+        )}
+        {/* Orejas redondeadas con el interior rosa */}
+        {[-1, 1].map((s) => (
+          <group key={s} ref={s === 1 ? ear : undefined} position={[s * 0.034, 0.046, -0.006]} rotation={[-0.15, 0, -s * 0.36]}>
+            <mesh scale={[1, 1, 0.6]} castShadow>
+              <coneGeometry args={[0.024, 0.038, 16]} />
+              {plain}
+            </mesh>
+            <mesh position={[0, -0.003, 0.005]} scale={[0.62, 0.7, 0.3]}>
+              <coneGeometry args={[0.024, 0.038, 16]} />
+              <meshStandardMaterial color="#f2a9b0" roughness={0.8} />
             </mesh>
           </group>
         ))}
       </group>
-      {/* Patas delanteras recogidas bajo la cabeza */}
-      <mesh position={[0.1, 0.014, 0.08]} rotation={[0, 0.9, Math.PI / 2]}>
-        <capsuleGeometry args={[0.012, 0.045, 4, 10]} />
-        {cream}
-      </mesh>
     </group>
   );
 }
@@ -230,8 +271,8 @@ export function Window({ t, reduceMotion }: { t: DeskCopy; reduceMotion: boolean
         <meshBasicMaterial map={sky} toneMapped={false} />
       </mesh>
 
-      {/* En espejo: así mira hacia la silla, que en esta pared queda al otro lado */}
-      <group position={[-0.12, -H / 2, -0.02]} scale={[-1, 1, 1]}>
+      {/* Al fondo del alféizar y en espejo: así mira hacia la silla */}
+      <group position={[0.15, -H / 2, -0.02]} scale={[-1, 1, 1]}>
         <Cat t={t} position={[0, 0, 0]} rotation={[0, 0.2, 0]} reduceMotion={reduceMotion} />
       </group>
     </group>
