@@ -151,7 +151,7 @@ export const drawCv =
     ctx.fillStyle = "#0a101c";
     ctx.fillRect(w * 0.035, 0, w * 0.13, h);
     text(ctx, "PORTFOLIO", w * 0.045, h * 0.07, mono(f, 17), "#5b6a86", { spacing: 3 });
-    const files = ["experiencia.md", "formacion.md", "skills.ts", "cv.tsx", "contacto.json", "certificados/"];
+    const files = t.screens.cvFiles;
     files.forEach((name, i) =>
       text(ctx, name, w * 0.055, h * (0.14 + i * 0.055), mono(f, 19), i === 3 ? ICE : "#7d8aa3"),
     );
@@ -161,7 +161,7 @@ export const drawCv =
     // Pestañas
     ctx.fillStyle = "#0a101c";
     ctx.fillRect(w * 0.165, 0, w, h * 0.065);
-    ["cv.tsx", "experiencia.md", "skills.ts"].forEach((tab, i) => {
+    [files[3], files[0], files[2]].forEach((tab, i) => {
       const x = w * (0.165 + i * 0.09);
       if (i === 0) {
         ctx.fillStyle = "#0c1422";
@@ -340,7 +340,7 @@ export const drawProjects =
 function clock(lang: string) {
   const now = new Date();
   return {
-    time: new Intl.DateTimeFormat(lang, { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Madrid" }).format(now),
+    time: new Intl.DateTimeFormat(lang, { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "Europe/Madrid" }).format(now),
     date: new Intl.DateTimeFormat(lang, { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Madrid" }).format(now),
   };
 }
@@ -449,16 +449,16 @@ export const drawTablet =
 
 /** Rótulos del teclado: cada letra con el color del degradado según su posición, como el RGB real. */
 export const drawLegends =
-  (keys: { x: number; z: number; w: number; label: string }[], unit: number): Draw =>
+  (keys: { x: number; z: number; w: number; label: string }[], unit: number, legend: Record<string, string>): Draw =>
   (ctx, w, _h, f) => {
     ctx.fillStyle = hgrad(ctx, 0, w, [...GRADIENT, ICE]);
     ctx.textBaseline = "middle";
     for (const k of keys) {
       if (!k.label) continue;
-      const size = k.label.length > 2 ? unit * 0.2 : unit * 0.34;
-      ctx.font = mono(f, size, 500);
       ctx.textAlign = "center";
-      ctx.fillText(k.label, k.x * unit, (k.z + 0.5) * unit - unit * 0.06);
+      const label = legend[k.label] ?? k.label;
+      ctx.font = mono(f, label.length > 2 ? unit * 0.2 : unit * 0.34, 500);
+      ctx.fillText(label, k.x * unit, (k.z + 0.5) * unit - unit * 0.06);
     }
   };
 
@@ -594,7 +594,9 @@ export const drawNeonSign =
   };
 
 /** Teclado, touchpad y rejillas del portátil, dibujados: a ese tamaño no merece la pena modelar teclas. */
-export const drawLaptopDeck: Draw = (ctx, w, h, f) => {
+export const drawLaptopDeck =
+  (legend: Record<string, string>): Draw =>
+  (ctx, w, h, f) => {
   ctx.fillStyle = "#1b2131";
   ctx.fillRect(0, 0, w, h);
   // Rejillas de altavoz a los lados
@@ -640,7 +642,7 @@ export const drawLaptopDeck: Draw = (ctx, w, h, f) => {
         ctx.shadowBlur = 8;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(k, x + kw / 2, y + kh / 2);
+        ctx.fillText(legend[k] ?? k, x + kw / 2, y + kh / 2);
         ctx.shadowBlur = 0;
       }
       x += kw;

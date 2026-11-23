@@ -71,7 +71,10 @@ export const es = {
       cvTimeline: "EXPERIENCIA",
       pressStart: "PULSA START",
       projectNames: ["Prensa", "Liberty"],
+      cvFiles: ["experiencia.md", "formacion.md", "skills.ts", "cv.tsx", "contacto.json", "certificados/"],
     },
+    // Rótulos de teclado que cambian con el idioma; en español se usan tal cual los del ISO-ES
+    keyLegends: {} as Record<string, string>,
   },
 };
 
@@ -150,6 +153,11 @@ export const en: Dictionary = {
       cvTimeline: "EXPERIENCE",
       pressStart: "PRESS START",
       projectNames: ["Prensa", "Liberty"],
+      cvFiles: ["experience.md", "education.md", "skills.ts", "cv.tsx", "contact.json", "certificates/"],
+    },
+    keyLegends: {
+      "º": "`", "'": "-", "¡": "=", "`": "[", "+": "]", "Ñ": ";", "´": "'", "Ç": "#", "<": "\\", "-": "/",
+      Impr: "PrtSc", Bloq: "ScrLk", Pausa: "Pause", Inicio: "Home", RePág: "PgUp", Supr: "Del", Fin: "End", AvPág: "PgDn",
     },
   },
 };

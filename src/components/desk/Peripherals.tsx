@@ -96,7 +96,6 @@ const o = new Object3D();
 const c = new Color();
 
 const LEGEND_PX = 64;
-const legendsDraw = drawLegends(KEYS, LEGEND_PX);
 
 /**
  * Teclado TKL con RGB que fluye. Las teclas que pulsas en tu teclado de verdad se hunden y se encienden,
@@ -109,6 +108,8 @@ export function Keyboard({ t, position, rotation, reduceMotion }: Placed & { t: 
   const ripple = useRef({ x: 0, z: 0, at: -10 });
   const lit = useRef(false);
   const glowMat = useRef<MeshBasicMaterial>(null);
+  // En inglés se rotulan como un ISO del Reino Unido; las teclas físicas y su respuesta no cambian
+  const legendsDraw = useMemo(() => drawLegends(KEYS, LEGEND_PX, t.keyLegends), [t]);
   const legends = useCanvasTexture(COLS * LEGEND_PX, DEPTH * LEGEND_PX, legendsDraw);
   const glow = useCanvasTexture(512, 4, drawStrip, { tileX: 1 });
   const spill = useCanvasTexture(128, 128, drawSoftDot);

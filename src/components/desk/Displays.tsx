@@ -122,7 +122,8 @@ const ZENBOOK = { color: "#1b2131", roughness: 0.38, metalness: 0.55 } as const;
 export function Laptop({ t, position, rotation }: { t: DeskCopy } & Placed) {
   const draw = useMemo(() => drawGames(t), [t]);
   const map = useCanvasTexture(1024, 632, draw);
-  const deck = useCanvasTexture(1536, 1030, drawLaptopDeck);
+  const deckDraw = useMemo(() => drawLaptopDeck(t.keyLegends), [t]);
+  const deck = useCanvasTexture(1536, 1030, deckDraw);
   const dot = useCanvasTexture(128, 128, drawSoftDot);
   return (
     <group position={position} rotation={rotation} scale={1.2}>
@@ -225,9 +226,9 @@ export function SideMonitor({ t, position, rotation }: { t: DeskCopy } & Placed)
           <meshBasicMaterial map={map} color={SCREEN} toneMapped={false} />
         </mesh>
         <Glass w={0.536} h={0.296} z={0.009} />
-        {/* Post-its: el de abajo señala al móvil, que queda a la izquierda; el borde izquierdo lo tapa la ultrawide */}
-        <StickyNote msg={t.notes.talk} paper="#f6e07a" arrow position={[-0.175, -0.108, 0.011]} tilt={0.08} />
-        <StickyNote msg={t.notes.todo} paper="#f4a9c4" strike position={[0.262, 0.112, 0.011]} tilt={-0.07} />
+        {/* Post-its pegados al marco: uno cuelga del borde inferior señalando al móvil, el otro asoma por el canto derecho */}
+        <StickyNote msg={t.notes.talk} paper="#f6e07a" arrow position={[-0.17, -0.19, 0.0125]} tilt={0.06} />
+        <StickyNote msg={t.notes.todo} paper="#f4a9c4" strike position={[0.299, 0.085, 0.0125]} tilt={-0.08} />
 
         {/* Lámpara de monitor con luz asimétrica hacia la mesa */}
         <group position={[0, 0.172, 0.012]}>

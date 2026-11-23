@@ -12,18 +12,18 @@ import { useHoverable } from "./interact";
 import { zap } from "./sfx";
 
 export const WALL_Z = -0.6;
-/** Hueco de la ventana en la pared derecha (x = 1,05): centro en z e y, ancho, alto y grosor del muro. */
-export const WINDOW = { z: -0.07, y: 0.5, w: 0.62, h: 0.56, depth: 0.16 };
+/** Hueco de la ventana en la pared izquierda (x = −1,05): centro en z e y, ancho, alto y grosor del muro. */
+export const WINDOW = { z: 0.2, y: 0.6, w: 0.62, h: 0.56, depth: 0.16 };
 
-// Pared derecha con el hueco de la ventana recortado; en coordenadas del plano, x local es la z del mundo
-const RIGHT_WALL = (() => {
+// Pared izquierda con el hueco de la ventana recortado; en coordenadas del plano, x local es −z del mundo
+const LEFT_WALL = (() => {
   const s = new Shape();
   s.moveTo(-0.9, -1.2);
   s.lineTo(0.9, -1.2);
   s.lineTo(0.9, 1.2);
   s.lineTo(-0.9, 1.2);
   s.closePath();
-  const x = WINDOW.z - 0.25;
+  const x = 0.25 - WINDOW.z;
   const y = WINDOW.y - 0.45;
   const hole = new Path();
   hole.moveTo(x - WINDOW.w / 2, y - WINDOW.h / 2);
@@ -102,11 +102,11 @@ export function Desk() {
         <meshLambertMaterial color="#2a2522" />
       </mesh>
       {/* Paredes laterales: el escritorio está en un hueco, no flotando en el vacío */}
-      <mesh position={[-1.05, 0.45, 0.25]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
-        <planeGeometry args={[1.8, 2.4]} />
+      <mesh geometry={LEFT_WALL} position={[-1.05, 0.45, 0.25]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
         <meshLambertMaterial color="#3a3640" />
       </mesh>
-      <mesh geometry={RIGHT_WALL} position={[1.05, 0.45, 0.25]} rotation={[0, -Math.PI / 2, 0]} receiveShadow>
+      <mesh position={[1.05, 0.45, 0.25]} rotation={[0, -Math.PI / 2, 0]} receiveShadow>
+        <planeGeometry args={[1.8, 2.4]} />
         <meshLambertMaterial color="#3a3640" />
       </mesh>
     </group>

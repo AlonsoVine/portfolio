@@ -103,9 +103,9 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
       <WallCalendar t={t} position={[0.86, 0.71, WALL_Z]} lang={lang} />
       {/* Mapa enmarcado bajo la balda, con el poto cayendo por delante */}
       <MapFrame position={[-0.6, 0.555, WALL_Z]} scale={0.62} />
-      {/* Pared derecha: la ventana con el gato y, en el suelo delante de la mesa, la guitarra recostada */}
+      {/* Pared izquierda: la ventana con el gato; en la derecha, la guitarra colgada */}
       <Window t={t} reduceMotion={reduceMotion} />
-      <Guitar t={t} position={[0.94, -0.75, 0.56]} rotation={[0, -Math.PI / 2 + 0.3, 0]} />
+      <Guitar t={t} position={[1.02, 0.1, 0.11]} rotation={[0, -Math.PI / 2, 0]} />
 
       <LookControls reduceMotion={reduceMotion} active={ready} />
       <Warmup
