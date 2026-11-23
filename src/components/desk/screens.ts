@@ -1445,3 +1445,151 @@ export const drawCalendar =
     }
     ctx.textAlign = "left";
   };
+
+/* ---------- libros de la balda ---------- */
+
+export type BookKey = keyof DeskCopy["books"];
+type SpineStyle = "tolkien" | "band" | "stripe" | "plain";
+/** Libro de la balda: caja de sx × sy × sz con el lomo (sx × sy) mirando a la sala. */
+export type BookSpec = {
+  key: BookKey;
+  size: [number, number, number];
+  at: [number, number, number];
+  turn?: number;
+  body: string;
+  ink: string;
+  accent: string;
+  style: SpineStyle;
+  vol?: string;
+  lying?: boolean;
+};
+
+const TOLKIEN = { body: "#1d2b24", ink: "#d4b062", accent: "#d4b062", style: "tolkien" } as const;
+const STANDING: Omit<BookSpec, "at">[] = [
+  { key: "fellowship", size: [0.026, 0.168, 0.108], ...TOLKIEN, vol: "I" },
+  { key: "towers", size: [0.026, 0.168, 0.108], ...TOLKIEN, vol: "II" },
+  { key: "king", size: [0.026, 0.168, 0.108], ...TOLKIEN, vol: "III" },
+  { key: "clean", size: [0.021, 0.16, 0.1], body: "#26292f", ink: "#f2efe8", accent: "#e0a43a", style: "band" },
+  { key: "refactoring", size: [0.024, 0.172, 0.104], body: "#e6dfd0", ink: "#8a2c22", accent: "#8a2c22", style: "stripe" },
+  { key: "deep", size: [0.03, 0.174, 0.11], body: "#3a2f4c", ink: "#f0e6d0", accent: "#d07a46", style: "plain" },
+  { key: "aima", size: [0.036, 0.178, 0.112], body: "#16294a", ink: "#f2efe8", accent: "#c9a24a", style: "band" },
+];
+const SHELF_TOP = 0.012;
+// Los lomos quedan a ras del frente, como en una balda de verdad; cada libro con su pizca de giro
+export const BOOKS: BookSpec[] = [
+  ...(() => {
+    let x = -0.238;
+    return STANDING.map((b, i) => {
+      const at: [number, number, number] = [x + b.size[0] / 2, SHELF_TOP, 0.128 - b.size[2] / 2];
+      x += b.size[0] + 0.0015;
+      return { ...b, at, turn: ((i * 37) % 7) * 0.006 - 0.018 };
+    });
+  })(),
+  { key: "ddia", size: [0.135, 0.022, 0.1], at: [0.035, SHELF_TOP, 0.074], turn: 0.08, body: "#ece6da", ink: "#7b3b2a", accent: "#c9563a", style: "stripe", lying: true },
+  { key: "pragmatic", size: [0.122, 0.018, 0.092], at: [0.038, SHELF_TOP + 0.022, 0.074], turn: -0.05, body: "#3f4247", ink: "#e8e4dc", accent: "#c9a24a", style: "band", lying: true },
+];
+
+// Atlas de lomos: todos en un canvas, para que la balda entera use una sola textura y un solo material
+const SPINE_PX = 4400;
+export const SPINE_ATLAS = 1024;
+/** Píxel blanco del atlas: las tapas lo muestrean y se tiñen con el color de vértice. */
+export const SPINE_WHITE: [number, number] = [1012 / SPINE_ATLAS, 1 - 1012 / SPINE_ATLAS];
+export const SPINE_RECTS: [number, number, number, number][] = (() => {
+  let x = 4;
+  let y = 4;
+  let row = 0;
+  return BOOKS.map((b) => {
+    const w = Math.round(b.size[0] * SPINE_PX);
+    const h = Math.round(b.size[1] * SPINE_PX);
+    if (x + w > SPINE_ATLAS - 4) {
+      x = 4;
+      y += row + 8;
+      row = 0;
+    }
+    const r: [number, number, number, number] = [x, y, w, h];
+    // Los tumbados van uno debajo de otro; los de pie, en fila
+    if (b.lying) y += h + 8;
+    else {
+      x += w + 8;
+      row = Math.max(row, h);
+    }
+    return r;
+  });
+})();
+
+export const drawSpines =
+  (books: DeskCopy["books"]): Draw =>
+  (ctx, _w, _h, f) => {
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(1000, 1000, 24, 24);
+    BOOKS.forEach((b, i) => {
+      const [x, y, w, h] = SPINE_RECTS[i];
+      const copy = books[b.key];
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.beginPath();
+      ctx.rect(0, 0, w, h);
+      ctx.clip();
+      // Se dibuja siempre en horizontal: el lomo de pie se gira para que el título baje de arriba abajo
+      const upright = h > w;
+      if (upright) {
+        ctx.translate(w, 0);
+        ctx.rotate(Math.PI / 2);
+      }
+      const L = upright ? h : w;
+      const T = upright ? w : h;
+      ctx.fillStyle = b.body;
+      ctx.fillRect(0, 0, L, T);
+      // Lomo redondeado: algo más claro en el centro y más oscuro hacia las tapas
+      const round = ctx.createLinearGradient(0, 0, 0, T);
+      round.addColorStop(0, "rgba(0,0,0,0.28)");
+      round.addColorStop(0.45, "rgba(255,255,255,0.08)");
+      round.addColorStop(1, "rgba(0,0,0,0.32)");
+      ctx.fillStyle = round;
+      ctx.fillRect(0, 0, L, T);
+
+      const fit = (s: string, size: number, max: number, weight = 700, family = f.display) => {
+        let px = size;
+        ctx.font = `${weight} ${px}px ${family}`;
+        while (px > 8 && ctx.measureText(s).width > max) ctx.font = `${weight} ${(px -= 1)}px ${family}`;
+        return ctx.font;
+      };
+      const write = (s: string, cx: number, font: string, color: string, spacing = 0) => {
+        ctx.textBaseline = "middle";
+        text(ctx, s, cx, T / 2 + 1, font, color, { align: "center", spacing });
+        ctx.textBaseline = "alphabetic";
+      };
+      const bar = (at: number, width: number, color: string) => {
+        ctx.fillStyle = color;
+        ctx.fillRect(at, 0, width, T);
+      };
+
+      if (b.style === "tolkien") {
+        // Edición a juego: filetes dorados, número de tomo y el anillo como emblema
+        for (const at of [L * 0.035, L * 0.055, L * 0.945, L * 0.965]) bar(at, 2.5, b.accent);
+        write(b.vol ?? "", L * 0.12, display(f, T * 0.36, 700), b.ink);
+        write(copy.spine, L * 0.5, fit(copy.spine, T * 0.34, L * 0.58, 600), b.ink, 1);
+        ctx.strokeStyle = b.accent;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.ellipse(L * 0.87, T / 2, T * 0.2, T * 0.2, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (b.style === "band") {
+        bar(L * 0.05, L * 0.1, b.accent);
+        write(copy.spine, L * 0.5, fit(copy.spine, T * 0.42, L * 0.56), b.ink);
+        write(copy.by, L * 0.86, fit(copy.by, T * 0.24, L * 0.2, 600, f.mono), withAlpha(b.ink, 0.75), 1);
+      } else if (b.style === "stripe") {
+        for (const at of [L * 0.06, L * 0.09, L * 0.91, L * 0.94]) bar(at, 3, b.accent);
+        write(copy.spine, L * 0.47, fit(copy.spine, T * 0.4, L * 0.58), b.ink);
+        write(copy.by, L * 0.82, fit(copy.by, T * 0.24, L * 0.12, 600, f.mono), b.ink, 1);
+      } else {
+        write(copy.spine, L * 0.45, fit(copy.spine, T * 0.44, L * 0.56, 800), b.ink);
+        ctx.fillStyle = b.accent;
+        ctx.beginPath();
+        ctx.arc(L * 0.1, T / 2, T * 0.13, 0, Math.PI * 2);
+        ctx.fill();
+        write(copy.by, L * 0.85, fit(copy.by, T * 0.22, L * 0.22, 600, f.mono), withAlpha(b.ink, 0.8), 1);
+      }
+      ctx.restore();
+    });
+  };

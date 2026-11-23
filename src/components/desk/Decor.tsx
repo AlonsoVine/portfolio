@@ -2,7 +2,7 @@
 
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BufferGeometry, type CanvasTexture, Color, type MeshStandardMaterial, DoubleSide, SRGBColorSpace, TextureLoader, Euler, Float32BufferAttribute, type Group, Matrix4, PlaneGeometry, Quaternion, Vector3 } from "three";
+import { BufferGeometry, type CanvasTexture, Color, type MeshStandardMaterial, DoubleSide, SRGBColorSpace, TextureLoader, Float32BufferAttribute, type Group, PlaneGeometry } from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { HangingPothos, Sway } from "./Plants";
@@ -10,7 +10,7 @@ import { showHover, useHoverable } from "./interact";
 import { flip, startAmbient, ticks } from "./sfx";
 import { ICE } from "./palette";
 import { RoundedBox } from "./primitives";
-import { CAL_PAGES, canvasTexture, drawCalendar, drawClockFace, drawRug, drawSoftDot, type DeskCopy } from "./screens";
+import { BOOKS, type BookSpec, CAL_PAGES, canvasTexture, drawCalendar, drawClockFace, drawRug, drawSoftDot, drawSpines, SPINE_ATLAS, SPINE_RECTS, SPINE_WHITE, type DeskCopy } from "./screens";
 import { useCanvasTexture } from "./useCanvasTexture";
 
 type Vec3 = [number, number, number];
@@ -26,53 +26,98 @@ export function Rug() {
   );
 }
 
-const BOOKS: { w: number; h: number; c: string; lean?: number }[] = [
-  { w: 0.024, h: 0.165, c: "#6e3328" },
-  { w: 0.019, h: 0.15, c: "#2f4a5a" },
-  { w: 0.028, h: 0.172, c: "#c8b48c" },
-  { w: 0.021, h: 0.142, c: "#3d5a3a" },
-  { w: 0.018, h: 0.158, c: "#1f1f24", lean: -0.2 },
-];
-// Balda, libros, cantos de páginas y la pila tumbada comparten material: una sola malla con color por vértice
+// Tabla de roble de la balda
 const SHELF_WOOD = (() => {
-  const m = new Matrix4();
-  const q = new Quaternion();
-  const c = new Color();
-  const parts: BufferGeometry[] = [];
-  const add = (g: BufferGeometry, hex: string, p: Vec3, r: Vec3 = [0, 0, 0], pivot: Vec3 = [0, 0, 0]) => {
-    const flat = g.index ? g.toNonIndexed() : g;
-    flat.translate(...pivot);
-    flat.applyMatrix4(m.compose(new Vector3(...p), q.setFromEuler(new Euler(...r)), new Vector3(1, 1, 1)));
-    c.set(hex);
-    const n = flat.attributes.position.count;
-    flat.setAttribute("color", new Float32BufferAttribute(Array.from({ length: n }, () => [c.r, c.g, c.b]).flat(), 3));
-    parts.push(flat);
-  };
-  add(new RoundedBoxGeometry(0.5, 0.024, 0.14, 3, 0.004), "#9b6b43", [0, 0, 0.07]);
-  let x = -0.215;
-  BOOKS.forEach((b) => {
-    const at: Vec3 = [x + b.w / 2 + (b.lean ? 0.03 : 0), 0.012, 0.075];
-    const r: Vec3 = [0, 0, b.lean ?? 0];
-    x += b.w + 0.002;
-    add(new RoundedBoxGeometry(b.w, b.h, 0.105, 2, 0.002), b.c, at, r, [0, b.h / 2, 0]);
-    // Bloque de páginas asomando por delante
-    add(new PlaneGeometry(b.w * 0.55, b.h * 0.92), "#d9d0bd", at, r, [0, b.h / 2, 0.0528]);
-  });
-  add(new RoundedBoxGeometry(0.13, 0.022, 0.095, 2, 0.002), "#a2482f", [0.035, 0.023, 0.072], [0, 0.08, 0]);
-  add(new RoundedBoxGeometry(0.12, 0.018, 0.09, 2, 0.002), "#e1d7c3", [0.038, 0.043, 0.072], [0, -0.05, 0]);
-  const merged = mergeGeometries(parts, false);
-  parts.forEach((g) => g.dispose());
-  return merged;
+  const g = new RoundedBoxGeometry(0.5, 0.024, 0.14, 3, 0.004);
+  g.translate(0, 0, 0.07);
+  return g;
 })();
 
-/** Balda flotante de roble con libros, una pila tumbada con un poto colgante y una cámara de carrete. */
+// Cada libro es una sola malla: tapas teñidas por color de vértice sobre el píxel blanco del atlas y lomo con su recorte
+const BOOK_GEOMETRY = BOOKS.map((b, i) => {
+  const [sx, sy, sz] = b.size;
+  const tint = (g: BufferGeometry, hex: string) => {
+    const c = new Color(hex);
+    const n = g.attributes.position.count;
+    g.setAttribute("color", new Float32BufferAttribute(Array.from({ length: n }, () => [c.r, c.g, c.b]).flat(), 3));
+    return g;
+  };
+  const cover = tint(new RoundedBoxGeometry(sx, sy, sz, 2, 0.0016), b.body);
+  const uv = cover.attributes.uv;
+  for (let k = 0; k < uv.count; k++) uv.setXY(k, ...SPINE_WHITE);
+  const spine = tint(new PlaneGeometry(sx - 0.0012, sy - 0.0012).toNonIndexed(), "#ffffff");
+  const [x, y, w, h] = SPINE_RECTS[i];
+  const suv = spine.attributes.uv;
+  for (let k = 0; k < suv.count; k++) {
+    suv.setXY(k, (x + suv.getX(k) * w) / SPINE_ATLAS, 1 - (y + (1 - suv.getY(k)) * h) / SPINE_ATLAS);
+  }
+  spine.translate(0, 0, sz / 2 + 0.0003);
+  const merged = mergeGeometries([cover, spine], false);
+  merged.translate(0, sy / 2, 0);
+  cover.dispose();
+  spine.dispose();
+  return merged;
+});
+
+/** Libro de la balda: al pasar el cursor asoma un poco y dice su título; al pulsarlo se saca un instante. */
+function Book({ spec, geometry, label, map }: { spec: BookSpec; geometry: BufferGeometry; label: string; map: CanvasTexture }) {
+  const slide = useRef<Group>(null);
+  const hot = useRef(false);
+  const pulled = useRef(-10);
+  const hover = useHoverable(
+    label,
+    () => {
+      pulled.current = performance.now() / 1000;
+      flip();
+    },
+    () => {
+      hot.current = true;
+    },
+  );
+  useFrame(({ gl }, dt) => {
+    const g = slide.current;
+    if (!g) return;
+    const s = performance.now() / 1000 - pulled.current;
+    const reach = spec.lying ? 0.5 : 1;
+    const target = ((hot.current ? 0.016 : 0) + (s < 0.7 ? Math.sin((Math.PI * s) / 0.7) * 0.03 : 0)) * reach;
+    const next = g.position.z + (target - g.position.z) * Math.min(1, dt * 14);
+    if (Math.abs(next - g.position.z) < 1e-5) return;
+    g.position.z = next;
+    gl.shadowMap.needsUpdate = true;
+  });
+  return (
+    <group position={spec.at} rotation={[0, spec.turn ?? 0, 0]}>
+      <group ref={slide}>
+        <mesh
+          geometry={geometry}
+          castShadow
+          receiveShadow
+          {...hover}
+          onPointerOut={() => {
+            hot.current = false;
+            hover.onPointerOut();
+          }}
+        >
+          <meshStandardMaterial map={map} vertexColors roughness={0.78} />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+/** Balda flotante de roble con El Señor de los Anillos, libros de programación e IA, un poto colgante y una cámara de carrete. */
 export function Shelf({ t, position }: { t: DeskCopy; position: Vec3 }) {
   const dot = useCanvasTexture(128, 128, drawSoftDot);
+  const draw = useMemo(() => drawSpines(t.books), [t.books]);
+  const spines = useCanvasTexture(SPINE_ATLAS, SPINE_ATLAS, draw);
   return (
     <group position={position}>
       <mesh geometry={SHELF_WOOD} castShadow receiveShadow>
-        <meshStandardMaterial vertexColors roughness={0.72} />
+        <meshStandardMaterial color="#9b6b43" roughness={0.72} />
       </mesh>
+      {BOOKS.map((b, i) => (
+        <Book key={b.key} spec={b} geometry={BOOK_GEOMETRY[i]} map={spines} label={`${t.books[b.key].title} · ${t.books[b.key].author}`} />
+      ))}
       {/* Sombra de la balda y sus objetos sobre la pared */}
       <mesh position={[0, -0.05, 0.002]} scale={[0.62, 0.16, 1]}>
         <planeGeometry />
