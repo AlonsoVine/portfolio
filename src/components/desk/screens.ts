@@ -1706,19 +1706,44 @@ export const drawNightSky: Draw = (ctx, w, h) => {
 
 /** Pelaje de gato naranja: rayas suaves y onduladas que, en la esfera, rodean el cuerpo. */
 export const drawTabby: Draw = (ctx, w, h) => {
+  const k = w / 256;
   ctx.fillStyle = hgrad(ctx, 0, w, ["#dc8642", "#e6964f", "#dc8642"]);
   ctx.fillRect(0, 0, w, h);
   const r = rng(5);
+  // Manchas: rayas anchas y suaves, más oscuras en el centro y difuminadas en los bordes
   for (let i = 0; i < 14; i += 1) {
-    const x0 = (i / 14) * w + r() * 8;
-    ctx.strokeStyle = `rgba(176,92,38,${0.22 + r() * 0.18})`;
-    ctx.lineWidth = 6 + r() * 6;
-    ctx.beginPath();
-    for (let y = h * 0.08; y <= h * 0.92; y += 8) {
-      const x = x0 + Math.sin(y * 0.03 + i) * 6;
-      if (y === h * 0.08) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
+    const x0 = (i / 14) * w + r() * 8 * k;
+    const alpha = 0.22 + r() * 0.18;
+    const width = (6 + r() * 6) * k;
+    for (const [lw, al] of [
+      [width * 1.9, alpha * 0.35],
+      [width, alpha],
+    ]) {
+      ctx.strokeStyle = `rgba(168,86,34,${al})`;
+      ctx.lineWidth = lw;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      for (let y = h * 0.08; y <= h * 0.92; y += 8 * k) {
+        const x = x0 + Math.sin(y * (0.03 / k) + i) * 6 * k;
+        if (y === h * 0.08) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
     }
+  }
+  // Pelo: miles de trazos cortos, claros y oscuros, peinados en la misma dirección
+  ctx.lineCap = "round";
+  for (let i = 0; i < 9000; i += 1) {
+    const x = r() * w;
+    const y = r() * h;
+    const len = (3 + r() * 5) * k;
+    const ang = Math.PI / 2 + (r() - 0.5) * 0.6;
+    const light = r() < 0.5;
+    ctx.strokeStyle = light ? `rgba(255,214,160,${0.1 + r() * 0.16})` : `rgba(110,52,18,${0.08 + r() * 0.14})`;
+    ctx.lineWidth = (0.6 + r() * 0.8) * k;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + Math.cos(ang) * len, y + Math.sin(ang) * len);
     ctx.stroke();
   }
   // Tripa y pecho más claros
