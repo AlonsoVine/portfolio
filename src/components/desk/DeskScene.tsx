@@ -17,7 +17,9 @@ import { ContactShadows, Reflections, Warmup } from "./primitives";
 import { drawSoftDot } from "./screens";
 import { useCanvasTexture } from "./useCanvasTexture";
 import { Headphones, MapFrame, Rug, Shelf, WallCalendar, WallClock } from "./Decor";
+import { showHover } from "./interact";
 import { Desk, Leds, WALL_Z } from "./Room";
+import { Window } from "./Window";
 
 // Las pantallas iluminan la mesa con luces de área; sus tablas se cargan una sola vez
 RectAreaLightUniformsLib.init();
@@ -39,6 +41,7 @@ type Props = { t: Dictionary["desk"]; lang: string; reduceMotion: boolean; onRea
 
 export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
   const [low, setLow] = useState(false);
+  const [ready, setReady] = useState(false);
   return (
     <Canvas
       className="desk-canvas"
@@ -88,8 +91,8 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
         <Phone t={t} lang={lang} position={[0.25, 0, -0.025]} rotation={[0, -0.22, 0]} />
         <Coffee t={t} position={[0.425, 0, -0.06]} reduceMotion={reduceMotion} />
         <Tablet t={t} lang={lang} position={[0.58, 0, 0.185]} rotation={[0, -0.42, 0]} />
-        {/* Cascos apoyados de lado junto a la tablet, con la diadema hacia la pared */}
-        <Headphones t={t} position={[0.84, 0, 0.13]} rotation={[0, -0.35, 0]} />
+        {/* Cascos tumbados junto a la tablet, con la diadema hacia el fondo: de frente se ve el arco entero */}
+        <Headphones t={t} position={[0.82, 0, 0.2]} rotation={[0, 0.3, 0]} />
       </group>
       <Mouse t={t} position={[0.27, 0, 0.13]} rotation={[0, -0.12, 0]} />
       <Plants t={t} reduceMotion={reduceMotion} />
@@ -98,12 +101,22 @@ export default function DeskScene({ t, lang, reduceMotion, onReady }: Props) {
       <Shelf t={t} position={[-0.6, 0.76, WALL_Z]} />
       <WallClock t={t} position={[0.6, 0.8, WALL_Z]} />
       <WallCalendar t={t} position={[0.86, 0.71, WALL_Z]} lang={lang} />
-      {/* Pared izquierda: un mapa enmarcado, al mismo alto que la guitarra de enfrente */}
-      <MapFrame position={[-1.049, 0.47, 0.22]} rotation={[0, Math.PI / 2, 0]} />
-      <Guitar t={t} position={[1.02, 0.1, 0.11]} rotation={[0, -Math.PI / 2, 0]} />
+      {/* Mapa enmarcado bajo la balda, con el poto cayendo por delante */}
+      <MapFrame position={[-0.6, 0.555, WALL_Z]} scale={0.62} />
+      {/* Pared derecha: la ventana con el gato y, en el suelo delante de la mesa, la guitarra recostada */}
+      <Window t={t} reduceMotion={reduceMotion} />
+      <Guitar t={t} position={[0.94, -0.75, 0.56]} rotation={[0, -Math.PI / 2 + 0.3, 0]} />
 
-      <LookControls reduceMotion={reduceMotion} />
-      <Warmup onReady={onReady} onLow={() => setLow(true)} />
+      <LookControls reduceMotion={reduceMotion} active={ready} />
+      <Warmup
+        onReady={() => {
+          setReady(true);
+          // Lo que se señaló a ciegas durante la carga no vale: la cámara acaba de cambiar de vista
+          showHover(null);
+          onReady();
+        }}
+        onLow={() => setLow(true)}
+      />
 
       <EffectComposer multisampling={0} enableNormalPass={false}>
         {/* Oclusión ambiental: asienta los objetos sobre la mesa y oscurece los rincones */}

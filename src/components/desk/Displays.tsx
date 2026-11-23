@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AdditiveBlending, BackSide, ExtrudeGeometry, type Object3D, Shape } from "three";
+import { AdditiveBlending, BackSide, ExtrudeGeometry, type Object3D, PlaneGeometry, Shape } from "three";
 import { AMBER, hdr } from "./palette";
-import { drawCv, drawGames, drawLaptopDeck, drawProjects, drawSoftDot, type DeskCopy } from "./screens";
+import { drawCv, drawGames, drawLaptopDeck, drawNote, drawProjects, drawSoftDot, type DeskCopy } from "./screens";
 import { RoundedBox } from "./primitives";
 import { useCanvasTexture } from "./useCanvasTexture";
 
@@ -21,6 +21,28 @@ function Glass({ w, h, z }: { w: number; h: number; z: number }) {
     <mesh position={[0, 0, z]}>
       <planeGeometry args={[w, h]} />
       <meshStandardMaterial {...GLASS_PROPS} />
+    </mesh>
+  );
+}
+
+// Post-it de 7 cm: pegado por la franja de arriba y con la parte de abajo algo despegada del cristal
+const NOTE = (() => {
+  const g = new PlaneGeometry(0.07, 0.07, 1, 8);
+  const p = g.attributes.position;
+  for (let i = 0; i < p.count; i += 1) {
+    const k = Math.max(0, (0.022 - p.getY(i)) / 0.057);
+    p.setZ(i, k * k * 0.007);
+  }
+  g.computeVertexNormals();
+  return g;
+})();
+
+function StickyNote({ msg, paper, strike, arrow, position, tilt }: { msg: string; paper: string; strike?: boolean; arrow?: boolean; position: [number, number, number]; tilt: number }) {
+  const draw = useMemo(() => drawNote(msg, paper, { strike, arrow }), [msg, paper, strike, arrow]);
+  const map = useCanvasTexture(256, 256, draw);
+  return (
+    <mesh geometry={NOTE} position={position} rotation={[0, 0, tilt]}>
+      <meshStandardMaterial map={map} roughness={0.9} />
     </mesh>
   );
 }
@@ -203,6 +225,9 @@ export function SideMonitor({ t, position, rotation }: { t: DeskCopy } & Placed)
           <meshBasicMaterial map={map} color={SCREEN} toneMapped={false} />
         </mesh>
         <Glass w={0.536} h={0.296} z={0.009} />
+        {/* Post-its: el de abajo señala al móvil, que queda a la izquierda; el borde izquierdo lo tapa la ultrawide */}
+        <StickyNote msg={t.notes.talk} paper="#f6e07a" arrow position={[-0.175, -0.108, 0.011]} tilt={0.08} />
+        <StickyNote msg={t.notes.todo} paper="#f4a9c4" strike position={[0.262, 0.112, 0.011]} tilt={-0.07} />
 
         {/* Lámpara de monitor con luz asimétrica hacia la mesa */}
         <group position={[0, 0.172, 0.012]}>

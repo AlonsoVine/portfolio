@@ -42,7 +42,9 @@ export const es = {
       musicOff: "Quitar música",
       plant: "Acariciar",
       calendar: "Pasar hojas",
+      cat: "Acariciar al gato",
     },
+    notes: { talk: "¿Hablamos?", todo: "Terminar el portfolio" },
     books: {
       fellowship: { title: "La Comunidad del Anillo", author: "J. R. R. Tolkien", spine: "La Comunidad del Anillo", by: "TOLKIEN" },
       towers: { title: "Las Dos Torres", author: "J. R. R. Tolkien", spine: "Las Dos Torres", by: "TOLKIEN" },
@@ -119,7 +121,9 @@ export const en: Dictionary = {
       musicOff: "Stop music",
       plant: "Brush the leaves",
       calendar: "Flip the pages",
+      cat: "Pet the cat",
     },
+    notes: { talk: "Let's talk?", todo: "Finish the portfolio" },
     books: {
       fellowship: { title: "The Fellowship of the Ring", author: "J. R. R. Tolkien", spine: "The Fellowship of the Ring", by: "TOLKIEN" },
       towers: { title: "The Two Towers", author: "J. R. R. Tolkien", spine: "The Two Towers", by: "TOLKIEN" },

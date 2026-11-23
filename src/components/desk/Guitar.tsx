@@ -116,8 +116,11 @@ function Strings({ pluck }: { pluck: { current: number } }) {
   );
 }
 
-/** Guitarra acústica colgada de un soporte de pared: tapa de abeto, aros de caoba y diapasón de palosanto. */
-export function Guitar({ t, position, rotation }: Placed & { t: DeskCopy }) {
+/**
+ * Guitarra acústica de pie en el suelo, recostada contra la pared: tapa de abeto, aros de caoba y diapasón de
+ * palosanto. `lean` es cuánto se inclina hacia atrás desde la culata.
+ */
+export function Guitar({ t, position, rotation, lean = 0.2 }: Placed & { t: DeskCopy; lean?: number }) {
   const pluck = useRef(-10);
   const hover = useHoverable(t.interact.strum, () => {
     pluck.current = performance.now() / 1000;
@@ -128,100 +131,82 @@ export function Guitar({ t, position, rotation }: Placed & { t: DeskCopy }) {
   const dot = useCanvasTexture(128, 128, drawSoftDot);
 
   return (
-    <group position={position} rotation={rotation} {...hover}>
-      <mesh geometry={BODY} castShadow receiveShadow>
-        <meshPhysicalMaterial color="#3a1a0c" roughness={0.5} clearcoat={0.7} clearcoatRoughness={0.35} />
-      </mesh>
-      <mesh geometry={BINDING} position={[0, 0, DEPTH - 0.0015]}>
-        <meshStandardMaterial color="#e8dcc0" roughness={0.35} />
-      </mesh>
-      {/* Fondo de la caja visto por la boca */}
-      <mesh position={[0, HOLE_Y, 0.004]}>
-        <circleGeometry args={[HOLE_R * 1.1, 32]} />
-        <meshBasicMaterial color="#030201" />
-      </mesh>
-      {/* Garganta de la boca: dentro de la caja apenas entra luz, se ve casi negra */}
-      <mesh position={[0, HOLE_Y, (FRONT + 0.004) / 2]} rotation={[Math.PI / 2, 0, 0]}>
-        <cylinderGeometry args={[HOLE_R * 0.995, HOLE_R * 0.995, FRONT - 0.004, 40, 1, true]} />
-        <meshBasicMaterial color="#070403" side={BackSide} />
-      </mesh>
-      <mesh geometry={TOP} position={[0, 0, FRONT + 0.0004]} receiveShadow>
-        <meshPhysicalMaterial map={spruce} roughness={0.35} clearcoat={0.6} clearcoatRoughness={0.32} />
-      </mesh>
-
-      {/* Puente con selleta de hueso */}
-      <RoundedBox args={[0.15, 0.03, 0.008]} radius={0.003} position={[0, SADDLE_Y - 0.008, FRONT + 0.004]} castShadow>
-        <meshStandardMaterial color="#1e120c" roughness={0.4} />
-      </RoundedBox>
-      <RoundedBox args={[0.075, 0.003, 0.004]} radius={0.001} position={[0, SADDLE_Y, FRONT + 0.009]}>
-        <meshStandardMaterial color="#efe8d8" roughness={0.4} />
-      </RoundedBox>
-
-      {/* Mástil y diapasón */}
-      <RoundedBox args={[0.05, NUT_Y - 0.49, 0.022]} radius={0.008} position={[0, (NUT_Y + 0.49) / 2, FRONT - 0.012]} castShadow>
-        <meshStandardMaterial color="#6b3a1f" roughness={0.35} />
-      </RoundedBox>
-      <RoundedBox args={[0.052, NUT_Y - BOARD_FROM, 0.006]} radius={0.0015} position={[0, (NUT_Y + BOARD_FROM) / 2, FRONT + 0.003]}>
-        <meshStandardMaterial color="#24150e" roughness={0.5} />
-      </RoundedBox>
-      <mesh position={[0, (NUT_Y + BOARD_FROM) / 2, FRONT + 0.0062]}>
-        <planeGeometry args={[0.05, NUT_Y - BOARD_FROM]} />
-        <meshStandardMaterial map={board} roughness={0.45} metalness={0.2} />
-      </mesh>
-      <RoundedBox args={[0.052, 0.004, 0.006]} radius={0.001} position={[0, NUT_Y, FRONT + 0.006]}>
-        <meshStandardMaterial color="#efe8d8" roughness={0.4} />
-      </RoundedBox>
-
-      <Strings pluck={pluck} />
-
-      {/* Pala inclinada hacia atrás con sus seis clavijas */}
-      <group position={[0, NUT_Y + 0.002, FRONT - 0.004]} rotation={[-0.24, 0, 0]}>
-        <RoundedBox args={[0.074, 0.18, 0.016]} radius={0.006} position={[0, 0.09, 0]} castShadow>
-          <meshStandardMaterial color="#1c110b" roughness={0.3} />
-        </RoundedBox>
-        {[0.04, 0.085, 0.13].flatMap((y) =>
-          [-1, 1].map((s) => (
-            <group key={`${y}${s}`} position={[s * 0.024, y, 0]}>
-              <mesh position={[0, 0, 0.012]} rotation={[Math.PI / 2, 0, 0]}>
-                <cylinderGeometry args={[0.003, 0.004, 0.012, 12]} />
-                <meshStandardMaterial color="#c9c6be" roughness={0.25} metalness={0.9} />
-              </mesh>
-              <mesh position={[s * 0.026, 0, -0.004]} rotation={[0, 0, Math.PI / 2]}>
-                <cylinderGeometry args={[0.0025, 0.0025, 0.016, 8]} />
-                <meshStandardMaterial color="#c9c6be" roughness={0.25} metalness={0.9} />
-              </mesh>
-              <RoundedBox args={[0.006, 0.012, 0.004]} radius={0.0015} position={[s * 0.036, 0, -0.004]}>
-                <meshStandardMaterial color="#d8d3c5" roughness={0.35} metalness={0.6} />
-              </RoundedBox>
-            </group>
-          )),
-        )}
-      </group>
-
-      {/* Sombra de contacto en la pared: la guitarra cuelga pegada a ella, no flota delante */}
-      <mesh position={[0.012, 0.22, -0.029]} scale={[0.56, 0.64, 1]}>
+    <group position={position} rotation={rotation}>
+      {/* Sombra de contacto en el suelo bajo la culata */}
+      <mesh position={[0, 0.001, FRONT / 2 - 0.01]} rotation={[-Math.PI / 2, 0, 0]} scale={[0.5, 0.22, 1]}>
         <planeGeometry />
-        <meshBasicMaterial map={dot} color="#000000" transparent opacity={0.55} depthWrite={false} />
+        <meshBasicMaterial map={dot} color="#000000" transparent opacity={0.6} depthWrite={false} />
       </mesh>
-      <mesh position={[0.004, 0.68, -0.029]} scale={[0.1, 0.5, 1]}>
-        <planeGeometry />
-        <meshBasicMaterial map={dot} color="#000000" transparent opacity={0.35} depthWrite={false} />
-      </mesh>
-
-      {/* Soporte de pared: placa de madera y horquilla que recoge el mástil bajo la pala */}
-      <RoundedBox args={[0.055, 0.09, 0.014]} radius={0.004} position={[0, NUT_Y - 0.01, -0.023]} castShadow>
-        <meshStandardMaterial color="#3b2a1f" roughness={0.55} />
-      </RoundedBox>
-      <mesh position={[0, NUT_Y - 0.012, 0.04]} rotation={[Math.PI / 2, 0, 0]}>
-        <cylinderGeometry args={[0.0045, 0.0045, 0.11, 12]} />
-        <meshStandardMaterial color="#2a2a2e" roughness={0.35} metalness={0.7} />
-      </mesh>
-      {[-1, 1].map((s) => (
-        <mesh key={s} position={[s * 0.032, NUT_Y + 0.002, FRONT - 0.012]} castShadow>
-          <cylinderGeometry args={[0.005, 0.005, 0.03, 12]} />
-          <meshStandardMaterial color="#141416" roughness={0.9} />
+      <group rotation={[-lean, 0, 0]} {...hover}>
+        <mesh geometry={BODY} castShadow receiveShadow>
+          <meshPhysicalMaterial color="#3a1a0c" roughness={0.5} clearcoat={0.7} clearcoatRoughness={0.35} />
         </mesh>
-      ))}
+        <mesh geometry={BINDING} position={[0, 0, DEPTH - 0.0015]}>
+          <meshStandardMaterial color="#e8dcc0" roughness={0.35} />
+        </mesh>
+        {/* Fondo de la caja visto por la boca */}
+        <mesh position={[0, HOLE_Y, 0.004]}>
+          <circleGeometry args={[HOLE_R * 1.1, 32]} />
+          <meshBasicMaterial color="#030201" />
+        </mesh>
+        {/* Garganta de la boca: dentro de la caja apenas entra luz, se ve casi negra */}
+        <mesh position={[0, HOLE_Y, (FRONT + 0.004) / 2]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[HOLE_R * 0.995, HOLE_R * 0.995, FRONT - 0.004, 40, 1, true]} />
+          <meshBasicMaterial color="#070403" side={BackSide} />
+        </mesh>
+        <mesh geometry={TOP} position={[0, 0, FRONT + 0.0004]} receiveShadow>
+          <meshPhysicalMaterial map={spruce} roughness={0.35} clearcoat={0.6} clearcoatRoughness={0.32} />
+        </mesh>
+
+        {/* Puente con selleta de hueso */}
+        <RoundedBox args={[0.15, 0.03, 0.008]} radius={0.003} position={[0, SADDLE_Y - 0.008, FRONT + 0.004]} castShadow>
+          <meshStandardMaterial color="#1e120c" roughness={0.4} />
+        </RoundedBox>
+        <RoundedBox args={[0.075, 0.003, 0.004]} radius={0.001} position={[0, SADDLE_Y, FRONT + 0.009]}>
+          <meshStandardMaterial color="#efe8d8" roughness={0.4} />
+        </RoundedBox>
+
+        {/* Mástil y diapasón */}
+        <RoundedBox args={[0.05, NUT_Y - 0.49, 0.022]} radius={0.008} position={[0, (NUT_Y + 0.49) / 2, FRONT - 0.012]} castShadow>
+          <meshStandardMaterial color="#6b3a1f" roughness={0.35} />
+        </RoundedBox>
+        <RoundedBox args={[0.052, NUT_Y - BOARD_FROM, 0.006]} radius={0.0015} position={[0, (NUT_Y + BOARD_FROM) / 2, FRONT + 0.003]}>
+          <meshStandardMaterial color="#24150e" roughness={0.5} />
+        </RoundedBox>
+        <mesh position={[0, (NUT_Y + BOARD_FROM) / 2, FRONT + 0.0062]}>
+          <planeGeometry args={[0.05, NUT_Y - BOARD_FROM]} />
+          <meshStandardMaterial map={board} roughness={0.45} metalness={0.2} />
+        </mesh>
+        <RoundedBox args={[0.052, 0.004, 0.006]} radius={0.001} position={[0, NUT_Y, FRONT + 0.006]}>
+          <meshStandardMaterial color="#efe8d8" roughness={0.4} />
+        </RoundedBox>
+
+        <Strings pluck={pluck} />
+
+        {/* Pala inclinada hacia atrás con sus seis clavijas */}
+        <group position={[0, NUT_Y + 0.002, FRONT - 0.004]} rotation={[-0.24, 0, 0]}>
+          <RoundedBox args={[0.074, 0.18, 0.016]} radius={0.006} position={[0, 0.09, 0]} castShadow>
+            <meshStandardMaterial color="#1c110b" roughness={0.3} />
+          </RoundedBox>
+          {[0.04, 0.085, 0.13].flatMap((y) =>
+            [-1, 1].map((s) => (
+              <group key={`${y}${s}`} position={[s * 0.024, y, 0]}>
+                <mesh position={[0, 0, 0.012]} rotation={[Math.PI / 2, 0, 0]}>
+                  <cylinderGeometry args={[0.003, 0.004, 0.012, 12]} />
+                  <meshStandardMaterial color="#c9c6be" roughness={0.25} metalness={0.9} />
+                </mesh>
+                <mesh position={[s * 0.026, 0, -0.004]} rotation={[0, 0, Math.PI / 2]}>
+                  <cylinderGeometry args={[0.0025, 0.0025, 0.016, 8]} />
+                  <meshStandardMaterial color="#c9c6be" roughness={0.25} metalness={0.9} />
+                </mesh>
+                <RoundedBox args={[0.006, 0.012, 0.004]} radius={0.0015} position={[s * 0.036, 0, -0.004]}>
+                  <meshStandardMaterial color="#d8d3c5" roughness={0.35} metalness={0.6} />
+                </RoundedBox>
+              </group>
+            )),
+          )}
+        </group>
+      </group>
     </group>
   );
 }

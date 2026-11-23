@@ -1593,3 +1593,163 @@ export const drawSpines =
       ctx.restore();
     });
   };
+
+/* ---------- ventana, gato y post-its ---------- */
+
+/** Noche al otro lado de la ventana: cielo despejado con luna, estrellas y la silueta de la ciudad con ventanas encendidas. */
+export const drawNightSky: Draw = (ctx, w, h) => {
+  ctx.fillStyle = vgrad(ctx, h, ["#070b1c", "#101a3a", "#2a2350", "#4a2c56"]);
+  ctx.fillRect(0, 0, w, h);
+  const r = rng(7);
+  for (let i = 0; i < 260; i += 1) {
+    const y = r() * h * 0.62;
+    const a = (0.25 + r() * 0.75) * (1 - y / (h * 0.7));
+    ctx.fillStyle = `rgba(230,236,255,${a})`;
+    const s = r() < 0.08 ? 2.2 : 1.2;
+    ctx.fillRect(r() * w, y, s, s);
+  }
+  // Luna creciente con su halo
+  glow(ctx, w * 0.72, h * 0.2, h * 0.16, "#cfd8ff", 0.35);
+  ctx.fillStyle = "#f1efe2";
+  ctx.beginPath();
+  ctx.arc(w * 0.72, h * 0.2, h * 0.045, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#121c3e";
+  ctx.beginPath();
+  ctx.arc(w * 0.72 + h * 0.022, h * 0.2 - h * 0.012, h * 0.042, 0, Math.PI * 2);
+  ctx.fill();
+  // Resplandor de la ciudad en el horizonte
+  glow(ctx, w * 0.4, h * 0.95, w * 0.6, "#ff9a5a", 0.22);
+  // Dos filas de edificios: la del fondo más azulada y apagada
+  for (const [base, tint, lit, seed] of [
+    [0.7, "#141a33", 0.35, 3],
+    [0.8, "#0a0d1a", 0.8, 11],
+  ] as const) {
+    const rr = rng(seed);
+    let x = -10;
+    while (x < w) {
+      const bw = 30 + rr() * 70;
+      const top = h * base - rr() * h * 0.2;
+      ctx.fillStyle = tint;
+      ctx.fillRect(x, top, bw, h - top);
+      for (let wy = top + 8; wy < h - 6; wy += 11) {
+        for (let wx = x + 6; wx < x + bw - 6; wx += 9) {
+          if (rr() > 0.22 * lit) continue;
+          ctx.fillStyle = rr() < 0.7 ? `rgba(255,200,120,${0.5 * lit + 0.2})` : `rgba(150,200,255,${0.4 * lit + 0.2})`;
+          ctx.fillRect(wx, wy, 4, 5);
+        }
+      }
+      // Alguna antena con piloto rojo
+      if (rr() < 0.25) {
+        ctx.fillRect(x + bw / 2, top - 18, 1.5, 18);
+        ctx.fillStyle = "rgba(255,70,60,0.9)";
+        ctx.fillRect(x + bw / 2 - 1, top - 20, 3.5, 3.5);
+      }
+      x += bw + rr() * 6;
+    }
+  }
+};
+
+/** Pelaje de gato atigrado naranja: rayas onduladas que, en la esfera, rodean el cuerpo. */
+export const drawTabby: Draw = (ctx, w, h) => {
+  ctx.fillStyle = hgrad(ctx, 0, w, ["#c9783a", "#d58a48", "#c9783a"]);
+  ctx.fillRect(0, 0, w, h);
+  const r = rng(5);
+  for (let i = 0; i < 22; i += 1) {
+    const x0 = (i / 22) * w + r() * 8;
+    ctx.strokeStyle = `rgba(120,58,22,${0.35 + r() * 0.3})`;
+    ctx.lineWidth = 5 + r() * 8;
+    ctx.beginPath();
+    for (let y = h * 0.08; y <= h * 0.92; y += 8) {
+      const x = x0 + Math.sin(y * 0.03 + i) * 6;
+      if (y === h * 0.08) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+  // Tripa y pecho más claros
+  const belly = ctx.createLinearGradient(0, 0, 0, h);
+  belly.addColorStop(0.7, "rgba(240,215,180,0)");
+  belly.addColorStop(1, "rgba(240,215,180,0.85)");
+  ctx.fillStyle = belly;
+  ctx.fillRect(0, 0, w, h);
+};
+
+FONT_FREE.add(drawNightSky).add(drawTabby);
+
+const HAND = '"Segoe Print", "Bradley Hand", "Marker Felt", "Comic Sans MS", cursive';
+const PEN = "#1e2b66";
+
+/** Post-it escrito a mano. `strike` lo tacha; `arrow` dibuja una flecha hacia abajo a la izquierda. */
+export const drawNote =
+  (msg: string, paper: string, opts: { strike?: boolean; arrow?: boolean } = {}): Draw =>
+  (ctx, w, h) => {
+    ctx.fillStyle = paper;
+    ctx.fillRect(0, 0, w, h);
+    // Franja adhesiva arriba algo más lisa y sombra suave donde el papel se despega
+    const lift = ctx.createLinearGradient(0, 0, 0, h);
+    lift.addColorStop(0, "rgba(255,255,255,0.18)");
+    lift.addColorStop(0.18, "rgba(255,255,255,0)");
+    lift.addColorStop(0.75, "rgba(0,0,0,0)");
+    lift.addColorStop(1, "rgba(0,0,0,0.12)");
+    ctx.fillStyle = lift;
+    ctx.fillRect(0, 0, w, h);
+
+    // Parte la frase en dos renglones por el espacio más cercano a la mitad
+    const words = msg.split(" ");
+    let best = [msg];
+    if (words.length > 1 && msg.length > 12) {
+      let cut = 1;
+      for (let i = 1; i < words.length; i += 1) {
+        if (Math.abs(words.slice(0, i).join(" ").length - msg.length / 2) < Math.abs(words.slice(0, cut).join(" ").length - msg.length / 2)) cut = i;
+      }
+      best = [words.slice(0, cut).join(" "), words.slice(cut).join(" ")];
+    }
+    let size = w * 0.17;
+    ctx.font = `700 ${size}px ${HAND}`;
+    while (best.some((l) => ctx.measureText(l).width > w * 0.84) && size > 10) ctx.font = `700 ${(size -= 1)}px ${HAND}`;
+    const top = opts.arrow ? h * 0.32 : h * 0.42;
+    best.forEach((l, i) => {
+      const y = top + i * size * 1.15;
+      ctx.save();
+      ctx.translate(w / 2, y);
+      ctx.rotate(-0.04);
+      text(ctx, l, 0, 0, ctx.font, PEN, { align: "center" });
+      ctx.restore();
+      if (opts.strike) {
+        const half = ctx.measureText(l).width / 2 + 6;
+        ctx.strokeStyle = "#c0262c";
+        ctx.lineWidth = 4;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(w / 2 - half, y - size * 0.28 + 3);
+        ctx.quadraticCurveTo(w / 2, y - size * 0.38, w / 2 + half, y - size * 0.3 - 4);
+        ctx.stroke();
+      }
+    });
+    if (opts.strike) {
+      // Visto bueno en rojo al pie
+      ctx.strokeStyle = "#c0262c";
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(w * 0.66, h * 0.8);
+      ctx.lineTo(w * 0.73, h * 0.88);
+      ctx.lineTo(w * 0.86, h * 0.7);
+      ctx.stroke();
+    }
+    if (opts.arrow) {
+      ctx.strokeStyle = PEN;
+      ctx.lineWidth = 5;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.beginPath();
+      ctx.moveTo(w * 0.72, h * 0.5);
+      ctx.bezierCurveTo(w * 0.7, h * 0.72, w * 0.45, h * 0.8, w * 0.17, h * 0.86);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(w * 0.3, h * 0.76);
+      ctx.lineTo(w * 0.15, h * 0.865);
+      ctx.lineTo(w * 0.29, h * 0.95);
+      ctx.stroke();
+    }
+  };

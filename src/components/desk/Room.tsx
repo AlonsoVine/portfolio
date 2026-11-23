@@ -3,7 +3,7 @@
 
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
-import { AdditiveBlending, type Color, type MeshBasicMaterial, type PointLight } from "three";
+import { AdditiveBlending, type Color, type MeshBasicMaterial, Path, type PointLight, Shape, ShapeGeometry } from "three";
 import { AMBER, hdr, ICE, MAGENTA, VIOLET } from "./palette";
 import { drawEdgeFalloff, drawFabric, drawFloorFalloff, drawMatEdge, drawNeonSign, drawPegboard, drawSoftDot, drawStrip, drawUnderglow, drawWood, drawWoodRough, type DeskCopy } from "./screens";
 import { Dust, RoundedBox, SoftPlanes, type SoftPlane } from "./primitives";
@@ -12,11 +12,33 @@ import { useHoverable } from "./interact";
 import { zap } from "./sfx";
 
 export const WALL_Z = -0.6;
+/** Hueco de la ventana en la pared derecha (x = 1,05): centro en z e y, ancho, alto y grosor del muro. */
+export const WINDOW = { z: -0.07, y: 0.5, w: 0.62, h: 0.56, depth: 0.16 };
+
+// Pared derecha con el hueco de la ventana recortado; en coordenadas del plano, x local es la z del mundo
+const RIGHT_WALL = (() => {
+  const s = new Shape();
+  s.moveTo(-0.9, -1.2);
+  s.lineTo(0.9, -1.2);
+  s.lineTo(0.9, 1.2);
+  s.lineTo(-0.9, 1.2);
+  s.closePath();
+  const x = WINDOW.z - 0.25;
+  const y = WINDOW.y - 0.45;
+  const hole = new Path();
+  hole.moveTo(x - WINDOW.w / 2, y - WINDOW.h / 2);
+  hole.lineTo(x - WINDOW.w / 2, y + WINDOW.h / 2);
+  hole.lineTo(x + WINDOW.w / 2, y + WINDOW.h / 2);
+  hole.lineTo(x + WINDOW.w / 2, y - WINDOW.h / 2);
+  hole.closePath();
+  s.holes.push(hole);
+  return new ShapeGeometry(s);
+})();
 
 export function Desk() {
   const wood = useCanvasTexture(1024, 512, drawWood, { tileX: 2 });
   const woodRough = useCanvasTexture(1024, 512, drawWoodRough, { tileX: 2, color: false });
-  const peg = useCanvasTexture(512, 512, drawPegboard, { tileX: 10, tileY: 5 });
+  const peg = useCanvasTexture(512, 512, drawPegboard, { tileX: 5, tileY: 5 });
   const fabric = useCanvasTexture(512, 512, drawFabric, { tileX: 7, tileY: 2.6 });
   const edge = useCanvasTexture(750, 280, drawMatEdge);
   const dot = useCanvasTexture(128, 128, drawSoftDot);
@@ -35,8 +57,9 @@ export function Desk() {
         <planeGeometry args={[1.5, 0.53]} />
         <meshStandardMaterial map={edge} transparent roughness={0.8} depthWrite={false} />
       </mesh>
+      {/* Justo de pared a pared: si sobresale, se vería por la ventana */}
       <mesh position={[0, 0.45, WALL_Z]} receiveShadow>
-        <planeGeometry args={[4.2, 2.4]} />
+        <planeGeometry args={[2.1, 2.4]} />
         <meshStandardMaterial map={peg} bumpMap={peg} bumpScale={0.4} color="#9a95a3" roughness={0.9} />
       </mesh>
       {/* Oclusión en las uniones: donde la mesa toca la pared y en las esquinas apenas llega luz */}
@@ -79,12 +102,13 @@ export function Desk() {
         <meshLambertMaterial color="#2a2522" />
       </mesh>
       {/* Paredes laterales: el escritorio está en un hueco, no flotando en el vacío */}
-      {[-1, 1].map((s) => (
-        <mesh key={s} position={[s * 1.05, 0.45, 0.25]} rotation={[0, -s * (Math.PI / 2), 0]} receiveShadow>
-          <planeGeometry args={[1.8, 2.4]} />
-          <meshLambertMaterial color="#3a3640" />
-        </mesh>
-      ))}
+      <mesh position={[-1.05, 0.45, 0.25]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
+        <planeGeometry args={[1.8, 2.4]} />
+        <meshLambertMaterial color="#3a3640" />
+      </mesh>
+      <mesh geometry={RIGHT_WALL} position={[1.05, 0.45, 0.25]} rotation={[0, -Math.PI / 2, 0]} receiveShadow>
+        <meshLambertMaterial color="#3a3640" />
+      </mesh>
     </group>
   );
 }

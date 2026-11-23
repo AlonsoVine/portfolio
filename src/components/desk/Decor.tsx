@@ -333,7 +333,7 @@ export function WallCalendar({ t, position, lang }: { t: DeskCopy; position: Vec
 const MAP_URL = `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/desk/mapa.webp`;
 
 /** Cuadro enmarcado con el mapa de la Tierra Media: marco de nogal, paspartú y cristal. */
-export function MapFrame({ position, rotation }: { position: Vec3; rotation?: Vec3 }) {
+export function MapFrame({ position, rotation, scale = 1 }: { position: Vec3; rotation?: Vec3; scale?: number }) {
   const dot = useCanvasTexture(128, 128, drawSoftDot);
   // La textura existe desde el principio: el shader se compila con ella en el calentamiento y la imagen entra al llegar
   const [map] = useState(() => {
@@ -354,7 +354,7 @@ export function MapFrame({ position, rotation }: { position: Vec3; rotation?: Ve
     [0, -OH / 2 + F / 2, OW],
   ];
   return (
-    <group position={position} rotation={rotation}>
+    <group position={position} rotation={rotation} scale={scale}>
       <mesh position={[0.01, -0.015, 0.001]} scale={[OW * 1.25, OH * 1.3, 1]}>
         <planeGeometry />
         <meshBasicMaterial map={dot} color="#000000" transparent opacity={0.5} depthWrite={false} />
@@ -388,7 +388,8 @@ export function MapFrame({ position, rotation }: { position: Vec3; rotation?: Ve
 }
 
 /**
- * Cascos cerrados de diadema rígida, de pie sobre la mesa. Al pulsarlos dan un saltito y ponen o quitan la música.
+ * Cascos cerrados de diadema rígida, tumbados sobre la mesa: descansan sobre el canto de las copas y la diadema
+ * cae hacia atrás hasta apoyarse en el tablero. Al pulsarlos dan un saltito y ponen o quitan la música.
  */
 export function Headphones({ t, position, rotation }: { t: DeskCopy; position: Vec3; rotation?: Vec3 }) {
   const R = 0.085;
@@ -422,50 +423,55 @@ export function Headphones({ t, position, rotation }: { t: DeskCopy; position: V
       showHover(t.interact.musicOff);
     }
   });
-  // Cascos rígidos de pie sobre sus copas, con la diadema en arco: la silueta de siempre, que se reconoce al instante
   const DROP = 0.068;
+  // Eje de las copas un pelín por encima del radio: la horquilla, algo mayor que la copa, es la que toca la mesa
+  const AXIS = CUP_R + 0.005;
+  // Giro hacia atrás justo para que el acero de la diadema llegue al tablero
+  const LIE = Math.PI / 2 + Math.asin((AXIS - 0.005) / (DROP + R + 0.0045));
   return (
     <group position={position} rotation={rotation} {...hover}>
       <group ref={hop}>
-        <group position={[0, CUP_R + DROP, 0]}>
-          {/* Diadema: arco de acero con almohadilla de piel por dentro */}
-          <mesh castShadow>
-            <torusGeometry args={[R, 0.0045, 10, 56, Math.PI]} />
-            <meshStandardMaterial color="#b9b8b4" roughness={0.3} metalness={0.9} />
-          </mesh>
-          <mesh rotation={[0, 0, Math.PI * 0.18]} scale={[1, 1, 2.4]} castShadow>
-            <torusGeometry args={[R - 0.007, 0.0075, 12, 40, Math.PI * 0.64]} />
-            <meshStandardMaterial color="#202024" roughness={0.6} />
-          </mesh>
-          {[-1, 1].map((s) => (
-            <group key={s} position={[s * R, 0, 0]}>
-              {/* Deslizador y horquilla que abraza la copa */}
-              <mesh position={[0, -0.022, 0]} castShadow>
-                <boxGeometry args={[0.006, 0.044, 0.012]} />
-                <meshStandardMaterial color="#b9b8b4" roughness={0.3} metalness={0.9} />
-              </mesh>
-              <mesh position={[0, -DROP, 0]} rotation={[0, Math.PI / 2, 0]} castShadow>
-                <torusGeometry args={[CUP_R + 0.004, 0.0028, 8, 40, Math.PI]} />
-                <meshStandardMaterial color="#b9b8b4" roughness={0.3} metalness={0.9} />
-              </mesh>
-              <group position={[-s * 0.004, -DROP, 0]} rotation={[0, 0, Math.PI / 2]}>
-                <mesh castShadow receiveShadow>
-                  <cylinderGeometry args={[CUP_R, 0.04, 0.026, 40]} />
-                  <meshStandardMaterial color="#1d1d21" roughness={0.45} metalness={0.2} />
+        <group position={[0, AXIS, 0]} rotation={[-LIE, 0, 0]}>
+          <group position={[0, DROP, 0]}>
+            {/* Diadema: arco de acero con almohadilla de piel por dentro */}
+            <mesh castShadow>
+              <torusGeometry args={[R, 0.0045, 10, 56, Math.PI]} />
+              <meshStandardMaterial color="#c9c8c4" roughness={0.3} metalness={0.6} />
+            </mesh>
+            <mesh rotation={[0, 0, Math.PI * 0.18]} scale={[1, 1, 1.5]} castShadow>
+              <torusGeometry args={[R - 0.007, 0.0075, 12, 40, Math.PI * 0.64]} />
+              <meshStandardMaterial color="#202024" roughness={0.6} />
+            </mesh>
+            {[-1, 1].map((s) => (
+              <group key={s} position={[s * R, 0, 0]}>
+                {/* Deslizador y horquilla que abraza la copa */}
+                <mesh position={[0, -0.022, 0]} castShadow>
+                  <boxGeometry args={[0.006, 0.044, 0.012]} />
+                  <meshStandardMaterial color="#c9c8c4" roughness={0.3} metalness={0.6} />
                 </mesh>
-                {/* Aro de acento en la tapa exterior: con la música puesta se enciende como un piloto */}
-                <mesh position={[0, -s * 0.0135, 0]} rotation={[Math.PI / 2, 0, 0]}>
-                  <torusGeometry args={[0.03, 0.0016, 8, 40]} />
-                  <meshStandardMaterial color="#c9a24a" roughness={0.3} metalness={1} emissive={playing ? ICE : "#000000"} emissiveIntensity={playing ? 2.5 : 0} />
+                <mesh position={[0, -DROP, 0]} rotation={[0, Math.PI / 2, 0]} castShadow>
+                  <torusGeometry args={[CUP_R + 0.004, 0.0028, 8, 40, Math.PI]} />
+                  <meshStandardMaterial color="#c9c8c4" roughness={0.3} metalness={0.6} />
                 </mesh>
-                {/* Almohadilla de polipiel hacia dentro */}
-                <mesh position={[0, s * 0.016, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[1, 1, 1.4]} castShadow>
-                  <torusGeometry args={[0.032, 0.009, 12, 40]} />
-                  <meshStandardMaterial color="#141416" roughness={0.7} />
-                </mesh>
+                <group position={[-s * 0.004, -DROP, 0]} rotation={[0, 0, Math.PI / 2]}>
+                  <mesh castShadow receiveShadow>
+                    <cylinderGeometry args={[CUP_R, 0.04, 0.026, 40]} />
+                    <meshStandardMaterial color="#1d1d21" roughness={0.45} metalness={0.2} />
+                  </mesh>
+                  {/* Aro de acento en la tapa exterior: con la música puesta se enciende como un piloto */}
+                  <mesh position={[0, -s * 0.0135, 0]} rotation={[Math.PI / 2, 0, 0]}>
+                    <torusGeometry args={[0.03, 0.0016, 8, 40]} />
+                    <meshStandardMaterial color="#c9a24a" roughness={0.3} metalness={1} emissive={playing ? ICE : "#000000"} emissiveIntensity={playing ? 2.5 : 0} />
+                  </mesh>
+                  {/* Almohadilla de polipiel hacia dentro */}
+                  <mesh position={[0, s * 0.016, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[1, 1, 1.4]} castShadow>
+                    <torusGeometry args={[0.032, 0.009, 12, 40]} />
+                    <meshStandardMaterial color="#141416" roughness={0.7} />
+                  </mesh>
+                </group>
               </group>
-            </group>
-          ))}
+            ))}
+          </group>
         </group>
       </group>
     </group>

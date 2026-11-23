@@ -130,6 +130,23 @@ export function flip() {
   play(buf, 0.22, f);
 }
 
+/** Ronroneo: ruido grave pulsado a unos 25 Hz, en dos respiraciones. */
+export function purr() {
+  const { ac } = audio();
+  const f = ac.createBiquadFilter();
+  f.type = "lowpass";
+  f.frequency.value = 260;
+  const buf = noiseBuffer(ac, 1.8);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i += 1) {
+    const t = i / ac.sampleRate;
+    const breath = Math.sin((Math.PI * t) / 0.9) ** 2;
+    const pulse = (0.5 + 0.5 * Math.sin(2 * Math.PI * 25 * t)) ** 3;
+    d[i] *= breath * pulse;
+  }
+  play(buf, 0.9, f);
+}
+
 /** Taza de gres que se posa en el corcho: golpe sordo con un poco de timbre cerámico. */
 export function clink() {
   const { ac, out } = audio();

@@ -29,7 +29,7 @@ export function DeskExperience({ t, lang }: { t: Dictionary["desk"]; lang: strin
         <span className="desk-loader-label">{t.loading}</span>
         <span className="desk-loader-bar" />
       </div>
-      <DeskCursor reduceMotion={reduceMotion} />
+      <DeskCursor reduceMotion={reduceMotion} ready={ready} />
       <p className="desk-hint">
         <span data-pointer>{t.hintPointer}</span>
         <span data-touch>{t.hintTouch}</span>

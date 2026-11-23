@@ -22,9 +22,15 @@ const DAMPING = 2 * 0.9 * Math.sqrt(STIFFNESS);
 /**
  * Mirada en primera persona: con ratón, la posición del puntero decide hacia dónde mira la cabeza;
  * en táctil, arrastrar gira la vista. La cámara no se desplaza, solo gira (y se inclina un poco).
+ * Mientras la escena carga (`active` falso) la vista se queda al frente: si no, con el ratón abajo
+ * arrancaba mirando el teclado de cerca y parecía un bulto en medio de la pantalla.
  */
-export function LookControls({ reduceMotion }: { reduceMotion: boolean }) {
+export function LookControls({ reduceMotion, active }: { reduceMotion: boolean; active: boolean }) {
   const target = useRef({ x: 0, y: 0 });
+  const live = useRef(active);
+  useEffect(() => {
+    live.current = active;
+  }, [active]);
   // Muelle críticamente amortiguado: arranca y frena con inercia, sin el «enganche» lineal de un lerp
   const spring = useRef({ x: 0, y: 0, vx: 0, vy: 0 });
 
@@ -35,6 +41,7 @@ export function LookControls({ reduceMotion }: { reduceMotion: boolean }) {
     let drag: { id: number; x: number; y: number } | null = null;
 
     const onMove = (e: PointerEvent) => {
+      if (!live.current) return;
       if (e.pointerType === "mouse") {
         target.current.x = shape(clamp((e.clientX / window.innerWidth) * 2 - 1));
         target.current.y = shape(clamp((e.clientY / window.innerHeight) * 2 - 1));
